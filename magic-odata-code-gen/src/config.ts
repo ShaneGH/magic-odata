@@ -1,4 +1,3 @@
-import { FileLocation, UriLocation, XmlString } from "./odataConfigLoader.js"
 
 /**
  * Structure of a config file for code generation
@@ -12,7 +11,7 @@ export type Config = {
      */
     inputFileLocation: Partial<{
         fromFile: string,
-        // TODO: bearer token???
+        // TODO: auth???
         fromUri: string,
         fromString: string
     }>,
@@ -271,9 +270,10 @@ export type CodeGenConfig = Partial<{
      * Remove entities from the generate code which are not specified in the whitelist
      * ignore is applied before "rename"
      * Values should be a concatenation of the namesapce and name, separated by a "."
+     * 
      * Default: use all entities
      * 
-     * @example ["My/OData/Ns.MyType", "My/OData/Ns.MyType2"] - Generate a client for types "MyType" and "MyType2" in namespace "My/OData/Ns"
+     * @example ["My/OData/Ns.MyType", "My/OData/Ns.MyType2"] - Generate a client for types "MyType" and "MyType2" in namespace "My/OData/Ns" only
      */
     entityWhitelist: Partial<{
 

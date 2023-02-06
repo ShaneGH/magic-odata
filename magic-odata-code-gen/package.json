@@ -1,7 +1,7 @@
 {
   "name": "magic-odata-code-gen",
-  "version": "1.0.0",
-  "description": "",
+  "version": "x.x.x",
+  "description": "Code generation tools to build OData clients",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
@@ -9,10 +9,9 @@
     "build": "tsc",
     "fix-links": "npm link ../magic-odata-shared"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Shane Connon",
+  "license": "MIT",
   "dependencies": {
-    "node-fetch": "^3.3.0",
     "xmldom": "^0.6.0",
     "xpath": "^0.0.32"
   },

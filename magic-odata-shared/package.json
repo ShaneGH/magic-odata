@@ -1,14 +1,11 @@
 {
   "name": "magic-odata-shared",
-  "version": "1.0.0",
-  "description": "",
+  "version": "x.x.x",
+  "description": "Shared interfaces between magic-odata-client and magic-odata-code-gen",
   "types": "index.d.ts",
   "type": "module",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
-  "license": "ISC",
+  "author": "Shane Connon",
+  "license": "MIT",
   "dependencies": {
     "typescript": "^4.9.4"
   }
