@@ -1,0 +1,16 @@
+
+# Editor
+
+.vscode/
+
+# Node
+
+dist/
+node_modules/
+
+# Dotnet
+
+bin/
+obj/
+
+generatedCode-*
