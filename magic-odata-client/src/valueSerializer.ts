@@ -14,9 +14,13 @@ export function enumMemberName(enumDef: ODataEnum, value: number): string {
     return name[0]
 }
 
+export function stringSerialize(value: string): string {
+    return `'${value.replace(/'/g, "''")}'`
+}
+
 export function basicSerialize(value: any): string {
     return typeof value === "string"
-        ? `'${value}'`
+        ? stringSerialize(value)
         : value.toString();
 }
 
@@ -44,15 +48,15 @@ export function serialize(value: any, type?: ODataTypeRef, serviceConfig?: OData
     if (type.namespace === "Edm") {
         // TODO: test each
         switch (type.name) {
-            case "String": return `'${value}'`;
-            case "Guid":
+            case "String":
             case "Boolean":
             case "Int16":
             case "Int32":
             case "Int64":
             case "Decimal":
             case "Double":
-            case "Single": return value.toString()
+            case "Single": return basicSerialize(value);
+            case "Guid": return value.toString()
             default:
                 console.warn(`Unknown type found when serializing value for filter. `
                     + `Ignoring type info. This may lead to incorrect serializaton of values in filtering`, type);
