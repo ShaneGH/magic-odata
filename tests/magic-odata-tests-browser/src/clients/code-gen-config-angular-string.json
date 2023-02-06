@@ -1,0 +1,25 @@
+{
+    "inputFileLocation": {
+        "fromUri": "http://localhost:5432/odata/test-entities/$metadata"
+    },
+    "outputFileLocation": "./generatedCode-angular.ts",
+    "codeGenSettings": {
+        "angularMode": true,
+        "prettyPrintJsonConfig": false,
+        "rename": {
+            "entityContainers": {
+                "My/Odata.Container": ""
+            },
+            "entityNamespaces": {
+                "My.Odata.Entities": ""
+            }
+        },
+        "entityWhitelist": {
+            "entities": [
+                "My.Odata.Entities.HasId",
+                "My.Odata.Entities.User"
+            ]
+        }
+    },
+    "warningSettings": {}
+}

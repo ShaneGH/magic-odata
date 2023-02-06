@@ -1,0 +1,34 @@
+{
+  "name": "magic-odata-client-tests",
+  "version": "1.0.0",
+  "description": "Tests for magic-odata-client and magic-odata-code-gen",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "fix-links: COMMENT": "Used to link the test project to the modules that it is testing. This command needs to be run after each 'npm install'",
+    "fix-links": "npm link ../../magic-odata-client ../../magic-odata-code-gen",
+    "start-test-server": "node startTestServer.js",
+    "stop-test-server": "node stopTestServer.js",
+    "generate-code": "node node_modules/magic-odata-code-gen/dist/index.js --config ./code-gen-config.json",
+    "test-only": "node --experimental-vm-modules node_modules/jest/bin/jest.js dist",
+    "test": "(npm run start-test-server && npm run generate-code && tsc && npm run test-only)",
+    "build-and-test": "buildFromRoot.cmd && npm run test"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node-fetch": "^2.6.2",
+    "node-fetch": "^3.3.0",
+    "openapi": "^1.0.1",
+    "@angular/common": "^15.1.3",
+    "@angular/compiler": "^15.1.3",
+    "@angular/platform-browser-dynamic": "^15.1.3"
+  },
+  "dependencies": {
+    "jest": "^28.0.0",
+    "@types/jest": "^28.0.0",
+    "@types/pretty-format": "^24.3.0",
+    "pretty-format": "^29.3.1"
+  }
+}

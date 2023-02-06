@@ -1,0 +1,77 @@
+
+
+	
+
+	
+'A'
+    RULE1 = rule2 rule2
+    built in rules are defined in uppercase. Do not use???, e.g. BIT =  "0" / "1"
+
+';'
+    ; ignore all of this
+    single line comment
+    
+'='
+    rule = other rules with operators
+    rule definition. Definitions end with crlf
+
+'/'
+    rule = rule1 / rule2
+    rule 1 or rule2
+
+' '
+    rule = rule1 rule2
+    concatenation
+
+'[]'
+    rule = rule1 [rule2]
+    rule2 is optional
+
+'()'
+    rule = rule1 / (rule2 rule3) 
+    round brackets are round brackets
+
+'"'
+    rule1 = "hello" 
+    case insensitive strings
+
+"'"
+    rule1 = 'hello'
+    case sensitive strings. Not standard. Not part of ABNF
+
+':'
+    ??? don't think this one exists
+
+'*'
+
+'-'
+
+'$'
+
+'?'
+
+'.'
+
+'&'
+
+'#'
+
+'+'
+
+'{'
+
+'%'
+
+'}'
+
+'\\'
+
+'_'
+
+'@'
+
+','
+
+'~'
+
+'!'

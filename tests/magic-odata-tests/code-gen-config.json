@@ -1,0 +1,19 @@
+{
+    "inputFileLocation": {
+        "fromUri": "http://localhost:5432/odata/test-entities/$metadata"
+    },
+    "outputFileLocation": "./generatedCode.ts",
+    "codeGenSettings": {
+        "prettyPrintJsonConfig": false,
+        "exportTypeDefinitionJsObject": true,
+        "enumType": {
+            "default": "Number",
+            "stringEnums": [
+                "My.Odata.Entities.UserProfileType",
+                "My.Odata.Entities.Mood"
+            ]
+        }
+    },
+    "printOData$metadata": false,
+    "warningSettings": {}
+}

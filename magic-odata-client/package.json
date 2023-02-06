@@ -1,0 +1,19 @@
+{
+  "name": "magic-odata-client",
+  "version": "0.1.0",
+  "description": "",
+  "main": "dist/index.js",
+  "types": "dist/index.d.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "fix-links": "npm link ../magic-odata-shared"
+  },
+  "author": "magic-odata-client",
+  "license": "ISC",
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^4.9.4",
+    "@types/node": "^18.11.18"
+  }
+}

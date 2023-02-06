@@ -1,0 +1,107 @@
+
+TODO: evaluate
+ * Different route types:
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part2-url-conventions.html
+ * https://learn.microsoft.com/en-us/aspnet/web-api/overview/odata-support-in-aspnet-web-api/odata-v4/
+ * https://learn.microsoft.com/en-us/odata/webapi-8/overview
+ * https://learn.microsoft.com/en-us/odata/webapi/getting-started
+ * https://learn.microsoft.com/en-us/aspnet/web-api/overview/odata-support-in-aspnet-web-api/odata-v4/
+ * https://learn.microsoft.com/en-us/odata/webapi-8/fundamentals/entityset-routing?tabs=net60%2Cvisual-studio
+ * http://docs.oasis-open.org/odata/odata/v4.01/cs01/abnf/odata-abnf-construction-rules.txt
+ * http://docs.oasis-open.org/odata/odata/v4.0/odata-v4.0-part2-url-conventions.html
+ * http://docs.oasis-open.org/odata/odata/v4.0/odata-v4.0-part3-csdl.html
+ * http://docs.oasis-open.org/odata/odata-data-aggregation-ext/v4.0/odata-data-aggregation-ext-v4.0.html
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_EntityIdsandEntityReferences
+     * Services are strongly encouraged to use the canonical URL for an entity as defined in OData-URL as its entity-id, but clients cannot assume the entity-id can be used to locate the entity unless the Core.DereferenceableIDs term is applied to the entity container, nor can the client assume any semantics from the structure of the entity-id. The canonical resource $entity provides a general mechanism for resolving an entity-id into an entity representation.
+    
+
+Evaluated: v0
+ * More EDM types
+ * // TODO: $count_fincution
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_SystemQueryOptionexpand
+    * TODO:  $compute, and $levels.
+ * List of qs http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_SystemQueryOptions . Do, or add to roadmap with later v
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_RequestingtheNumberofItemsinaCollect
+    * read carefully
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html point 11.5.2 ->
+    * do this
+    * intersting. This might be a way to simulate collections of collections
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_AdvertisingAvailableOperationswithin
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_Functions
+ * Casting
+     * https://learn.microsoft.com/en-us/aspnet/web-api/overview/odata-support-in-aspnet-web-api/odata-routing-conventions
+     * casting root done. Need to cast somewhere in path
+     * need to cast twice (e.g. ~/Cast.To.Child/Cast.To.GrandChild)
+ * $value endpoint (e.g. http://localhost:5432/odata/test-entities/Users('f27f6026-cbb9-4234-a8e5-82584eb276ae')/UserType/$value)
+     * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_RequestingaPropertysRawValueusingval
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_SystemQueryOptionselect
+     * GET http://host/service/Products?$select=DemoService.* ????
+
+Evaluated: v1
+ * Whitelisted types should automatically whitelist their Complex object properties (but not navigation properties)
+ * What is the default value of Nullable for properties in $metadata
+ * Dynamic properties (and open types)
+ * http://docs.oasis-open.org/odata/odata-data-aggregation-ext/v4.0/odata-data-aggregation-ext-v4.0.html
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_SystemQueryOptioncompute
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_Formats +
+     * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_SystemQueryOptionformat
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_ServerDrivenPaging
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_RequestinganIndividualMemberofanOrde
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_RequestingEntityReferences
+ * Etags
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_ResolvinganEntityId
+     * not sure this needs doing
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_allResponse
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_crossjoinResponse
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_BindinganOperationtoaResource
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_BatchRequests
+ * Descripttions: builder.EntitySet<HasId>("HasIds").HasDescription().HasDescription("These are the has Ids\n\"");
+ * Errors http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_ErrorResponseBody
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_CommonResponseStatusCodes
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_RequestingRelatedEntities
+ * Expose query builder objects again (try to support non standard odata)
+     * confusing. Think it is done (except for the 204)
+ * Make dev env linux friendly
+ * Cast enums
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_BuiltinQueryFunctions
+    * Collection functions + 
+    * collection versions of string + collection functions
+    * date and time functions
+    * type functions (requires code gen for types)
+    * geo functions 
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_ParameterAliases
+ * IsFlags
+    * https://devblogs.microsoft.com/odata/tutorial-sample-use-enumeration-types-in-odata/
+    * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_BuiltinFilterOperations "has" operator
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_SystemQueryOptionexpand
+    * /$ref
+    * /$count
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_SystemQueryOptionorderby
+     * Services SHOULD order language-dependent strings according to the content-language of the response, and SHOULD annotate string properties with language-dependent order with the term Core.IsLanguageDependent, see [OData-VocCore].
+     * A type cast using the qualified entity type name is required to order by a property defined on a derived type
+
+Evaluated: vNext
+ 
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_SystemQueryOptionschemaversion
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_HeaderFields
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_RequestingtheMediaStreamofaMediaEnti
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_SystemQueryOptionschemaversion
+     * not sure this needs doing
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_RequestingChanges
+     * + http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_DeltaPayloadResponse
+     * + http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_IteminaDeltaPayloadResponse
+     * http://docs.oasis-open.org/odata/odata/v4.0/odata-v4.0-part2-url-conventions.html point 4.12
+     * http://docs.oasis-open.org/odata/odata/v4.0/odata-v4.0-part2-url-conventions.html point 4.11
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_ModelVersioning
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_Extensibility
+ * Errors http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_ErrorResponseBody write
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_ManagingMediaEntities
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_ManagingStreamProperties
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_DataModification
+     * + do not allow post on <ComplexType Name="..." Abstract="true" />
+     * + https://learn.microsoft.com/en-us/aspnet/web-api/overview/odata-support-in-aspnet-web-api/odata-v4/odata-actions-and-functions
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_Actions
+     * https://learn.microsoft.com/en-us/aspnet/web-api/overview/odata-support-in-aspnet-web-api/odata-v4/odata-actions-and-functions
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_AsynchronousRequests
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_CommonResponseStatusCodes write
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_RequestingIndividualEntities what is readLink, editLink, Core.Permissions

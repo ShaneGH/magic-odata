@@ -1,0 +1,24 @@
+{
+  "name": "magic-odata-code-gen",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "fix-links": "npm link ../magic-odata-shared"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "node-fetch": "^3.3.0",
+    "xmldom": "^0.6.0",
+    "xpath": "^0.0.32"
+  },
+  "devDependencies": {
+    "typescript": "^4.9.4",
+    "@types/node": "^18.11.18",
+    "@types/xmldom": "^0.1.31"
+  }
+}
