@@ -1,5 +1,6 @@
 import { ComplexTypeOrEnum, ODataComplexTypeProperty, ODataEntitySetNamespaces, ODataEntitySets, ODataServiceConfig, ODataSingleTypeRef, ODataTypeRef } from "magic-odata-shared";
 import { Config } from "./config.js";
+import { typeNameString } from "./utils.js";
 
 // TODO: ignore primitive types? Auto ignore unused primitives?
 type IsWhiteListed = (type: { name: string, namespace: string }) => boolean
@@ -20,7 +21,7 @@ export function applyWhitelist(serviceConfig: ODataServiceConfig, settings: Conf
 
     const whitelisted = settings.codeGenSettings.entityWhitelist.entities
         .map(x => {
-            const ns = x.lastIndexOf(".");
+            const ns = x.lastIndexOf("/");
             return ns === -1
                 ? { name: x, namesapce: "" }
                 : { name: x.substring(ns + 1), namesapce: x.substring(0, ns) }
@@ -67,8 +68,8 @@ export function applyWhitelist(serviceConfig: ODataServiceConfig, settings: Conf
             if (!shouldWhitelistTypeRef(baseTypeRef, whitelist)) {
 
                 if (!settings.warningSettings?.suppressAll && !settings.warningSettings?.suppressIgnoredBaseType) {
-                    const t = `${type.type.namespace && `${type.type.namespace}.`}${type.type.name}`
-                    const tBase = `${type.type.baseType.namespace && `${type.type.baseType.namespace}.`}${type.type.baseType.name}`
+                    const t = typeNameString(type.type)
+                    const tBase = typeNameString(type.type.baseType)
                     console.warn(`Type ${t} is not ignored, however it's parent type ${tBase} is. Ignoring ${t}. ` +
                         "To supress this warning, set warningSettings.suppressIgnoredBaseType to false")
                 }
@@ -82,9 +83,9 @@ export function applyWhitelist(serviceConfig: ODataServiceConfig, settings: Conf
                 if (!shouldWhitelistTypeRef(type.type.properties[type.type.keyProps[i]].type, whitelist)) {
 
                     if (!settings.warningSettings?.suppressAll && !settings.warningSettings?.suppressIgnoredKeyType) {
-                        const t = `${type.type.namespace && `${type.type.namespace}.`}${type.type.name}`
+                        const t = typeNameString(type.type)
                         const k = unwrapTypeRef(type.type.properties[type.type.keyProps[i]].type)
-                        const tKey = `${k.namespace && `${k.namespace}.`}${k.name}`
+                        const tKey = typeNameString(k)
 
                         console.warn(`Type ${t} is not ignored, however (part of) it's key type ${tKey} is. Ignoring ${t}. ` +
                             "To supress this warning, set warningSettings.suppressIgnoredKeyType to false")

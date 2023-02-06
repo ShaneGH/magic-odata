@@ -1,4 +1,5 @@
 import { ODataComplexType, ODataTypeRef, ODataServiceTypes, ODataSingleTypeRef, ODataTypeName, ODataEnum, ODataServiceConfig } from "magic-odata-shared";
+import { typeNameString } from "./utils.js";
 
 type Dict<T> = { [key: string]: T }
 
@@ -154,8 +155,7 @@ function buildPropertyTypeRef<T>(type: ODataTypeRef, root: ODataServiceTypes, pa
 
     const tLookup = root[type.namespace || ""] && root[type.namespace || ""][type.name];
     if (!tLookup) {
-        const ns = type.namespace ? `${type.namespace}.` : "";
-        throw new Error(`Could not find type ${ns}${type.name}`);
+        throw new Error(`Could not find type ${typeNameString(type)}`);
     }
 
     if (tLookup.containerType === "Enum") {
@@ -187,13 +187,11 @@ function buildPropertyTypeRef<T>(type: ODataTypeRef, root: ODataServiceTypes, pa
         && root[complexType.baseType.namespace][complexType.baseType.name];
 
     if (complexType.baseType && !bLookup) {
-        const ns = complexType.baseType.namespace && `${complexType.baseType.namespace}.`
-        throw new Error(`Could not find base type ${ns}${complexType.baseType.name}`);
+        throw new Error(`Could not find base type ${typeNameString(complexType.baseType)}`);
     }
 
     if (bLookup && bLookup.containerType !== "ComplexType") {
-        const ns = bLookup.type.namespace && `${bLookup.type.namespace}.`
-        throw new Error(`Base type ${ns}${bLookup.type.name} is an enum. Expecting a complex type`);
+        throw new Error(`Base type ${typeNameString(bLookup.type)} is an enum. Expecting a complex type`);
     }
 
     // This is a bit hacky. 

@@ -1,5 +1,6 @@
 import { ODataComplexType, ODataTypeRef, ODataServiceConfig, ODataServiceTypes, ODataSingleTypeRef, ODataEnum } from "magic-odata-shared";
 import { CodeGenConfig } from "../config.js";
+import { typeNameString } from "../utils.js";
 import { Keywords } from "./keywords.js";
 import { buildFullyQualifiedTsType, buildGetCasterName, buildGetKeyBuilderName, buildGetKeyType, buildGetQueryableName, buildGetSubPathName, buildSanitizeNamespace, FullyQualifiedTsType, GetCasterName, GetKeyBuilderName, GetKeyType, GetQueryableName, GetSubPathName, httpClientType, Tab } from "./utils.js"
 
@@ -137,11 +138,11 @@ function buildGetSubPathProps(
         }
 
         if (info.type.objectType === ObjectType.PrimitiveType) {
-            return `QueryPrimitive<${info.type.primitiveType.namespace && `${info.type.primitiveType.namespace}.`}${info.type.primitiveType.name}>`
+            return `QueryPrimitive<${typeNameString(info.type.primitiveType, ".")}>`
         }
 
         if (info.type.objectType === ObjectType.EnumType) {
-            return `QueryEnum<${info.type.enumType.namespace && `${info.type.enumType.namespace}.`}${info.type.enumType.name}>`
+            return `QueryEnum<${typeNameString(info.type.enumType, ".")}>`
         }
 
         return fullyQualifiedTsType({
@@ -194,8 +195,7 @@ function buildGetSubPathProps(
 
         const type = allTypes[propertyType.namespace] && allTypes[propertyType.namespace][propertyType.name]
         if (!type) {
-            const ns = propertyType.namespace && `${propertyType.namespace}.`
-            throw new Error(`Could not find key for type ${ns}${propertyType.name}`);
+            throw new Error(`Could not find key for type ${typeNameString(propertyType)}`);
         }
 
         if (type.containerType === "ComplexType") {

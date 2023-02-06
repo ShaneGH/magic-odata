@@ -1,5 +1,6 @@
 import { ODataComplexType, ODataEnum, ComplexTypeOrEnum } from "magic-odata-shared";
 import { CodeGenConfig } from "../config.js";
+import { typeNameString } from "../utils.js";
 import { buildGetTypeString, buildSanitizeNamespace, Tab } from "./utils.js";
 
 export type EntityData = (type: ComplexTypeOrEnum) => string
@@ -56,7 +57,7 @@ ${tab(props)}
             throw new Error(`Invalid "enumType.default" setting: ${settings.enumType.default}`);
         }
 
-        const name = `${type.namespace && `${type.namespace}.`}${type.name}`;
+        const name = typeNameString(type)
         return settings.enumType.numberEnums && settings.enumType.numberEnums?.indexOf(name) !== -1
             ? v()
             : settings.enumType.stringEnums && settings.enumType.stringEnums?.indexOf(name) !== -1

@@ -1,5 +1,6 @@
 import { ODataComplexType, ODataTypeRef, ODataServiceConfig, ODataSingleTypeRef, ComplexTypeOrEnum } from "magic-odata-shared";
 import { AngularHttpResultType, AsyncType, CodeGenConfig } from "../config.js";
+import { typeNameString } from "../utils.js";
 import { Keywords } from "./keywords.js";
 
 export type Dict<T> = { [key: string]: T }
@@ -91,7 +92,7 @@ export const buildLookupComplexType = (serviceConfig: ODataServiceConfig): Looku
         const result = lt(t);
         if (!result || result.containerType === "ComplexType") return result?.type;
 
-        throw new Error(`${t.namespace && `${t.namespace}.`}${t.name} is not a complex type`);
+        throw new Error(`${typeNameString(t)} is not a complex type`);
     }
 }
 
@@ -154,8 +155,7 @@ export const buildGetKeyType = (settings: CodeGenConfig | null | undefined, serv
             if (t.baseType && lookupParent) {
                 const baseType = lookupComplexType({ isCollection: false, namespace: t.baseType.namespace, name: t.baseType.name })
                 if (!baseType) {
-                    const ns = t.baseType.namespace && `${t.baseType.namespace}.`
-                    throw new Error(`Could not find base type: ${ns}${t.baseType.name}`);
+                    throw new Error(`Could not find base type: ${typeNameString(t.baseType)}`);
                 }
 
                 return getKeyType(baseType, lookupParent)
@@ -167,8 +167,7 @@ export const buildGetKeyType = (settings: CodeGenConfig | null | undefined, serv
         const propTypes = t.keyProps.map(name => {
             const type = t.properties[name]?.type;
             if (!type) {
-                const ns = t.namespace ? `${t.namespace}.` : ""
-                throw new Error(`Could not find key property: ${name} of type ${ns}${t.name}`)
+                throw new Error(`Could not find key property: ${name} of type ${typeNameString(t)}`)
             }
 
             return { name, type };

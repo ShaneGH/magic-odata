@@ -41,7 +41,7 @@ function renameEntityContainers(serviceConfig: ODataServiceConfig, containerRena
         }
 
         if (printEntitySetName) {
-            console.log(`Renaming entity set: ${ns && `${ns}.`}${printEntitySetName} => ${crn[ns] && `${crn[ns]}.`}${printEntitySetName}`);
+            console.log(`Renaming entity set: ${ns && `${ns}/`}${printEntitySetName} => ${crn[ns] && `${crn[ns]}/`}${printEntitySetName}`);
         }
 
         return crn[ns] || "";
@@ -89,7 +89,7 @@ function renameEntities(serviceConfig: ODataServiceConfig, renames: { [key: stri
         }
 
         if (printEntitySetName) {
-            console.log(`Renaming entity: ${ns && `${ns}.`}${printEntitySetName} => ${rn[ns] && `${rn[ns]}.`}${printEntitySetName}`);
+            console.log(`Renaming entity: ${ns && `${ns}/`}${printEntitySetName} => ${rn[ns] && `${rn[ns]}/`}${printEntitySetName}`);
         }
 
         return rn[ns] || "";

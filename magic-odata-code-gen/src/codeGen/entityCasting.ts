@@ -41,7 +41,7 @@ function buildGetComplexCasterProps(
             ? (x: ODataComplexType) => x.name
             // TODO: test
             // TODO: this logic will be duplicated in the code gen project. Possible to merge?
-            : (x: ODataComplexType) => `${x.namespace}.${x.name}`.replace(/[^\w]/g, "_")
+            : (x: ODataComplexType) => `${x.namespace}/${x.name}`.replace(/[^\w]/g, "_")
 
         return complexInherits
             .map(t => {

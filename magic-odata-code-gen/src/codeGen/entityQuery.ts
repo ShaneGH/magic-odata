@@ -1,5 +1,6 @@
 import { ODataComplexType, ODataTypeRef, ODataServiceConfig, ODataEnum, ComplexTypeOrEnum } from "magic-odata-shared";
 import { CodeGenConfig } from "../config.js";
+import { typeNameString } from "../utils.js";
 import { Keywords } from "./keywords.js";
 import { buildFullyQualifiedTsType, buildGetQueryableName, buildSanitizeNamespace, FullyQualifiedTsType, GetQueryableName, Tab } from "./utils.js";
 
@@ -38,8 +39,7 @@ function getQueryableType(type: ODataTypeRef, keywords: Keywords,
     }
 
     if (!serviceConfig.types[type.namespace] || !serviceConfig.types[type.namespace][type.name]) {
-        const ns = type.namespace ? `${type.namespace}.` : "";
-        throw new Error(`Unknown type: ${ns}${type.name}`);
+        throw new Error(`Unknown type: ${typeNameString(type)}`);
     }
 
     const isEnum = serviceConfig.types[type.namespace][type.name].containerType === "Enum"
@@ -64,6 +64,7 @@ export const buildEntityQuery = (settings: CodeGenConfig | null | undefined, tab
 
     function complexType(type: ODataComplexType) {
         const qtName = getQueryableName(type.name)
+
         const baseTypeNs = type.baseType?.namespace ? `${sanitizeNamespace(type.baseType?.namespace)}.` : ""
         const baseQType = type.baseType ? `${baseTypeNs}${getQueryableName(type.baseType.name)} & ` : "";
 

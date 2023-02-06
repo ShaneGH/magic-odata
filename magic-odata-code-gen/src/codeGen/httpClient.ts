@@ -1,5 +1,6 @@
 import { ODataComplexType, ODataEntitySet, ODataServiceConfig } from "magic-odata-shared";
 import { CodeGenConfig, SupressWarnings } from "../config.js";
+import { typeNameString } from "../utils.js";
 import { Keywords } from "./keywords.js";
 import { buildFullyQualifiedTsType, buildGetCasterName, buildGetKeyBuilderName, buildGetKeyType, buildGetQueryableName, buildGetSubPathName, buildLookupComplexType, buildLookupType, buildSanitizeNamespace, httpClientType, Tab } from "./utils.js";
 
@@ -108,8 +109,7 @@ ${methods}
         const type = lookupComplexType(entitySet.forType);
         if (!type) {
             if (!warnings?.suppressAll && !warnings?.suppressUnableToFindTypeForEntitySet) {
-                const ns = entitySet.namespace && `${entitySet.namespace}.`
-                console.warn(`Could not find type for entity set: ${ns}${entitySet.name}. `
+                console.warn(`Could not find type for entity set: ${typeNameString(entitySet)}. `
                     // TODO: standardise "to suppress this warning text"
                     + "To supress this warning, set warningSettings.suppressUnableToFindTypeForEntitySet to false");
             }

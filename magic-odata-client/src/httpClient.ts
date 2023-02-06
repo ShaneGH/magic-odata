@@ -3,6 +3,7 @@ import { utils as queryUtils, Utils } from "./query/queryUtils.js";
 import { buildQuery, Query } from "./queryBuilder.js";
 import { ODataUriParts, RequestOptions, RequestTools, ResponseInterceptor, RootResponseInterceptor } from "./requestTools.js";
 import { buildComplexTypeRef, QueryComplexObject, QueryEnum, QueryObjectType, QueryPrimitive } from "./typeRefBuilder.js";
+import { typeNameString } from "./utils.js";
 import { serialize } from "./valueSerializer.js";
 
 
@@ -69,7 +70,7 @@ function lookup(
 
     const result = root[type.namespace] && root[type.namespace][type.name];
     if (!result) {
-        throw new Error(`Could not find type ${type.namespace && `${type.namespace}.`}${type.name}`)
+        throw new Error(`Could not find type ${type.namespace && `${type.namespace}/`}${type.name}`)
     }
 
     return result.containerType === "ComplexType"
@@ -83,7 +84,7 @@ function lookupComplex(
 
     const result = lookup(type, root);
     if (result.flag !== "Complex") {
-        throw new Error(`Could not find complex type ${type.namespace && `${type.namespace}.`}${type.name}`)
+        throw new Error(`Could not find complex type ${typeNameString(type)}`)
     }
 
     return result.type;
@@ -120,13 +121,11 @@ function tryFindBaseType(
 
     const result = root[type.baseType.namespace] && root[type.baseType.namespace][type.baseType.name]
     if (!result) {
-        const ns = type.namespace && `${type.namespace}.`
-        throw new Error(`Base type ${ns}${type.name} does not exist`);
+        throw new Error(`Base type ${typeNameString(type)} does not exist`);
     }
 
     if (result.containerType !== "ComplexType") {
-        const ns = type.namespace && `${type.namespace}.`
-        throw new Error(`Base type ${ns}${type.name} es an enum. Expected an entity or complex type`);
+        throw new Error(`Base type ${typeNameString(type)} es an enum. Expected an entity or complex type`);
     }
 
     return result.type
@@ -151,7 +150,7 @@ function findPropertyType(
 
     const result = tryFindPropertyType(type, propertyName, root);
     if (!result) {
-        throw new Error(`Could not find property ${propertyName} on type ${type.namespace && `${type.namespace}.`}${type.name}`);
+        throw new Error(`Could not find property ${propertyName} on type ${typeNameString(type)}`);
     }
 
     return result;
@@ -259,7 +258,10 @@ function keyExpr(keyTypes: KeyType[], key: any, keyEmbedType: WithKeyType, servi
             throw new Error(`Invalid WithKeyType: ${keyEmbedType}`);
         }
 
-        return result;
+        return {
+            ...result,
+            value: encodeURIComponent(result.value)
+        }
     }
 
     const kvp = keyTypes
@@ -284,7 +286,7 @@ function keyExpr(keyTypes: KeyType[], key: any, keyEmbedType: WithKeyType, servi
 
     return {
         appendToLatest: true,
-        value: `(${value})`
+        value: `(${encodeURIComponent(value)})`
     }
 }
 
@@ -374,9 +376,9 @@ export class EntityQuery<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSi
         }
 
         const newT = cast(this.buildCaster());
-        const { namespace, name } = getCastingTypeRef(newT.type);
+        const type = getCastingTypeRef(newT.type);
 
-        const fullyQualifiedName = namespace ? `${namespace}.${name}` : name;
+        const fullyQualifiedName = typeNameString(type, ".");
         const path = this.state.path?.length ? [...this.state.path, fullyQualifiedName] : [fullyQualifiedName];
 
         // TODO: Are these anys harmful, can they be removed?
@@ -615,7 +617,7 @@ export class EntityQuery<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSi
             // TODO: test
             // TODO: this logic will be duplicated in the code gen project. Possible to merge?
             // TODO: change "_" character in config file
-            : (x: ODataSingleTypeRef) => `${x.namespace}.${x.name}`.replace(/[^\w]/g, "_")
+            : (x: ODataSingleTypeRef) => `${x.namespace}/${x.name}`.replace(/[^\w]/g, "_")
 
         const reAddCollection = (t: ODataSingleTypeRef): ODataTypeRef => isCollection
             ? { isCollection: true, collectionType: t }

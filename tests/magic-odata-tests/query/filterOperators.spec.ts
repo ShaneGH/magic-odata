@@ -378,7 +378,7 @@ describe("Query.Filter Operators", function () {
             const ctxt = await addFullUserChain();
             const name = success
                 ? ctxt.blogUser.Name
-                : uniqueString("FilterByWord");
+                : uniqueString(`FilterByWord${success}`);
 
             const result = await client.Users
                 .withQuery((u, { filter: { eq, and, or } }) =>

@@ -234,7 +234,15 @@ export type CodeGenConfig = Partial<{
     | "Number"
     | {
         default: "String" | "Number",
+
+        /**
+         * Enums to represent as strings. The enum name should be in the form of "{{namespace}}/{{name}}"
+         */
         stringEnums?: string[],
+
+        /**
+         * Enums to represent as numbers. The enum name should be in the form of "{{namespace}}/{{name}}"
+         */
         numberEnums?: string[]
     }
 
@@ -269,16 +277,16 @@ export type CodeGenConfig = Partial<{
     /** 
      * Remove entities from the generate code which are not specified in the whitelist
      * ignore is applied before "rename"
-     * Values should be a concatenation of the namesapce and name, separated by a "."
+     * Values should be a concatenation of the namesapce and name, separated by a "/"
      * 
      * Default: use all entities
-     * 
-     * @example ["My/OData/Ns.MyType", "My/OData/Ns.MyType2"] - Generate a client for types "MyType" and "MyType2" in namespace "My/OData/Ns" only
      */
     entityWhitelist: Partial<{
 
         /** 
          * Defines rename strategies for entity namespaces.
+         * 
+         * @example ["My.OData.Ns/MyType", "My.OData.Ns/MyType2"] - Generate a client for types "MyType" and "MyType2" in namespace "My.OData.Ns" only
          */
         entities: string[]
     }>,

@@ -64,7 +64,7 @@ export function processServiceConfig(settings: CodeGenConfig | null | undefined,
                     .filter(x => s[namespaceName][x]);
 
                 if (overlap.length && !warnings?.suppressAll && !warnings?.suppressTypeNameOverlap) {
-                    const ns = namespaceName && `${namespaceName}.`
+                    const ns = namespaceName && `${namespaceName}/`
                     const msg = overlap.map(x => `${ns}${x}`).join(", ")
 
                     console.warn(`Found multiple typescript types with the same name: ${msg}. Some overlapped types will be missing from the generated client. `
