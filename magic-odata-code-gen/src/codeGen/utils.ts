@@ -226,7 +226,7 @@ export function angularResultType(settings: CodeGenConfig | null): string | null
 const httpClientGenericNames = ["TEntity", "TDataResult", "TKeyBuilder", "TQueryable", "TCaster", "TSingleCaster", "TSubPath", "TSingleSubPath", "TFetchResult"]
 const longest = httpClientGenericNames.map(x => x.length).reduce((s, x) => s > x ? s : x, -1);
 
-export function httpClientType(keywords: Keywords, generics: HttpClientGenerics, tab: Tab, settings: CodeGenConfig | null) {
+export function httpClientType(keywords: Keywords, generics: HttpClientGenerics, tab: Tab, settings: CodeGenConfig | null, asInterface = true) {
 
     const angularResult = angularResultType(settings);
 
@@ -251,7 +251,7 @@ export function httpClientType(keywords: Keywords, generics: HttpClientGenerics,
         .map(tab)
         .join(",\n");
 
-    return `${keywords.EntitySet}<\n${gs}>`
+    return `${asInterface ? keywords.IEntitySet : keywords.EntitySet}<\n${gs}>`
 
     function addType(name: string, i: number) {
         const gType = httpClientGenericNames[i] || ""

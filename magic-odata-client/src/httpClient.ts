@@ -299,15 +299,60 @@ export class HttpError extends Error {
     }
 }
 
+/**
+ * Path and query utils on an entity set or sub path
+ */
+export interface IEntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSingleCaster, TSubPath, TSingleSubPath, TFetchResult> {
+
+    /**
+     * Create a new EntitySet scoped to a single entity
+     */
+    withKey<TNewEntityQuery>(key: (builder: TKeyBuilder) => KeySelection<TNewEntityQuery>): TNewEntityQuery;
+
+    /**
+     * Create a new EntitySet of entites casted to the specified type
+     */
+    cast<TNewEntityQuery>(
+        cast: (caster: TCaster) => CastSelection<TNewEntityQuery>): TNewEntityQuery;
+
+    /**
+     * Create a new EntitySet of entites at the sub path defined
+     */
+    subPath<TNewEntityQuery>(
+        subPath: (caster: TSubPath) => SubPathSelection<TNewEntityQuery>): TNewEntityQuery;
+
+    // TODO: this allows the user to do illegal queries on singletons:
+    //  The query specified in the URI is not valid. The requested resource is not a collection. Query options $filter, $orderby, $count, $skip, and $top can be applied only on collections
+    /**
+     * Create a new EntitySet with the defined query attached
+     * 
+     * @param urlEncode Default true
+     */
+    withQuery(queryBuilder: (entity: TQueryable, utils: Utils) => Query | Query[], urlEncode?: boolean)
+        : IEntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSingleCaster, TSubPath, TSingleSubPath, TFetchResult>;
+
+    /**
+     * Execute a get request
+     * @param overrideRequestTools Override any request tools needed
+     */
+    get(overrideRequestTools?: Partial<RequestTools<TFetchResult, TResult>>): TResult;
+
+    /**
+     * Execute a get request, casting the result to something custom
+     * @param overrideRequestTools Override any request tools needed
+     */
+    get<TOverrideResultType>(overrideRequestTools?: Partial<RequestTools<TFetchResult, TOverrideResultType>>): TOverrideResultType;
+
+}
+
 // TODO: deconstruct into different functions/files
 // TODO: do not return instances from any methods. Return interfaces instead
-// TODO: method documentation
+export class EntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSingleCaster, TSubPath, TSingleSubPath, TFetchResult>
+    implements IEntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSingleCaster, TSubPath, TSingleSubPath, TFetchResult> {
+    // ^^NOTE^^: these generic type names are copy pasted into code gen project \src\codeGen\utils.ts
+    // ^^NOTE^^: make sure that they stay in sync
 
-// NOTE: these generic type names are copy pasted into code gen project \src\codeGen\utils.ts
-// NOTE: make sure that they stay in sync
-export class EntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSingleCaster, TSubPath, TSingleSubPath, TFetchResult> {
-
-    state: EntityQueryState
+    private state: EntityQueryState
 
     constructor(
         private requestTools: RequestTools<TFetchResult, TResult>,
@@ -421,7 +466,7 @@ export class EntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSing
 
     // TODO: this allows the user to do illegal queries on singletons:
     //  The query specified in the URI is not valid. The requested resource is not a collection. Query options $filter, $orderby, $count, $skip, and $top can be applied only on collections
-    withQuery(queryBuilder: (entity: TQueryable, utils: Utils) => Query | Query[], urlEncode = true) {
+    withQuery(queryBuilder: (entity: TQueryable, utils: Utils) => Query | Query[], urlEncode?: boolean) {
 
         if (this.state.query) {
             throw new Error("This request already has a query");
@@ -447,7 +492,7 @@ export class EntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSing
             this.type,
             this.entitySet,
             this.root,
-            { ...this.state, query: { query, urlEncode } });
+            { ...this.state, query: { query, urlEncode: urlEncode == undefined ? true : urlEncode } });
     }
 
     private executePrimitiveQueryBuilder(
@@ -506,18 +551,8 @@ export class EntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSing
         return queryBuilder(typeRef, queryUtils());
     }
 
-    /**
-     * Execute a get request
-     * @param overrideRequestTools Override any request tools needed
-     */
     get(overrideRequestTools?: Partial<RequestTools<TFetchResult, TResult>>): TResult;
-
-    /**
-     * Execute a get request, casting the result to something custom
-     * @param overrideRequestTools Override any request tools needed
-     */
     get<TOverrideResultType>(overrideRequestTools?: Partial<RequestTools<TFetchResult, TOverrideResultType>>): TOverrideResultType;
-
     get(overrideRequestTools?: Partial<RequestTools<TFetchResult, TResult>>): TResult {
         return this.fetch(this.path(), overrideRequestTools)
     }

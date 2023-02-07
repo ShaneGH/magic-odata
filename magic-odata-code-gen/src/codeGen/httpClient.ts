@@ -122,7 +122,8 @@ ${methods}
             : entitySetGenerics(entitySet, type);
 
         const ths = hasThisContext ? "this." : ""
-        const instanceType = httpClientType(keywords, generics, tab, settings || null);
+        const instanceType = httpClientType(keywords, generics, tab, settings || null, false);
+        const interfaceType = httpClientType(keywords, generics, tab, settings || null);
         const constructorArgs = [
             `${ths}${keywords._httpClientArgs}`,
             `${keywords.responseParser}`,
@@ -132,7 +133,7 @@ ${methods}
         ]
 
         return `get ${entitySet.name}() {
-${tab(`return new ${instanceType}(${constructorArgs.join(", ")});`)}
+${tab(`return new ${instanceType}(${constructorArgs.join(", ")}) as \n${tab(interfaceType)};`)}
 }`
     }
 

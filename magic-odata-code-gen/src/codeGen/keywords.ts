@@ -10,6 +10,7 @@ export type Keywords = {
     QueryComplexObject: string
     QueryEnum: string
     EntitySet: string
+    IEntitySet: string
     rootConfig: string
     rootConfigExporter: string
     ODataUriParts: string
@@ -81,6 +82,7 @@ export function generateKeywords(allNamespaces: string[], rootLevelTypes: string
         SubPathSelection: getKeyword("SubPathSelection"),
         CastSelection: getKeyword("CastSelection"),
         EntitySet: getKeyword("EntitySet"),
+        IEntitySet: getKeyword("IEntitySet"),
         rootConfig: getKeyword("rootConfig"),
         ODataUriParts: getKeyword("ODataUriParts"),
         ODataServiceConfig: getKeyword("ODataServiceConfig"),
@@ -136,6 +138,7 @@ ${tab(importWithAlias("ODataUriParts"))},
 ${tab(importWithAlias("QueryPrimitive"))},
 ${tab(importWithAlias("QueryArray"))},
 ${tab(importWithAlias("EntitySet"))},
+${tab(importWithAlias("IEntitySet"))},
 ${tab(importWithAlias("QueryComplexObject"))},
 ${tab(importWithAlias("ODataCollectionResult"))},
 ${tab(importWithAlias("ODataResult"))},
