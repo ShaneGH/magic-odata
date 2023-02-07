@@ -16,8 +16,9 @@
     "xpath": "^0.0.32"
   },
   "devDependencies": {
-    "typescript": "^4.9.4",
     "@types/node": "^18.11.18",
-    "@types/xmldom": "^0.1.31"
+    "@types/xmldom": "^0.1.31",
+    "babel-minify": "^0.5.2",
+    "typescript": "^4.9.4"
   }
 }
