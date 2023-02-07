@@ -1,10 +1,10 @@
 import { Filter } from "../../queryBuilder.js";
-import { QueryArray, QueryObject, QueryObjectType, QueryPrimitive } from "../../typeRefBuilder.js";
+import { QueryCollection, QueryObject, QueryObjectType, QueryPrimitive } from "../../typeRefBuilder.js";
 import { serialize } from "../../valueSerializer.js";
 import { combineFilterStrings, getFilterString, getOperableFilterString, getOperableTypeInfo, HasFilterMetadata } from "./operable0.js";
 import { IntegerTypes, NonNumericTypes, resolveOutputType } from "./queryPrimitiveTypes0.js";
 
-export type OperableCollection<T> = QueryArray<QueryObject<T>, T> | Filter
+export type OperableCollection<T> = QueryCollection<QueryObject<T>, T> | Filter
 
 const bool = resolveOutputType(NonNumericTypes.Boolean)
 
@@ -13,7 +13,7 @@ function collectionMapper<T>(mapper: ((x: T) => string) | undefined) {
 }
 
 export function collectionFilter<TQueryObj extends QueryObject<TArrayType>, TArrayType>(
-    collection: QueryArray<TQueryObj, TArrayType>,
+    collection: QueryCollection<TQueryObj, TArrayType>,
     operator: string,
     collectionItemOperation: ((t: TQueryObj) => Filter)): Filter {
 
@@ -49,20 +49,20 @@ export function collectionFunction<TArrayType>(
 }
 
 export function any<TQueryObj extends QueryObject<TArrayType>, TArrayType>(
-    collection: QueryArray<TQueryObj, TArrayType>,
+    collection: QueryCollection<TQueryObj, TArrayType>,
     collectionItemOperation: ((t: TQueryObj) => Filter)): Filter {
 
     return collectionFilter(collection, "any", collectionItemOperation);
 }
 
 export function all<TQueryObj extends QueryObject<TArrayType>, TArrayType>(
-    collection: QueryArray<TQueryObj, TArrayType>,
+    collection: QueryCollection<TQueryObj, TArrayType>,
     collectionItemOperation: ((t: TQueryObj) => Filter)): Filter {
 
     return collectionFilter(collection, "all", collectionItemOperation);
 }
 
-export function count(collection: QueryArray<any, any>, countUnit = IntegerTypes.Int32): QueryPrimitive<Number> {
+export function count(collection: QueryCollection<any, any>, countUnit = IntegerTypes.Int32): QueryPrimitive<Number> {
 
     return {
         $$oDataQueryObjectType: QueryObjectType.QueryPrimitive,
@@ -82,7 +82,7 @@ export function count(collection: QueryArray<any, any>, countUnit = IntegerTypes
 }
 
 export function hassubset<TArrayType>(
-    collection: QueryArray<QueryPrimitive<TArrayType>, TArrayType>,
+    collection: QueryCollection<QueryPrimitive<TArrayType>, TArrayType>,
     values: TArrayType[],
     mapper?: (x: TArrayType) => string): Filter {
 

@@ -53,7 +53,6 @@ export function ge<T>(lhs: Operable<T>, rhs: T | Operable<T>, mapper?: (x: T) =>
 
 export function not(condition: Filter, group = true): Filter {
 
-    // TODO: not on primitive value
     return {
         ...condition,
         $$filter: `not${group ? `(${condition.$$filter})` : ` ${condition.$$filter}`}`
@@ -62,7 +61,6 @@ export function not(condition: Filter, group = true): Filter {
 
 export function group(condition: Filter): Filter {
 
-    // TODO: not on primitive value
     return {
         ...condition,
         $$filter: `(${condition.$$filter})`

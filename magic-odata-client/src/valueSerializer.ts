@@ -1,4 +1,5 @@
 import { ODataEnum, ODataServiceTypes, ODataTypeRef } from "magic-odata-shared";
+import { typeRefString } from "./utils.js";
 
 export function enumMemberName(enumDef: ODataEnum, value: number): string {
     const name = Object
@@ -24,6 +25,9 @@ export function basicSerialize(value: any): string {
         : value.toString();
 }
 
+const warnedCollectionTypes = {} as { [k: string]: boolean }
+const warnedEnumTypes = {} as { [k: string]: boolean }
+
 export function serialize(value: any, type?: ODataTypeRef, serviceConfig?: ODataServiceTypes): string {
     if (value == null) {
         return "null"
@@ -35,9 +39,13 @@ export function serialize(value: any, type?: ODataTypeRef, serviceConfig?: OData
     }
 
     if (type?.isCollection) {
-        // TODO: disable warnings
-        console.warn(`Collection type found when serializing non collection for filter. `
-            + `Ignoring type info. This may lead to incorrect serializaton of values in filtering`, type);
+        const name = typeRefString(type)
+        if (!warnedCollectionTypes[name]) {
+            console.warn(`Collection type found when serializing non collection for filter. `
+                + `Ignoring type info. This may lead to incorrect serializaton of values in filtering`, type);
+        }
+
+        warnedCollectionTypes[name] = true
         type = undefined;
     }
 
@@ -46,7 +54,7 @@ export function serialize(value: any, type?: ODataTypeRef, serviceConfig?: OData
     }
 
     if (type.namespace === "Edm") {
-        // TODO: test each
+        // https://github.com/ShaneGH/magic-odata/issues/7
         switch (type.name) {
             case "String":
             case "Boolean":
@@ -70,9 +78,14 @@ export function serialize(value: any, type?: ODataTypeRef, serviceConfig?: OData
 
     const enumType = serviceConfig[type.namespace] && serviceConfig[type.namespace][type.name]
     if (enumType.containerType !== "Enum") {
-        // TODO: disable warnings
-        console.warn(`Complex type found when serializing value for filter. `
-            + `Ignoring type info. This may lead to incorrect serializaton of values in filtering`, type);
+
+        const name = typeRefString(type)
+        if (!warnedEnumTypes[name]) {
+            console.warn(`Complex type found when serializing value for filter. `
+                + `Ignoring type info. This may lead to incorrect serializaton of values in filtering`, type);
+        }
+
+        warnedEnumTypes[name] = true
         return basicSerialize(value);
     }
 
@@ -86,7 +99,7 @@ export function serialize(value: any, type?: ODataTypeRef, serviceConfig?: OData
 
     return basicSerialize(value);
 
-    /* TODO:
+    /* https://github.com/ShaneGH/magic-odata/issues/8
     ${tab(mapSimpleType("DateTime", "Date"))}
     ${tab(mapSimpleType("DateTimeOffset", "Date"))}
     

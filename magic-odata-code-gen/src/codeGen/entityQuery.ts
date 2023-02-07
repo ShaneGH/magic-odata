@@ -19,11 +19,11 @@ function getQueryableTypeString(
 function getQueryableType(type: ODataTypeRef, keywords: Keywords,
     serviceConfig: ODataServiceConfig, fullyQualifiedTsType: FullyQualifiedTsType, getQueryableName: GetQueryableName) {
     // TODO: namespacing of value from getTypeString?
-    // TODO: test for QueryArray<QueryArray<T>>
+    // TODO: test for QueryCollection<QueryCollection<T>>
     if (type.isCollection) {
         // TODO: type signature gets very long. Remove namespaces where possible
         return {
-            wrapper: keywords.QueryArray,
+            wrapper: keywords.QueryCollection,
             generics: [
                 getQueryableTypeString(type.collectionType, true, keywords, serviceConfig, fullyQualifiedTsType, getQueryableName),
                 getQueryableTypeString(type.collectionType, false, keywords, serviceConfig, fullyQualifiedTsType, getQueryableName)

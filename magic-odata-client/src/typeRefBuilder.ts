@@ -1,14 +1,13 @@
 import { ODataComplexType, ODataTypeRef, ODataServiceTypes, ODataSingleTypeRef, ODataTypeName, ODataEnum, ODataServiceConfig } from "magic-odata-shared";
-import { typeNameString } from "./utils.js";
+import { typeNameString, typeRefString } from "./utils.js";
 
 type Dict<T> = { [key: string]: T }
 
 export enum QueryObjectType {
     QueryObject = "QueryObject",
-    QueryArray = "QueryArray",  // TODO: rename collection
+    QueryCollection = "QueryCollection",
     QueryPrimitive = "QueryPrimitive",
     QueryEnum = "QueryEnum"
-    // TODO: add Filter
 }
 
 export type PathSegment = {
@@ -40,11 +39,10 @@ export type QueryEnum<T> = {
     $$oDataEnumType: ODataEnum
 }
 
-// TODO: rename to Collection
 // type def is recursive for this type: "TQueryObj extends QueryObject<...". Cannot be a "type"
-export interface QueryArray<TQueryObj extends QueryObject<TArrayType>, TArrayType> {
+export interface QueryCollection<TQueryObj extends QueryObject<TArrayType>, TArrayType> {
     $count: QueryPrimitive<number>
-    $$oDataQueryObjectType: QueryObjectType.QueryArray
+    $$oDataQueryObjectType: QueryObjectType.QueryCollection
     $$oDataQueryMetadata: QueryObjectMetadata
     childObjConfig: TQueryObj
     childObjAlias: string
@@ -61,7 +59,7 @@ export type HasODataQueryMetadata = {
 
 export type QueryComplexObject<T> = T & QueryComplexObjectBase
 
-export type QueryObject<T> = QueryPrimitive<T> | QueryArray<QueryObject<T>, T> | QueryComplexObject<T> | QueryEnum<T>
+export type QueryObject<T> = QueryPrimitive<T> | QueryCollection<QueryObject<T>, T> | QueryComplexObject<T> | QueryEnum<T>
 
 function buildAlias(forName: string) {
 
@@ -69,7 +67,7 @@ function buildAlias(forName: string) {
 
     // create acronym from camelCase, PascalCase and 
     // snake_case or a combination of all 3
-    const rx = /(^[a-zA-Z])|([A-Z])|((?<=_)[a-z])/g;    // TODO: test
+    const rx = /(^[a-zA-Z])|([A-Z])|((?<=_)[a-z])/g;
     let result: RegExpExecArray | null;
     while (parts.length < 5 && (result = rx.exec(forName || ""))) {
         parts.push(result[0]);
@@ -133,14 +131,13 @@ function buildPropertyTypeRef<T>(type: ODataTypeRef, root: ODataServiceTypes, pa
 
         return {
             $count: buildArrayCount($$oDataQueryMetadata),
-            $$oDataQueryObjectType: QueryObjectType.QueryArray,
+            $$oDataQueryObjectType: QueryObjectType.QueryCollection,
             $$oDataQueryMetadata,
             childObjConfig: buildPropertyTypeRef<T>(type.collectionType, root, [newRootPath], newAliases.aliases),
             childObjAlias: newAliases.newAlias
         };
     }
 
-    // TODO: custom primitive type (e.g. My.Namespace.EmployeeId = typeof(string))
     if (type.namespace === "Edm") {
         return {
             $$oDataQueryObjectType: QueryObjectType.QueryPrimitive,
@@ -243,7 +240,7 @@ export function buildComplexTypeRef<T>(type: ODataComplexType, root: ODataServic
     }, root, [], {});
 
     if (typeRef.$$oDataQueryObjectType !== QueryObjectType.QueryObject) {
-        throw new Error("TODO: try to simulate this error");
+        throw new Error(`Type ref is not a complex object: ${typeRef.$$oDataQueryObjectType}, ${typeRefString(typeRef.$$oDataQueryMetadata.typeRef)}`);
     }
 
     return typeRef;
@@ -262,7 +259,7 @@ export function reContext<T>(obj: QueryComplexObject<T>): QueryComplexObject<T> 
     }, obj.$$oDataQueryMetadata.root, [], obj.$$oDataQueryMetadata.queryAliases);
 
     if (typeRef.$$oDataQueryObjectType !== QueryObjectType.QueryObject) {
-        throw new Error("TODO: try to simulate this error");
+        throw new Error(`Type ref is not a complex object: ${typeRef.$$oDataQueryObjectType}, ${typeRefString(typeRef.$$oDataQueryMetadata.typeRef)}`);
     }
 
     return typeRef;

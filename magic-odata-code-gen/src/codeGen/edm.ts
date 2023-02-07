@@ -1,7 +1,7 @@
 import { Tab } from "./utils.js";
 
 
-/* TODO:
+/* https://github.com/ShaneGH/magic-odata/issues/8
 <xs:enumeration value="Edm.Byte"/>
 <xs:enumeration value="Edm.Binary"/>
 <xs:enumeration value="Edm.Duration"/>

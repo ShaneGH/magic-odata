@@ -11,7 +11,6 @@ export type Config = {
      */
     inputFileLocation: Partial<{
         fromFile: string,
-        // TODO: auth???
         fromUri: string,
         fromString: string
     }>,
@@ -153,8 +152,6 @@ export type AngularConfig = {
     httpResultType: AngularHttpResultType
 }
 
-// TODO: settings from cmd
-// TODO: test all
 export type CodeGenConfig = Partial<{
 
     /** 
@@ -168,14 +165,6 @@ export type CodeGenConfig = Partial<{
      * @default false
      */
     exportTypeDefinitionJsObject: boolean,
-
-    /** 
-     * Specifies how to name query builder classes. Use "{0}" to inject the name of the type
-     * that this query builder is for
-     * @default "{0}QueryBuilder"
-     */
-    // TODO: are query builders still classes? Have they been changed to functions?
-    queryBuilderClassNameTemplate: string,
 
     /** 
      * Specifies how to name queryable types. Use "{0}" to inject the name of the type
@@ -271,7 +260,6 @@ export type CodeGenConfig = Partial<{
         queryTypes: TypeCaseSettings
     }>
 
-    // TODO: test older versions of angular
     /** 
      * If true, will generate http clients with an angular HttpClient as input
      * If true, will use a default value for the finer config details. See AngularConfig for finer options details 

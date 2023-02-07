@@ -63,10 +63,10 @@ export {
     QueryObjectType,
     QueryPrimitive,
     QueryEnum,
-    QueryArray,
+    QueryCollection,
     QueryComplexObject,
     QueryObject,
-    buildComplexTypeRef // TODO1: do not expose. Expose a query builder instead
+    buildComplexTypeRef // https://github.com/ShaneGH/magic-odata/issues/6
 } from "./src/typeRefBuilder.js"
 
 /*

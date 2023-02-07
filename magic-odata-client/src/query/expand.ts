@@ -1,5 +1,5 @@
 import { Expand, OrderBy, Paging, Query, Select } from "../queryBuilder.js"
-import { PathSegment, QueryArray, QueryComplexObject, QueryObjectType, reContext } from "../typeRefBuilder.js"
+import { PathSegment, QueryCollection, QueryComplexObject, QueryObjectType, reContext } from "../typeRefBuilder.js"
 
 export type ExpandUtils = {
 
@@ -23,7 +23,7 @@ export type ExpandUtils = {
      * @example expand(my.user.blogPosts)
      * @example expand(my.user.blogPosts, p => gt(p.likes, 10), p => select(p.title), _ => "$count")
      */
-    expand<T>(obj: QueryComplexObject<T> | QueryArray<QueryComplexObject<T>, T>, ...and: ((x: QueryComplexObject<T>) => Query)[]): Expand;
+    expand<T>(obj: QueryComplexObject<T> | QueryCollection<QueryComplexObject<T>, T>, ...and: ((x: QueryComplexObject<T>) => Query)[]): Expand;
 
     /**
      * Combine multiple expanded properties
@@ -55,7 +55,7 @@ function expandAll($ref?: boolean): Expand {
     }
 }
 
-function expand<T>(obj: QueryComplexObject<T> | QueryArray<QueryComplexObject<T>, T>, ...and: ((x: QueryComplexObject<T>) => Query)[]): Expand {
+function expand<T>(obj: QueryComplexObject<T> | QueryCollection<QueryComplexObject<T>, T>, ...and: ((x: QueryComplexObject<T>) => Query)[]): Expand {
 
     const $$expand = _expand(obj.$$oDataQueryMetadata.path);
     if (!$$expand) {
@@ -69,7 +69,7 @@ function expand<T>(obj: QueryComplexObject<T> | QueryArray<QueryComplexObject<T>
         }
     }
 
-    const reContexted = obj.$$oDataQueryObjectType === QueryObjectType.QueryArray
+    const reContexted = obj.$$oDataQueryObjectType === QueryObjectType.QueryCollection
         ? reContext(obj.childObjConfig)
         : reContext(obj);
 

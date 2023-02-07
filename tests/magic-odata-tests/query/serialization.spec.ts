@@ -51,6 +51,8 @@ describe("Query.Select", function () {
     afterAll(() => {
         const expected = [
             "Edm.String",
+            // https://github.com/ShaneGH/magic-odata/issues/7
+            // https://github.com/ShaneGH/magic-odata/issues/8
             // "Edm.Guid",
             // "Edm.Boolean",
             // "Edm.DateTime",

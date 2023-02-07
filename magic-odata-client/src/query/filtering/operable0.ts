@@ -5,10 +5,9 @@ import { serialize } from "../../valueSerializer.js";
 
 export type Operable<T> = QueryPrimitive<T> | QueryEnum<T> | Filter
 
-// TODO: this type is a bit of a hack. Make a more cohesive type system
 export type HasFilterMetadata = Filter
     | {
-        $$oDataQueryObjectType: QueryObjectType.QueryArray
+        $$oDataQueryObjectType: QueryObjectType.QueryCollection
         $$oDataQueryMetadata: QueryObjectMetadata
     }
     | {

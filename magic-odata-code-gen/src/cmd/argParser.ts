@@ -42,7 +42,7 @@ function parseArg(state: ParseArgState | null, arg: string): ParseArgState | nul
     }
 
     if (!state.currentFlag) {
-        return null;
+        return state;
     }
 
     return {

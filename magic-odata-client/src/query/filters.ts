@@ -1,4 +1,4 @@
-import { QueryArray, QueryObject, QueryPrimitive } from "../typeRefBuilder.js";
+import { QueryCollection, QueryObject, QueryPrimitive } from "../typeRefBuilder.js";
 import { add, ceiling, div, divby, floor, mod, mul, round, sub } from "./filtering/arithmetic2.js";
 import { all, any, collectionFilter, collectionFunction, count, hassubset, OperableCollection } from "./filtering/collection1.js";
 import {
@@ -10,11 +10,6 @@ import { FilterablePaths, FilterableProps, filterRaw } from "./filtering/op1.js"
 import { Operable } from "./filtering/operable0.js";
 import { IntegerTypes, OutputTypes, RealNumberTypes } from "./filtering/queryPrimitiveTypes0.js";
 import { Filter } from "../queryBuilder.js";
-
-// TODO: remove mappers from functions which will not use them. e.g.
-//      eq<T>(lhs: Operable<T>, rhs: T | Operable<T>, mapper?: (x: T) => string): Filter;
-//      => eq<T>(lhs: Operable<T>, rhs: Operable<T>): Filter;
-//      => eq<T>(lhs: Operable<T>, rhs: T, mapper?: (x: T) => string): Filter;
 
 export type FilterUtils = {
     /**
@@ -210,7 +205,7 @@ export type FilterUtils = {
      * @example collectionFilter(my.items, "any", item => eq(item, 4))
      */
     collectionFilter<TQueryObj extends QueryObject<TArrayType>, TArrayType>(
-        collection: QueryArray<TQueryObj, TArrayType>,
+        collection: QueryCollection<TQueryObj, TArrayType>,
         operator: string,
         collectionItemOperation: ((t: TQueryObj) => Filter)): Filter;
 
@@ -243,7 +238,7 @@ export type FilterUtils = {
      * @example any(my.items, item => eq(item, 4))
      */
     any<TQueryObj extends QueryObject<TArrayType>, TArrayType>(
-        collection: QueryArray<TQueryObj, TArrayType>,
+        collection: QueryCollection<TQueryObj, TArrayType>,
         collectionItemOperation: ((t: TQueryObj) => Filter)): Filter;
 
     /**
@@ -256,7 +251,7 @@ export type FilterUtils = {
      * @example all(my.items, item => eq(item, 4))
      */
     all<TQueryObj extends QueryObject<TArrayType>, TArrayType>(
-        collection: QueryArray<TQueryObj, TArrayType>,
+        collection: QueryCollection<TQueryObj, TArrayType>,
         collectionItemOperation: ((t: TQueryObj) => Filter)): Filter;
 
     /**
@@ -268,7 +263,7 @@ export type FilterUtils = {
      * 
      * @example count(my.items)
      */
-    count(collection: QueryArray<any, any>, countUnit?: IntegerTypes): QueryPrimitive<Number>;
+    count(collection: QueryCollection<any, any>, countUnit?: IntegerTypes): QueryPrimitive<Number>;
 
     /**
      * Call the "hassubset" function on a collection
@@ -282,7 +277,7 @@ export type FilterUtils = {
      * @example hassubset(my.items, [1, 2, 3])
      */
     hassubset<TArrayType>(
-        collection: QueryArray<QueryPrimitive<TArrayType>, TArrayType>,
+        collection: QueryCollection<QueryPrimitive<TArrayType>, TArrayType>,
         values: TArrayType[],
         mapper?: (x: TArrayType) => string): Filter;
 
@@ -529,7 +524,7 @@ export type FilterUtils = {
      */
     round(lhs: Operable<number>, result?: IntegerTypes | undefined): Filter;
 
-    // TODO: need server test to verify this functionality. (query string test is passing) 
+    // https://github.com/ShaneGH/magic-odata/issues/9
     // /**
     //  * An OData "concat" operation
     //  *

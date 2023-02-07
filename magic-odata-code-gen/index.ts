@@ -18,7 +18,5 @@ export {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// TODO: default config file name
-// TODO: verify the magic-odata-client version is the same as this version
-// TODO: process.argv.slice(2) might be incorrect. e.g. node --experimental-vm-modules index.js --config my-config.js
-executeCodeGen(process.argv.slice(2));
+// https://github.com/ShaneGH/magic-odata/issues/11
+executeCodeGen(process.argv.slice(0));
