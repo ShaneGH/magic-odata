@@ -53,9 +53,16 @@ export function generateCode(odataConfig: XmlLocation, settings: Config): Promis
 
 export function generateTypescriptFile(args: CommandLineArgs): Promise<void> {
 
-    const configFile = args.type === "ConfigFile"
+    let configFile = args.type === "ConfigFile"
         ? loadConfigFile(args.configFile)
         : new Promise<Config>(res => res({ inputFileLocation: { fromUri: args.metadataUrl }, outputFileLocation: "./odataClient.ts" }))
+
+    configFile = configFile
+        .then(c => ({
+            ...c,
+            ciMode: args.ciMode == undefined ? c.ciMode : args.ciMode,
+            httpHeaders: args.httpHeaders == undefined ? c.httpHeaders : args.httpHeaders
+        }))
 
     return configFile
         .then(config => generateCode(getXmlLocation(config), config)

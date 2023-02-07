@@ -17,6 +17,21 @@ export type Config = {
     }>,
 
     /**
+     * If set to true, will disable all command line prompts
+     * Can also be overridden with the --ciMode command line arg
+     * 
+     * @default false
+     */
+    ciMode?: boolean,
+
+    /**
+     * If set, and the $metadata file is retrieved from a URL, will add these headers
+     * To the http request. 
+     * Can also be overridden with the --httpHeaders command line arg
+     */
+    httpHeaders?: [string, string][]
+
+    /**
      * If set to true, will print the value of the odata $metadata used on screen
      */
     printOData$metadata?: boolean,

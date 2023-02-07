@@ -56,6 +56,7 @@ Write safe, statically typed odata queries in typescript. No more `string`. No m
 ## Features
 
  * Code gen configuration
+    * $metadata files protected with authentication
     * Angular mode
  * Client configuration
  * Entity keys
