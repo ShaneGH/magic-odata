@@ -31,7 +31,7 @@ export {
 export {
     ODataCollectionResult,
     ODataResult,
-    EntityQuery,
+    EntitySet,
     CastSelection,
     KeySelection,
     WithKeyType,

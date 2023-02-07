@@ -301,12 +301,11 @@ export class HttpError extends Error {
 
 // TODO: deconstruct into different functions/files
 // TODO: do not return instances from any methods. Return interfaces instead
-// TODO: not a great name: EntityQuery
 // TODO: method documentation
 
 // NOTE: these generic type names are copy pasted into code gen project \src\codeGen\utils.ts
 // NOTE: make sure that they stay in sync
-export class EntityQuery<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSingleCaster, TSubPath, TSingleSubPath, TFetchResult> {
+export class EntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSingleCaster, TSubPath, TSingleSubPath, TFetchResult> {
 
     state: EntityQueryState
 
@@ -358,7 +357,7 @@ export class EntityQuery<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSi
                 keyPath.value
             ]
 
-        return new EntityQuery<any, any, any, any, any, any, any, any, any>(
+        return new EntitySet<any, any, any, any, any, any, any, any, any>(
             this.requestTools,
             this.defaultResponseInterceptor,
             this.type.collectionType,
@@ -381,7 +380,7 @@ export class EntityQuery<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSi
         const path = this.state.path?.length ? [...this.state.path, fullyQualifiedName] : [fullyQualifiedName];
 
         // TODO: Are these anys harmful, can they be removed?
-        return new EntityQuery<any, any, any, any, any, any, any, any, any>(
+        return new EntitySet<any, any, any, any, any, any, any, any, any>(
             this.requestTools,
             this.defaultResponseInterceptor,
             newT.type,
@@ -411,7 +410,7 @@ export class EntityQuery<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSi
         const path = this.state.path?.length ? [...this.state.path, newT.propertyName] : [newT.propertyName];
 
         // TODO: Are these anys harmful, can they be removed?
-        return new EntityQuery<any, any, any, any, any, any, any, any, any>(
+        return new EntitySet<any, any, any, any, any, any, any, any, any>(
             this.requestTools,
             this.defaultResponseInterceptor,
             prop,
@@ -442,7 +441,7 @@ export class EntityQuery<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSi
                 ? this.executePrimitiveQueryBuilder(t.type, queryBuilder as any)
                 : this.executeEnumQueryBuilder(t.type, queryBuilder as any);
 
-        return new EntityQuery<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSingleCaster, TSubPath, TSingleSubPath, TFetchResult>(
+        return new EntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSingleCaster, TSubPath, TSingleSubPath, TFetchResult>(
             this.requestTools,
             this.defaultResponseInterceptor,
             this.type,

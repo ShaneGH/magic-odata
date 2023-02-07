@@ -251,7 +251,7 @@ export function httpClientType(keywords: Keywords, generics: HttpClientGenerics,
         .map(tab)
         .join(",\n");
 
-    return `${keywords.EntityQuery}<\n${gs}>`
+    return `${keywords.EntitySet}<\n${gs}>`
 
     function addType(name: string, i: number) {
         const gType = httpClientGenericNames[i] || ""
