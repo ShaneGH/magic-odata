@@ -6,6 +6,7 @@ import { applyWhitelist } from "./whitelist.js";
 import { loadConfig, LocationType, XmlLocation } from "./odataConfigLoader.js";
 import { processConfig } from "./odataConfigProcessor.js";
 import { applyRenames } from "./rename.js";
+import { CommandLineArgs } from "./cmd/argParser.js";
 
 async function persist(code: string, file: string) {
     console.log(`Saving: ${file}`);
@@ -50,9 +51,13 @@ export function generateCode(odataConfig: XmlLocation, settings: Config): Promis
         .then(x => codeGen(x, settings.codeGenSettings, settings.warningSettings));
 }
 
-export function generateTypescriptFile(configLocation: string): Promise<void> {
+export function generateTypescriptFile(args: CommandLineArgs): Promise<void> {
 
-    return loadConfigFile(configLocation)
+    const configFile = args.type === "ConfigFile"
+        ? loadConfigFile(args.configFile)
+        : new Promise<Config>(res => res({ inputFileLocation: { fromUri: args.metadataUrl }, outputFileLocation: "./odataClient.ts" }))
+
+    return configFile
         .then(config => generateCode(getXmlLocation(config), config)
             .then(code => persist(code, outputFile(config))));
 
@@ -61,7 +66,9 @@ export function generateTypescriptFile(configLocation: string): Promise<void> {
             throw new Error("outputFileLocation is not defined in config");
         }
 
-        return path.join(path.dirname(configLocation), config.outputFileLocation)
+        return args.type === "ConfigFile"
+            ? path.join(path.dirname(args.configFile), config.outputFileLocation)
+            : config.outputFileLocation
     }
 
     function getXmlLocation(config: Config): XmlLocation {
