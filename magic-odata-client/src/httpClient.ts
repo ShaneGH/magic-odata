@@ -321,8 +321,6 @@ export interface IEntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, 
     subPath<TNewEntityQuery>(
         subPath: (caster: TSubPath) => SubPathSelection<TNewEntityQuery>): TNewEntityQuery;
 
-    // TODO: this allows the user to do illegal queries on singletons:
-    //  The query specified in the URI is not valid. The requested resource is not a collection. Query options $filter, $orderby, $count, $skip, and $top can be applied only on collections
     /**
      * Create a new EntitySet with the defined query attached
      * 
@@ -424,7 +422,6 @@ export class EntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSing
         const fullyQualifiedName = typeNameString(type, ".");
         const path = this.state.path?.length ? [...this.state.path, fullyQualifiedName] : [fullyQualifiedName];
 
-        // TODO: Are these anys harmful, can they be removed?
         return new EntitySet<any, any, any, any, any, any, any, any, any>(
             this.requestTools,
             this.defaultResponseInterceptor,
@@ -454,7 +451,6 @@ export class EntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSing
 
         const path = this.state.path?.length ? [...this.state.path, newT.propertyName] : [newT.propertyName];
 
-        // TODO: Are these anys harmful, can they be removed?
         return new EntitySet<any, any, any, any, any, any, any, any, any>(
             this.requestTools,
             this.defaultResponseInterceptor,
@@ -464,8 +460,7 @@ export class EntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSing
             { ...this.state, path }) as TNewEntityQuery;
     }
 
-    // TODO: this allows the user to do illegal queries on singletons:
-    //  The query specified in the URI is not valid. The requested resource is not a collection. Query options $filter, $orderby, $count, $skip, and $top can be applied only on collections
+    // https://github.com/ShaneGH/magic-odata/issues/2
     withQuery(queryBuilder: (entity: TQueryable, utils: Utils) => Query | Query[], urlEncode?: boolean) {
 
         if (this.state.query) {
@@ -659,20 +654,17 @@ export class EntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSing
         return inherits
             .reduce((s, type) => ({
                 ...s,
-                // TODO: any
-                [getName(type)]: function (): CastSelection<any> {
+                [getName(type)]: (): CastSelection<any> => {
                     return {
                         type: reAddCollection(type)
                     }
                 }
-                // TODO: any
             }), {} as any);
     }
 
     private buildSubPath(type: ODataTypeName): TSubPath {
 
         return listAllProperties(lookupComplex(type, this.root.types), this.root.types, true)
-            // TODO: any
             .reduce((s, x) => ({ ...s, [x]: { propertyName: x } }), {} as any);
     }
 }
