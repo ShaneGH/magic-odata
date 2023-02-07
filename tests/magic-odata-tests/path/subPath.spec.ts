@@ -49,6 +49,23 @@ function recordingFetcher(recorder: string[]) {
     }
 }
 
+describe("Singleton", function () {
+
+    it("Should filter (success)", execute.bind(null, true));
+    it("Should filter (failure)", execute.bind(null, false))
+
+    async function execute(success: boolean) {
+
+        const word = success
+            ? "Blog"
+            : "Invalid";
+
+        const result = await client.AppDetails.get();
+
+        expect(result.Id).toBe(1)
+    }
+});
+
 describe("SubPath", function () {
 
     describe("Singleton", () => {

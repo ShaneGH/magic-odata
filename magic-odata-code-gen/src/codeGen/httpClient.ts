@@ -152,7 +152,7 @@ ${tab(`return new ${instanceType}(${constructorArgs.join(", ")});`)}
             tSubPath: keywords.CollectionsCannotBeTraversed,
             tSingleSubPath: `${subPathType}`,
             tResult: {
-                annotated: true,
+                collection: true,
                 resultType: `${resultType}[]`
             }
         }
@@ -173,7 +173,7 @@ ${tab(`return new ${instanceType}(${constructorArgs.join(", ")});`)}
             tSubPath: subPathType,
             tSingleSubPath: subPathType,
             tResult: {
-                annotated: true,
+                collection: false,
                 resultType: resultType
             }
         }

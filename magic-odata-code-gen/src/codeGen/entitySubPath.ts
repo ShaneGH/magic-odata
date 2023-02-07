@@ -66,7 +66,7 @@ function buildGetSubPathProps(
                     tSubPath: entityInfo.collectionDepth ? keywords.CollectionsCannotBeTraversed : getTSubPath(entityInfo, false),
                     tSingleSubPath: entityInfo.collectionDepth ? getTSubPath(entityInfo, true) : keywords.CollectionsCannotBeTraversed,
                     tResult: {
-                        annotated: entityInfo.type.objectType !== ObjectType.ComplexType || !!entityInfo.collectionDepth,
+                        collection: entityInfo.type.objectType !== ObjectType.ComplexType || !!entityInfo.collectionDepth,
                         resultType: tEntity + (entityInfo.collectionDepth ? "[]" : "")
                     }
                 }

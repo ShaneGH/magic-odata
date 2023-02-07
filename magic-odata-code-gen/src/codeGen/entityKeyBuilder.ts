@@ -39,7 +39,7 @@ ${tab(`key(key: ${getKeyType(type, true)}, keyType?: ${keywords.WithKeyType}): $
             tSubPath: subProps,
             tSingleSubPath: subProps,
             tResult: {
-                annotated: false,
+                collection: false,
                 resultType: resultType
             }
         }

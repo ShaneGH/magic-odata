@@ -205,7 +205,7 @@ export type HttpClientGenerics = {
     tSingleSubPath: string,
     tResult: {
         resultType: string,
-        annotated: boolean
+        collection: boolean
     }
 }
 
@@ -236,8 +236,8 @@ export function httpClientType(keywords: Keywords, generics: HttpClientGenerics,
 
     const gs = [
         generics.tEntity,
-        generics.tResult.annotated
-            ? `${async}<${keywords.ODataAnnotatedResult}<${generics.tResult.resultType}>>`
+        generics.tResult.collection
+            ? `${async}<${keywords.ODataCollectionResult}<${generics.tResult.resultType}>>`
             : `${async}<${keywords.ODataResult}<${generics.tResult.resultType}>>`,
         generics.tKeyBuilder,
         generics.tQueryable,

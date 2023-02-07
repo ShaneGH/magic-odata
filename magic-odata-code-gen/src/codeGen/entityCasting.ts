@@ -26,7 +26,7 @@ function buildGetComplexCasterProps(
             .map(x => x!))
         .reduce((s, x) => [...s, ...x], [])
 
-    return (type: ODataComplexType, annotatedResult: boolean, singleCasterType: boolean) => {
+    return (type: ODataComplexType, collectionResult: boolean, singleCasterType: boolean) => {
 
         const casterType = singleCasterType ? "Single" : "Collection"
         const complexInherits = allComplexTypeFlatList
@@ -60,7 +60,7 @@ function buildGetComplexCasterProps(
                     tSubPath: singleCasterType ? `${subProps}` : keywords.CollectionsCannotBeTraversed,
                     tSingleSubPath: singleCasterType ? keywords.CollectionsCannotBeTraversed : `${subProps}`,
                     tResult: {
-                        annotated: annotatedResult,
+                        collection: collectionResult,
                         resultType: resultType + (singleCasterType ? "" : "[]")
                     }
                 }

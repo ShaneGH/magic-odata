@@ -21,7 +21,7 @@ export type Keywords = {
     ODataTypeRef: string
     _httpClientArgs: string,    // TODO: keyword should be against collection namespaces
     WithKeyType: string
-    ODataAnnotatedResult: string
+    ODataCollectionResult: string
     ODataResult: string
     Internal: string
     SingleItemsCannotBeQueriedByKey: string
@@ -84,7 +84,7 @@ export function generateKeywords(allNamespaces: string[], rootLevelTypes: string
         rootConfig: getKeyword("rootConfig"),
         ODataUriParts: getKeyword("ODataUriParts"),
         ODataServiceConfig: getKeyword("ODataServiceConfig"),
-        ODataAnnotatedResult: getKeyword("ODataAnnotatedResult"),
+        ODataCollectionResult: getKeyword("ODataCollectionResult"),
         ODataResult: getKeyword("ODataResult"),
         _httpClientArgs: getKeyword("_httpClientArgs"),
         SingleItemsCannotBeQueriedByKey: getKeyword("SingleItemsCannotBeQueriedByKey"),
@@ -137,7 +137,7 @@ ${tab(importWithAlias("QueryPrimitive"))},
 ${tab(importWithAlias("QueryArray"))},
 ${tab(importWithAlias("EntityQuery"))},
 ${tab(importWithAlias("QueryComplexObject"))},
-${tab(importWithAlias("ODataAnnotatedResult"))},
+${tab(importWithAlias("ODataCollectionResult"))},
 ${tab(importWithAlias("ODataResult"))},
 ${tab(importWithAlias("SingleItemsCannotBeQueriedByKey"))},
 ${tab(importWithAlias("ThisItemDoesNotHaveAKey"))},

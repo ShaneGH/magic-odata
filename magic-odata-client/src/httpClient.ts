@@ -12,8 +12,7 @@ export type ODataResultMetadata = Partial<{
     "@odata.context": string
 }>
 
-// TODO: rename ODataCollectionResult
-export type ODataAnnotatedResult<T> = ODataResultMetadata & {
+export type ODataCollectionResult<T> = ODataResultMetadata & {
 
     value: T
 }

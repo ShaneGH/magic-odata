@@ -29,7 +29,7 @@ export {
 } from "./src/queryBuilder.js"
 
 export {
-    ODataAnnotatedResult,
+    ODataCollectionResult,
     ODataResult,
     EntityQuery,
     CastSelection,
@@ -53,7 +53,7 @@ export {
     QueryArray,
     QueryComplexObject,
     QueryObject,
-    buildComplexTypeRef // TODO: do not expose. Expose a query builder instead
+    buildComplexTypeRef // TODO1: do not expose. Expose a query builder instead
 } from "./src/typeRefBuilder.js"
 
 /*

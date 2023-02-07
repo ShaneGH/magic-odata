@@ -7,7 +7,7 @@ import { ODataClient as FetchClient } from 'src/clients/generatedCode-fetch';
 import { ODataClient as ArrayBuferClient } from 'src/clients/generatedCode-angular-arraybuffer';
 import { ODataClient, User } from 'src/clients/generatedCode-angular-blob';
 import { AppComponent } from './app.component';
-import { ODataAnnotatedResult } from 'magic-odata-client';
+import { ODataCollectionResult } from 'magic-odata-client';
 
 describe('Angular client with Blob output', () => {
   beforeEach(async () => {
@@ -52,7 +52,7 @@ describe('Angular client with Blob output', () => {
     const client = TestBed.createComponent(AppComponent).componentInstance.angularBlobClient;
     const user = await addUser();
     // keep type annotation here. It is part of the test
-    const items: Observable<ODataAnnotatedResult<User[]>> = client.Users
+    const items: Observable<ODataCollectionResult<User[]>> = client.Users
       .withQuery((u, { filter: { eq } }) => eq(u.Id, user.Id))
       .get();
 
