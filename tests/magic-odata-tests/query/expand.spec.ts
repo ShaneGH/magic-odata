@@ -65,11 +65,34 @@ describe("Query.Expand", function () {
             const ctxt = await addFullUserChain();
             const result = await client.BlogPosts
                 .withKey(x => x.key(ctxt.blogPost.Id))
-                .withQuery((p, { expand: { expandRaw } }) =>
-                    expandRaw("Blog"))
+                .withQuery((p, { expand: { expandRaw } }) => expandRaw("Blog"))
                 .get();
 
             expect(result.Blog!.Name).toBe(ctxt.blog.Name);
+        });
+    });
+
+    testCase("expandAll", function () {
+        it("Should work correctly", async () => {
+
+            const ctxt = await addFullUserChain();
+            const result = await client.BlogPosts
+                .withKey(x => x.key(ctxt.blogPost.Id))
+                .withQuery((_, { expand: { expandAll } }) => expandAll())
+                .get();
+
+            expect(result.Blog!.Name).toBe(ctxt.blog.Name);
+        });
+
+        it("Should work correctly with $ref", async () => {
+
+            const ctxt = await addFullUserChain();
+            const result = await client.BlogPosts
+                .withKey(x => x.key(ctxt.blogPost.Id))
+                .withQuery((_, { expand: { expandAll } }) => expandAll(true))
+                .get();
+
+            expect((result.Blog as any)["@odata.id"]).toBe(`Blogs('${ctxt.blog.Id}')`);
         });
     });
 

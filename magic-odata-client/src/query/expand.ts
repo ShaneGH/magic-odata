@@ -31,6 +31,13 @@ export type ExpandUtils = {
      * @example combine(expand(my.property1), expand(my.property2))
      */
     combine(...expansions: Expand[]): Expand
+
+    /**
+     * Expand all properties of an object
+     * 
+     * @param $ref If true, expand by ref. Default false
+     */
+    expandAll($ref?: boolean): Expand
 }
 
 function expandRaw(expand: string): Expand {
@@ -38,6 +45,13 @@ function expandRaw(expand: string): Expand {
     return {
         $$oDataQueryObjectType: "Expand",
         $$expand: expand
+    }
+}
+
+function expandAll($ref?: boolean): Expand {
+    return {
+        $$oDataQueryObjectType: "Expand",
+        $$expand: $ref ? "*/$ref" : "*"
     }
 }
 
@@ -134,6 +148,7 @@ export function newUtils(): ExpandUtils {
     return {
         expand,
         combine,
-        expandRaw
+        expandRaw,
+        expandAll
     }
 }
