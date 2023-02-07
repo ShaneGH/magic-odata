@@ -32,20 +32,32 @@ export {
     ODataCollectionResult,
     ODataResult,
     EntitySet,
-    IEntitySet,
-    CastSelection,
-    KeySelection,
-    WithKeyType,
-    SubPathSelection,
+    IEntitySet
+} from "./src/entitySet.js"
+
+export {
     HttpError
-} from "./src/httpClient.js"
+} from "./src/entitySet/executeRequest.js"
+
+export {
+    SubPathSelection
+} from "./src/entitySet/subPath.js"
+
+export {
+    KeySelection,
+    WithKeyType
+} from "./src/entitySet/selectByKey.js"
+
+export {
+    CastSelection,
+} from "./src/entitySet/cast.js"
 
 export {
     RequestTools,
     RequestOptions,
     ODataUriParts,
     RootResponseInterceptor
-} from "./src/requestTools.js"
+} from "./src/entitySet/requestTools.js"
 
 export {
     QueryObjectType,

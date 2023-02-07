@@ -124,16 +124,25 @@ ${methods}
         const ths = hasThisContext ? "this." : ""
         const instanceType = httpClientType(keywords, generics, tab, settings || null, false);
         const interfaceType = httpClientType(keywords, generics, tab, settings || null);
-        const constructorArgs = [
-            `${ths}${keywords._httpClientArgs}`,
-            `${keywords.responseParser}`,
-            `${keywords.toODataTypeRef}(${!entitySet.isSingleton}, "${entitySet.forType.namespace || ""}", "${entitySet.forType.name}")`,
-            `${keywords.rootConfig}.entitySets["${entitySet.namespace || ""}"]["${entitySet.name}"]`,
-            keywords.rootConfig
-        ]
+        const constructorArgs = {
+            requestTools: `${ths}${keywords._httpClientArgs}`,
+            defaultResponseInterceptor: `${keywords.responseParser}`,
+            type: `${keywords.toODataTypeRef}(${!entitySet.isSingleton}, "${entitySet.forType.namespace || ""}", "${entitySet.forType.name}")`,
+            entitySet: `${keywords.rootConfig}.entitySets["${entitySet.namespace || ""}"]["${entitySet.name}"]`,
+            root: keywords.rootConfig
+        } as any
+
+        let args = Object
+            .keys(constructorArgs)
+            .map(x => `${x}: ${constructorArgs[x]}`)
+            .join(",\n")
+
+        args = `const args = {\n${tab(args)}\n}`
 
         return `get ${entitySet.name}() {
-${tab(`return new ${instanceType}(${constructorArgs.join(", ")}) as \n${tab(interfaceType)};`)}
+${tab(args)}
+
+${tab(`return new ${instanceType}(args) as \n${tab(interfaceType)};`)}
 }`
     }
 
