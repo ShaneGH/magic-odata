@@ -17,7 +17,6 @@ TODO: evaluate
 
 Evaluated: v0
  * More EDM types
- * // TODO: $count_fincution
  * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_SystemQueryOptionexpand
     * TODO:  $compute, and $levels.
  * List of qs http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_SystemQueryOptions . Do, or add to roadmap with later v

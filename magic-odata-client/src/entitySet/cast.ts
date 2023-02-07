@@ -3,7 +3,7 @@ import { typeNameString } from "../utils.js";
 import { EntitySetData, getDeepTypeRef } from "./utils.js";
 
 
-// TODO: duplicate_logic_key: caster
+// https://github.com/ShaneGH/magic-odata/issues/4
 function buildCaster<TFetchResult, TResult, TCaster>(
     data: EntitySetData<TFetchResult, TResult>): TCaster {
 
@@ -31,9 +31,7 @@ function buildCaster<TFetchResult, TResult, TCaster>(
 
     const getName = inherits.length === distinctNames.length
         ? (x: ODataSingleTypeRef) => x.name
-        // TODO: test
-        // TODO: this logic will be duplicated in the code gen project. Possible to merge?
-        // TODO: change "_" character in config file
+        // https://github.com/ShaneGH/magic-odata/issues/5
         : (x: ODataSingleTypeRef) => `${x.namespace}/${x.name}`.replace(/[^\w]/g, "_")
 
     const reAddCollection = (t: ODataSingleTypeRef): ODataTypeRef => isCollection

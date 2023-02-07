@@ -116,8 +116,7 @@ export class EntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSing
         return executeRequest(this.state, this.path(), overrideRequestTools)
     }
 
-    // // TODO: $count_fincution
-    // // TODO: is response type correct?
+    // https://github.com/ShaneGH/magic-odata/issues/3
     // count(overrideRequestTools?: Partial<RequestTools<TResult>>): Promise<TDataResult> {
     //     throw new Error()
     //     //return this.fetch(this.path("$count"), overrideRequestTools);

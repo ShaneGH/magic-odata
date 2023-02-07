@@ -44,8 +44,6 @@ export type RequestOptions = {
     headers: [string, string][]
 }
 
-// TODO: document: Add article. Also, link article to angular fetch
-// TODO: test all of these
 /**
  * Input args to an ODataHttpClient
  */

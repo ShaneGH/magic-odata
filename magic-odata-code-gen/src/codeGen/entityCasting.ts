@@ -1,10 +1,9 @@
 import { ComplexTypeOrEnum, ODataComplexType, ODataEnum, ODataServiceConfig, ODataServiceTypes, ODataSingleTypeRef } from "magic-odata-shared";
 import { CodeGenConfig } from "../config.js";
 import { Keywords } from "./keywords.js";
-import { buildFullyQualifiedTsType, buildGetCasterName, buildGetKeyType, buildGetKeyBuilderName, buildGetQueryableName, buildGetSubPathName, FullyQualifiedTsType, GetCasterName, GetKeyBuilderName, GetKeyType, GetQueryableName, GetSubPathName, httpClientType, Tab } from "./utils.js"
+import { buildFullyQualifiedTsType, buildGetCasterName, buildGetKeyBuilderName, buildGetQueryableName, buildGetSubPathName, FullyQualifiedTsType, GetCasterName, GetKeyBuilderName, GetQueryableName, GetSubPathName, httpClientType, Tab } from "./utils.js"
 
-// TODO: duplicate_logic_key: caster
-// TODO: this is a fairly heavy method to be called quite a bit. Optisation?
+// https://github.com/ShaneGH/magic-odata/issues/4
 function buildGetComplexCasterProps(
     allTypes: ODataServiceTypes,
     fullyQualifiedTsType: FullyQualifiedTsType,
@@ -39,8 +38,6 @@ function buildGetComplexCasterProps(
 
         const name = complexInherits.length === distinctNames.length
             ? (x: ODataComplexType) => x.name
-            // TODO: test
-            // TODO: this logic will be duplicated in the code gen project. Possible to merge?
             : (x: ODataComplexType) => `${x.namespace}/${x.name}`.replace(/[^\w]/g, "_")
 
         return complexInherits
