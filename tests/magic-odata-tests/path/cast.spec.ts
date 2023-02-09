@@ -152,7 +152,6 @@ describe("Cast (singleton)", function () {
 
     describe("Path Cast Combos", () => {
 
-        // TODO: path -> cast
         it("Should retrieve correct values after cast and path", async () => {
             const ctxt = await addFullUserChain();
             const comments = await client.AppDetailsBase

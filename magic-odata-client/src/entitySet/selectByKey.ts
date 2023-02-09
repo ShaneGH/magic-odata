@@ -23,6 +23,7 @@ export enum WithKeyType {
 }
 
 export type KeySelection<TNewEntityQuery> = {
+    raw: boolean
     keyEmbedType: WithKeyType,
     key: any
 }
@@ -129,12 +130,24 @@ export function recontextDataForKey<TFetchResult, TResult, TNewEntityQuery, TKey
     }
 
     const keyResult = key({
+        keyRaw: (key: string): KeySelection<any> => ({
+            key,
+            raw: true,
+            // key embed type is ignored. 
+            // There is a weird type error preventing sum types here
+            keyEmbedType: WithKeyType.FunctionCall
+        }),
+
         key: (key: any, keyEmbedType?: WithKeyType.FunctionCall): KeySelection<any> => ({
-            key, keyEmbedType: keyEmbedType || WithKeyType.FunctionCall
+            key,
+            raw: false,
+            keyEmbedType: keyEmbedType || WithKeyType.FunctionCall
         })
     } as any);
     const keyTypes = tryFindKeyTypes(data.tools.type.collectionType, data.tools.root.types);
-    const keyPath = keyExpr(keyTypes, keyResult.key, keyResult.keyEmbedType, data.tools.root.types);
+    const keyPath = keyResult.raw
+        ? { value: keyResult.key, appendToLatest: keyResult.key[0] === "(" }
+        : keyExpr(keyTypes, keyResult.key, keyResult.keyEmbedType, data.tools.root.types);
 
     const path = keyPath.appendToLatest
         ? [

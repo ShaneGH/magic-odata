@@ -40,7 +40,7 @@ export interface IEntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, 
      * Create a new EntitySet of entites at the sub path defined
      */
     subPath<TNewEntityQuery>(
-        subPath: (caster: TSubPath) => SubPathSelection<TNewEntityQuery>): TNewEntityQuery;
+        selector: (entity: TSubPath) => SubPathSelection<TNewEntityQuery> | string): TNewEntityQuery;
 
     /**
      * Create a new EntitySet with the defined query attached
@@ -96,9 +96,9 @@ export class EntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSing
     }
 
     subPath<TNewEntityQuery>(
-        subPath: (pathSelector: TSubPath) => SubPathSelection<TNewEntityQuery>): TNewEntityQuery {
+        selector: (entity: TSubPath) => SubPathSelection<TNewEntityQuery>): TNewEntityQuery {
 
-        const { state, tools } = recontextDataForSubPath(this.state, subPath)
+        const { state, tools } = recontextDataForSubPath(this.state, selector)
         return new EntitySet<any, any, any, any, any, any, any, any, any>(tools, state) as TNewEntityQuery;
     }
 

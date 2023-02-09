@@ -19,7 +19,9 @@ export const buildEntityKeyBuilder = (tab: Tab, settings: CodeGenConfig | null |
         const keyBuilderName = getKeyBuilderName(type.name)
 
         return `export type ${keyBuilderName} = {
-${tab(`key(key: ${getKeyType(type, true)}, keyType?: ${keywords.WithKeyType}): ${getResultType(type)}`)}
+${tab(`key(key: ${getKeyType(type, true)}, keyType?: ${keywords.WithKeyType}): ${getResultType(type)}
+
+keyRaw(key: string): ${getResultType(type)}`)}
 }`
     }
 

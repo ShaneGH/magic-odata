@@ -66,6 +66,30 @@ describe("Singleton", function () {
     }
 });
 
+describe("keyRaw", function () {
+
+    it("Should retrieve value as path segment", async () => {
+        const user = await addFullUserChain();
+        const comment = await client.BlogPosts
+            .withKey(x => x.keyRaw(`'${user.blogPost.Id}'`))
+            .subPath(x => x.Comments)
+            .withKey(x => x.key(user.comment.Id!, WithKeyType.PathSegment))
+            .get();
+
+        expect(comment.Title).toBe(user.comment.Title);
+    });
+
+    it("Should retrieve value as function call", async () => {
+        const user = await addFullUserChain();
+        const userName = await client.Users
+            .withKey(x => x.keyRaw(`('${user.blogUser.Id}')`))
+            .subPath(x => x.Name)
+            .get();
+
+        expect(userName.value).toBe(user.blogUser.Name);
+    });
+});
+
 describe("SubPath", function () {
 
     describe("Singleton", () => {
@@ -128,6 +152,7 @@ describe("SubPath", function () {
 
         describe("String enum", () =>
             it("Should be a string", () => expect(typeof My.Odata.Entities.UserProfileType.Advanced).toBe("string")));
+
         it("Should retrieve string enum item in the path, 1 level", async () => {
             const user = await addFullUserChain();
             const userProfileType = await client.Users
