@@ -105,10 +105,6 @@ public class Blog : HasId
     public IList<BlogPost> Posts { get; set; }
     public IQueryable<string> BlogPostNames => GetBlogPostNames().AsQueryable();
     public IEnumerable<string> GetBlogPostNames() => Posts.OrEmpty().Select(x => x.Name);
-
-    // TODO: List<List<SimpleType>>, List<List<CompleType>>
-    // public IQueryable<IQueryable<Comment>> Comments => Posts.OrEmpty().Select(x => x.Comments.OrEmpty().AsQueryable()).AsQueryable();
-    // public IQueryable<IQueryable<string>> CommentTitles => Posts.OrEmpty().Select(x => x.Comments.OrEmpty().Select(x => x.Title).AsQueryable()).AsQueryable();
 }
 
 public class BlogPost : HasId
@@ -132,10 +128,6 @@ public class BlogPost : HasId
     public Blog Blog { get; set; }
     public IList<Comment> Comments { get; set; }
     public IQueryable<string> Words => Regex.Split(Content, @"\s").Where(x => !string.IsNullOrWhiteSpace(x)).AsQueryable();
-
-    // TODO: List<List<SimpleType>>, List<List<CompleType>>
-    // public IQueryable<IQueryable<CommentTag>> CommentTags => Comments.OrEmpty().Select(x => x.Tags.OrEmpty().AsQueryable()).AsQueryable();
-    // public IQueryable<IQueryable<string>> CommentWords => Comments.OrEmpty().Select(x => x.Words.OrEmpty().AsQueryable()).AsQueryable();
 }
 
 public class Comment : HasId

@@ -104,8 +104,6 @@ public class Program
     {
         var builder = new ODataConventionModelBuilder();
 
-        // TODO: test special characters in namespace
-        // asp net lets you add multiple modles by calling .AddOData(...) more than once
         builder.Namespace = "My.Odata.Entities";
         builder.ContainerName = "My/Odata.Container";
 

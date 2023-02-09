@@ -208,7 +208,7 @@ export type CodeGenConfig = Partial<{
 
     /** 
      * A character to use instead of special characters when found in namespaces. 
-     * Special characters are characters which will cause typesript build errors when part of a module name
+     * Special characters are characters which will cause typesript build errors when part of a module name 
      * @default "."
      */
     namespaceSpecialCharacter: string

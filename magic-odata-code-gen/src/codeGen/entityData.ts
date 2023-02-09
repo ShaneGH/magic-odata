@@ -57,7 +57,7 @@ ${tab(props)}
             throw new Error(`Invalid "enumType.default" setting: ${settings.enumType.default}`);
         }
 
-        const name = typeNameString(type)
+        const name = typeNameString(type, settings)
         return settings.enumType.numberEnums && settings.enumType.numberEnums?.indexOf(name) !== -1
             ? v()
             : settings.enumType.stringEnums && settings.enumType.stringEnums?.indexOf(name) !== -1

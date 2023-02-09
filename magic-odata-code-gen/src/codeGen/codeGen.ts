@@ -7,7 +7,7 @@ import { ProcessedNamespace, ProcessedServiceConfig, processServiceConfig } from
 import { fetchHttpClient } from "./fetchHttpClient.js";
 import { httpClient } from "./httpClient.js";
 import { generateKeywords, imports } from "./keywords.js";
-import { buildTab, configObj, lintingAndComments } from "./utils.js";
+import { buildSanitizeNamespace, buildTab, configObj, lintingAndComments } from "./utils.js";
 
 export function codeGen(serviceConfig: ODataServiceConfig, settings: CodeGenConfig | null | undefined, warnings: SupressWarnings | null | undefined) {
 
@@ -15,6 +15,7 @@ export function codeGen(serviceConfig: ODataServiceConfig, settings: CodeGenConf
         throw new Error('If angularMode is configured, asyncType must be either null or "Rxjs"');
     }
 
+    const sanitizeNamespace = buildSanitizeNamespace(settings)
     const keywords = generateKeywords(Object.keys(serviceConfig.types), Object.keys(serviceConfig.types[""] || {}));
     const tab = buildTab(settings)
     const client = settings?.angularMode ? angularHttpClient : fetchHttpClient
@@ -100,7 +101,7 @@ ${buildModule(utils)}`
             return Object
                 .keys(result)
                 .map(x => x
-                    ? `export module ${x} {\n${tab(processModule(result[x]))}\n}`
+                    ? `export module ${sanitizeNamespace(x)} {\n${tab(processModule(result[x]))}\n}`
                     : processModule(result[x]))
                 .join("\n\n");
         }

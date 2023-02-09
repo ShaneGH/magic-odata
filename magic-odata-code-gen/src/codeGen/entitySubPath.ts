@@ -137,11 +137,11 @@ function buildGetSubPathProps(
         }
 
         if (info.type.objectType === ObjectType.PrimitiveType) {
-            return `QueryPrimitive<${typeNameString(info.type.primitiveType, ".")}>`
+            return `QueryPrimitive<${typeNameString(info.type.primitiveType, settings, ".")}>`
         }
 
         if (info.type.objectType === ObjectType.EnumType) {
-            return `QueryEnum<${typeNameString(info.type.enumType, ".")}>`
+            return `QueryEnum<${typeNameString(info.type.enumType, settings, ".")}>`
         }
 
         return fullyQualifiedTsType({
@@ -194,7 +194,7 @@ function buildGetSubPathProps(
 
         const type = allTypes[propertyType.namespace] && allTypes[propertyType.namespace][propertyType.name]
         if (!type) {
-            throw new Error(`Could not find key for type ${typeNameString(propertyType)}`);
+            throw new Error(`Could not find key for type ${typeNameString(propertyType, settings)}`);
         }
 
         if (type.containerType === "ComplexType") {

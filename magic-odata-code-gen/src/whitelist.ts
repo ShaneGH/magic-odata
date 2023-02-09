@@ -67,8 +67,8 @@ export function applyWhitelist(serviceConfig: ODataServiceConfig, settings: Conf
             if (!shouldWhitelistTypeRef(baseTypeRef, whitelist)) {
 
                 if (!settings.warningSettings?.suppressAll && !settings.warningSettings?.suppressIgnoredBaseType) {
-                    const t = typeNameString(type.type)
-                    const tBase = typeNameString(type.type.baseType)
+                    const t = typeNameString(type.type, settings.codeGenSettings)
+                    const tBase = typeNameString(type.type.baseType, settings.codeGenSettings)
                     warn(settings.warningSettings, "suppressIgnoredBaseType", `Type ${t} is not ignored, however it's parent type ${tBase} is. Ignoring ${t}.`)
                 }
 
@@ -81,9 +81,9 @@ export function applyWhitelist(serviceConfig: ODataServiceConfig, settings: Conf
                 if (!shouldWhitelistTypeRef(type.type.properties[type.type.keyProps[i]].type, whitelist)) {
 
                     if (!settings.warningSettings?.suppressAll && !settings.warningSettings?.suppressIgnoredKeyType) {
-                        const t = typeNameString(type.type)
+                        const t = typeNameString(type.type, settings.codeGenSettings)
                         const k = unwrapTypeRef(type.type.properties[type.type.keyProps[i]].type)
-                        const tKey = typeNameString(k)
+                        const tKey = typeNameString(k, settings.codeGenSettings)
 
                         warn(settings.warningSettings, "suppressIgnoredKeyType", `Type ${t} is not ignored, however (part of) it's key type ${tKey} is. Ignoring ${t}`)
                     }

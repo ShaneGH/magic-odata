@@ -8,23 +8,23 @@ import { buildFullyQualifiedTsType, buildGetQueryableName, buildSanitizeNamespac
 
 function getQueryableTypeString(
     type: ODataTypeRef, wrapInQueryObject: boolean, keywords: Keywords, serviceConfig: ODataServiceConfig,
-    fullyQualifiedTsType: FullyQualifiedTsType, getQueryableName: GetQueryableName): string {
+    settings: CodeGenConfig | null | undefined, fullyQualifiedTsType: FullyQualifiedTsType, getQueryableName: GetQueryableName): string {
 
-    const t = getQueryableType(type, keywords, serviceConfig, fullyQualifiedTsType, getQueryableName);
+    const t = getQueryableType(type, keywords, settings, serviceConfig, fullyQualifiedTsType, getQueryableName);
     return wrapInQueryObject
         ? `${t.wrapper}<${t.generics.join(", ")}>`
         : t.generics[0];
 }
 
-function getQueryableType(type: ODataTypeRef, keywords: Keywords,
+function getQueryableType(type: ODataTypeRef, keywords: Keywords, settings: CodeGenConfig | null | undefined,
     serviceConfig: ODataServiceConfig, fullyQualifiedTsType: FullyQualifiedTsType, getQueryableName: GetQueryableName) {
     // TODO: test for QueryCollection<QueryCollection<T>>
     if (type.isCollection) {
         return {
             wrapper: keywords.QueryCollection,
             generics: [
-                getQueryableTypeString(type.collectionType, true, keywords, serviceConfig, fullyQualifiedTsType, getQueryableName),
-                getQueryableTypeString(type.collectionType, false, keywords, serviceConfig, fullyQualifiedTsType, getQueryableName)
+                getQueryableTypeString(type.collectionType, true, keywords, serviceConfig, settings, fullyQualifiedTsType, getQueryableName),
+                getQueryableTypeString(type.collectionType, false, keywords, serviceConfig, settings, fullyQualifiedTsType, getQueryableName)
             ]
         };
     }
@@ -37,7 +37,7 @@ function getQueryableType(type: ODataTypeRef, keywords: Keywords,
     }
 
     if (!serviceConfig.types[type.namespace] || !serviceConfig.types[type.namespace][type.name]) {
-        throw new Error(`Unknown type: ${typeNameString(type)}`);
+        throw new Error(`Unknown type: ${typeNameString(type, settings)}`);
     }
 
     const isEnum = serviceConfig.types[type.namespace][type.name].containerType === "Enum"
@@ -70,7 +70,7 @@ export const buildEntityQuery = (settings: CodeGenConfig | null | undefined, tab
             .keys(type.properties)
             .map(key => ({
                 key,
-                type: getQueryableTypeString(type.properties[key].type, true, keywords, serviceConfig, fullyQualifiedTsType, getQueryableName)
+                type: getQueryableTypeString(type.properties[key].type, true, keywords, serviceConfig, settings, fullyQualifiedTsType, getQueryableName)
             }))
             .map(prop => `${prop.key}: ${prop.type}`)
             .join("\n");

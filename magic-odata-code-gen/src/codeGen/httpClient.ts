@@ -16,7 +16,7 @@ export function httpClient(
     const fullyQualifiedTsType = buildFullyQualifiedTsType(settings);
     const sanitizeNamespace = buildSanitizeNamespace(settings);
     const getKeyBuilderName = buildGetKeyBuilderName(settings);
-    const lookupComplexType = buildLookupComplexType(serviceConfig);
+    const lookupComplexType = buildLookupComplexType(serviceConfig, settings);
 
     const getQueryableName = buildGetQueryableName(settings);
     const getCasterName = buildGetCasterName(settings)
@@ -105,7 +105,7 @@ ${methods}
 
         const type = lookupComplexType(entitySet.forType);
         if (!type) {
-            warn(warnings, "suppressUnableToFindTypeForEntitySet", `Could not find type for entity set: ${typeNameString(entitySet)}.`);
+            warn(warnings, "suppressUnableToFindTypeForEntitySet", `Could not find type for entity set: ${typeNameString(entitySet, settings)}.`);
             return undefined;
         }
 

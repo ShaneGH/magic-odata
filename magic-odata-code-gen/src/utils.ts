@@ -1,7 +1,8 @@
-import { SupressWarnings } from "./config.js";
+import { sanitizeNamespace } from "./codeGen/utils.js";
+import { CodeGenConfig, SupressWarnings } from "./config.js";
 
-export function typeNameString(type: { name: string, namespace: string }, delimiter = "/") {
-    return `${type.namespace && `${type.namespace}${delimiter}`}${type.name}`
+export function typeNameString(type: { name: string, namespace: string }, settings: CodeGenConfig | null | undefined, delimiter = "/") {
+    return `${type.namespace && `${sanitizeNamespace(type.namespace, settings)}${delimiter}`}${type.name}`
 }
 
 /**

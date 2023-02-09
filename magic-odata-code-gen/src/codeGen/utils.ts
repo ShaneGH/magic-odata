@@ -72,7 +72,11 @@ ${exportSettings}`
 
 type SanitizeNamespace = (namespace: string) => string
 export const buildSanitizeNamespace = (settings: CodeGenConfig | null | undefined): SanitizeNamespace => (namespace: string) => {
-    return namespace.replace(/[^a-zA-Z0-9$._]/, settings?.namespaceSpecialCharacter || ".");
+    return sanitizeNamespace(namespace, settings)
+}
+
+export const sanitizeNamespace = (namespace: string, settings: CodeGenConfig | null | undefined) => {
+    return namespace.replace(/[^a-zA-Z0-9$._]/g, settings?.namespaceSpecialCharacter || ".");
 }
 
 export type LookupType = (t: ODataSingleTypeRef) => ComplexTypeOrEnum | undefined
@@ -83,13 +87,13 @@ export const buildLookupType = (serviceConfig: ODataServiceConfig): LookupType =
 
 export type LookupComplexType = (t: ODataSingleTypeRef) => ODataComplexType | undefined
 
-export const buildLookupComplexType = (serviceConfig: ODataServiceConfig): LookupComplexType => {
+export const buildLookupComplexType = (serviceConfig: ODataServiceConfig, settings: CodeGenConfig | null | undefined): LookupComplexType => {
     const lt = buildLookupType(serviceConfig);
     return (t: ODataSingleTypeRef) => {
         const result = lt(t);
         if (!result || result.containerType === "ComplexType") return result?.type;
 
-        throw new Error(`${typeNameString(t)} is not a complex type`);
+        throw new Error(`${typeNameString(t, settings)} is not a complex type`);
     }
 }
 
@@ -144,14 +148,14 @@ export type GetKeyType = (t: ODataComplexType, lookupParent: boolean) => string
 export const buildGetKeyType = (settings: CodeGenConfig | null | undefined, serviceConfig: ODataServiceConfig, keywords: Keywords): GetKeyType => {
 
     const fullyQualifiedTsType = buildFullyQualifiedTsType(settings)
-    const lookupComplexType = buildLookupComplexType(serviceConfig)
+    const lookupComplexType = buildLookupComplexType(serviceConfig, settings)
 
     const getKeyType: GetKeyType = (t: ODataComplexType, lookupParent = true): string => {
         if (!t.keyProps) {
             if (t.baseType && lookupParent) {
                 const baseType = lookupComplexType({ isCollection: false, namespace: t.baseType.namespace, name: t.baseType.name })
                 if (!baseType) {
-                    throw new Error(`Could not find base type: ${typeNameString(t.baseType)}`);
+                    throw new Error(`Could not find base type: ${typeNameString(t.baseType, settings)}`);
                 }
 
                 return getKeyType(baseType, lookupParent)
@@ -163,7 +167,7 @@ export const buildGetKeyType = (settings: CodeGenConfig | null | undefined, serv
         const propTypes = t.keyProps.map(name => {
             const type = t.properties[name]?.type;
             if (!type) {
-                throw new Error(`Could not find key property: ${name} of type ${typeNameString(t)}`)
+                throw new Error(`Could not find key property: ${name} of type ${typeNameString(t, settings)}`)
             }
 
             return { name, type };
