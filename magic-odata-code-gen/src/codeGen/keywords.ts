@@ -13,18 +13,15 @@ export type Keywords = {
     IEntitySet: string
     rootConfig: string
     rootConfigExporter: string
-    ODataUriParts: string
     CastSelection: string
     KeySelection: string
     SubPathSelection: string
     RequestTools: string,
-    ODataComplexType: string,
     ODataTypeRef: string
     _httpClientArgs: string,
     WithKeyType: string
     ODataCollectionResult: string
     ODataResult: string
-    Internal: string
     SingleItemsCannotBeQueriedByKey: string
     CollectionsCannotBeTraversed: string
     PrimitiveTypesCannotBeTraversed: string
@@ -34,9 +31,7 @@ export type Keywords = {
     toODataTypeRef: string,
     responseParser: string,
     RootResponseInterceptor: string
-    AngularHttpClient: string
     parseBlob: string
-    parseResponse: string
     Observable: string
     HttpError: string,
     AngularHttpResponse: string
@@ -60,11 +55,9 @@ export function generateKeywords(allNamespaces: string[], rootLevelTypes: string
         mergeMap: getKeyword("mergeMap"),
         map: getKeyword("map"),
         AngularHttpResponse: getKeyword("HttpResponse"),
-        parseResponse: getKeyword("parseResponse"),
         parseBlob: getKeyword("parseBlob"),
         HttpError: getKeyword("HttpError"),
         Observable: getKeyword("Observable"),
-        AngularHttpClient: getKeyword("AngularHttpClient"),
         RootResponseInterceptor: getKeyword("RootResponseInterceptor"),
         responseParser: getKeyword("responseParser"),
         toODataTypeRef: getKeyword("toODataTypeRef"),
@@ -72,7 +65,6 @@ export function generateKeywords(allNamespaces: string[], rootLevelTypes: string
         WithKeyType: getKeyword("WithKeyType"),
         ODataTypeRef: getKeyword("ODataTypeRef"),
         KeySelection: getKeyword("KeySelection"),
-        ODataComplexType: getKeyword("ODataComplexType"),
         RequestTools: getKeyword("RequestTools"),
         rootConfigExporter: getKeyword("rootConfigExporter"),
         QueryPrimitive: getKeyword("QueryPrimitive"),
@@ -83,7 +75,6 @@ export function generateKeywords(allNamespaces: string[], rootLevelTypes: string
         EntitySet: getKeyword("EntitySet"),
         IEntitySet: getKeyword("IEntitySet"),
         rootConfig: getKeyword("rootConfig"),
-        ODataUriParts: getKeyword("ODataUriParts"),
         ODataServiceConfig: getKeyword("ODataServiceConfig"),
         ODataCollectionResult: getKeyword("ODataCollectionResult"),
         ODataResult: getKeyword("ODataResult"),
@@ -93,8 +84,7 @@ export function generateKeywords(allNamespaces: string[], rootLevelTypes: string
         PrimitiveTypesCannotBeTraversed: getKeyword("PrimitiveTypesCannotBeTraversed"),
         CastingOnCollectionsOfCollectionsIsNotSupported: getKeyword("CastingOnCollectionsOfCollectionsIsNotSupported"),
         QueryingOnCollectionsOfCollectionsIsNotSupported: getKeyword("QueryingOnCollectionsOfCollectionsIsNotSupported"),
-        ThisItemDoesNotHaveAKey: getKeyword("ThisItemDoesNotHaveAKey"),
-        Internal: getKeyword("Internal")
+        ThisItemDoesNotHaveAKey: getKeyword("ThisItemDoesNotHaveAKey")
     }
 
     function getKeyword(defaultVal: string) {
@@ -110,7 +100,6 @@ export function generateKeywords(allNamespaces: string[], rootLevelTypes: string
 export function imports(keywords: Keywords, tab: Tab, config: CodeGenConfig | null) {
 
     const ng = config?.angularMode && `import {
-    ${tab(importWithAlias("AngularHttpClient", "HttpClient"))},
     ${tab(importWithAlias("AngularHttpResponse", "HttpResponse"))}
 } from '@angular/common/http'`
 
@@ -120,20 +109,17 @@ export function imports(keywords: Keywords, tab: Tab, config: CodeGenConfig | nu
     ${tab(importWithAlias("map"))},
 } from 'rxjs'`
 
-    // TODO: audit are all of these still used?
     const odataTsClient = `import {
 ${tab(importWithAlias("HttpError"))},
 ${tab(importWithAlias("RootResponseInterceptor"))},
 ${tab(importWithAlias("KeySelection"))},
 ${tab(importWithAlias("WithKeyType"))},
 ${tab(importWithAlias("QueryEnum"))},
-${tab(importWithAlias("ODataComplexType"))},
 ${tab(importWithAlias("ODataTypeRef"))},
 ${tab(importWithAlias("RequestTools"))},
 ${tab(importWithAlias("ODataServiceConfig"))},
 ${tab(importWithAlias("CastSelection"))},
 ${tab(importWithAlias("SubPathSelection"))},
-${tab(importWithAlias("ODataUriParts"))},
 ${tab(importWithAlias("QueryPrimitive"))},
 ${tab(importWithAlias("QueryCollection"))},
 ${tab(importWithAlias("EntitySet"))},
