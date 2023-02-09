@@ -18,10 +18,8 @@ function getQueryableTypeString(
 
 function getQueryableType(type: ODataTypeRef, keywords: Keywords,
     serviceConfig: ODataServiceConfig, fullyQualifiedTsType: FullyQualifiedTsType, getQueryableName: GetQueryableName) {
-    // TODO: namespacing of value from getTypeString?
     // TODO: test for QueryCollection<QueryCollection<T>>
     if (type.isCollection) {
-        // TODO: type signature gets very long. Remove namespaces where possible
         return {
             wrapper: keywords.QueryCollection,
             generics: [
@@ -80,7 +78,6 @@ export const buildEntityQuery = (settings: CodeGenConfig | null | undefined, tab
         return `export type ${qtName} = ${baseQType}{
 ${tab(queryableProps)}
 }`
-
     }
 
     function enumType(type: ODataEnum) {

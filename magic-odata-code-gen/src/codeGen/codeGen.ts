@@ -19,7 +19,6 @@ export function codeGen(serviceConfig: ODataServiceConfig, settings: CodeGenConf
     const tab = buildTab(settings)
     const client = settings?.angularMode ? angularHttpClient : fetchHttpClient
 
-    // TODO: make module composition a bit nicer "module X { module Y { module Z { ..."
     const output = `
 ${imports(keywords, tab, settings || null)}
 
@@ -38,10 +37,7 @@ ${edm(tab)}`
         .replace(/s+\n/g, "\n") + "\n";
 
     function splitConfig(config: ProcessedServiceConfig): [ProcessedServiceConfig, ProcessedServiceConfig] {
-        // return config;
 
-        // TODO: good idea. Will allow us to export types for actual data, but keep 
-        // non data types local. But some module reference issues
         return Object
             .keys(config)
             .reduce((s, x) => [
@@ -105,7 +101,6 @@ ${buildModule(utils)}`
                 .keys(result)
                 .map(x => x
                     ? `export module ${x} {\n${tab(processModule(result[x]))}\n}`
-                    // TODO: test this case (with namespace == "")
                     : processModule(result[x]))
                 .join("\n\n");
         }

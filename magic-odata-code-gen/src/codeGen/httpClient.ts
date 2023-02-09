@@ -1,6 +1,6 @@
 import { ODataComplexType, ODataEntitySet, ODataServiceConfig } from "magic-odata-shared";
 import { CodeGenConfig, SupressWarnings } from "../config.js";
-import { typeNameString } from "../utils.js";
+import { typeNameString, warn } from "../utils.js";
 import { Keywords } from "./keywords.js";
 import { buildFullyQualifiedTsType, buildGetCasterName, buildGetKeyBuilderName, buildGetKeyType, buildGetQueryableName, buildGetSubPathName, buildLookupComplexType, buildLookupType, buildSanitizeNamespace, httpClientType, Tab } from "./utils.js";
 
@@ -22,8 +22,6 @@ export function httpClient(
     const getCasterName = buildGetCasterName(settings)
     const getSubPathName = buildGetSubPathName(settings)
 
-    // TODO: _httpClientArgs keyword is different to others.It needs to be unique from the point of
-    // view of an EntitySet, not an Entity(or root namespace)
     const methods = Object
         .keys(serviceConfig.entitySets)
         .sort((x, y) => x < y ? -1 : 1)
@@ -63,7 +61,6 @@ ${tab("return collection ? { isCollection: true, collectionType } : collectionTy
 }`
     }
 
-    // TODO: error handling
     function parseResponse() {
 
         return `const ${keywords.responseParser}: ${keywords.RootResponseInterceptor}<${requestToolsGenerics.join(", ")}> = response => {
@@ -108,12 +105,7 @@ ${methods}
 
         const type = lookupComplexType(entitySet.forType);
         if (!type) {
-            if (!warnings?.suppressAll && !warnings?.suppressUnableToFindTypeForEntitySet) {
-                console.warn(`Could not find type for entity set: ${typeNameString(entitySet)}. `
-                    // TODO: standardise "to suppress this warning text"
-                    + "To supress this warning, set warningSettings.suppressUnableToFindTypeForEntitySet to false");
-            }
-
+            warn(warnings, "suppressUnableToFindTypeForEntitySet", `Could not find type for entity set: ${typeNameString(entitySet)}.`);
             return undefined;
         }
 

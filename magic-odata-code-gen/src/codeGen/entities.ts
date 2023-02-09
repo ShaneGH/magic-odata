@@ -1,5 +1,6 @@
 import { ODataComplexType, ODataServiceConfig, ComplexTypeOrEnum } from "magic-odata-shared"
 import { CodeGenConfig, SupressWarnings } from "../config.js"
+import { warn } from "../utils.js"
 import { buildEntityCasting } from "./entityCasting.js"
 import { buildEntityData } from "./entityData.js"
 import { buildEntityKeyBuilder } from "./entityKeyBuilder.js"
@@ -67,9 +68,7 @@ export function processServiceConfig(settings: CodeGenConfig | null | undefined,
                     const ns = namespaceName && `${namespaceName}/`
                     const msg = overlap.map(x => `${ns}${x}`).join(", ")
 
-                    console.warn(`Found multiple typescript types with the same name: ${msg}. Some overlapped types will be missing from the generated client. `
-                        // TODO: standardise "to suppress this warning text"
-                        + "To supress this warning, set warningSettings.suppressTypeNameOverlap to false");
+                    warn(warnings, "suppressTypeNameOverlap", `Found multiple typescript types with the same name: ${msg}. Some overlapped types will be missing from the generated client. `);
                 }
 
                 namespaceData = {

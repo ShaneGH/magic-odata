@@ -2,6 +2,7 @@
 import { useNamespaces } from 'xpath'
 import { ODataServiceTypes, ODataComplexType, ODataTypeRef, ODataSingleTypeRef, ODataServiceConfig, ODataEntitySetNamespaces, ODataEntitySet, ODataEnum, ComplexTypeOrEnum } from 'magic-odata-shared'
 import { SupressWarnings } from './config.js';
+import { warn } from './utils.js';
 
 const ns = {
     edmx: "http://docs.oasis-open.org/odata/ns/edmx",
@@ -120,7 +121,6 @@ function getType(entitySet: Node, typeAttr: string, namespace: string, forName: 
         : { isCollection: false, namespace: type[0].value.substring(0, lastDot), name: type[0].value.substring(lastDot + 1) };
 }
 
-const supressUnableToVerifyOdataVersionMessage = "To supress this warning, set warningSettings.suppressUnableToVerifyOdataVersion to false"
 function checkVersion(warningConfig: SupressWarnings, config: Document) {
     if (warningConfig.suppressAll || warningConfig.suppressUnableToVerifyOdataVersion) {
         return;
@@ -129,28 +129,27 @@ function checkVersion(warningConfig: SupressWarnings, config: Document) {
     try {
         const version = nsLookup(config, "edmx:Edmx");
         if (!version.length) {
-            console.warn("Could not find element edmx:Edmx. Unable to check odata version. " + supressUnableToVerifyOdataVersionMessage)
+            warn(warningConfig, "suppressUnableToVerifyOdataVersion", "Could not find element edmx:Edmx. Unable to check odata version.")
         }
 
         for (let i = 0; i < version.length; i++) {
             const vs = nsLookup(version[i] as Node, "@Version");
             if (!vs.length) {
-                console.warn("Could not find Version attribute of element edmx:Edmx. Unable to check odata version. " + supressUnableToVerifyOdataVersionMessage)
+                warn(warningConfig, "suppressUnableToVerifyOdataVersion", "Could not find Version attribute of element edmx:Edmx. Unable to check odata version")
                 return;
             }
 
             if (vs.length > 1) {
-                console.warn("Multiple Version attributes found in element edmx:Edmx. Unable to check odata version. " + supressUnableToVerifyOdataVersionMessage)
+                warn(warningConfig, "suppressUnableToVerifyOdataVersion", "Multiple Version attributes found in element edmx:Edmx. Unable to check odata version")
             }
 
             const v = (vs[0] as Attr)?.value || "";
             if (!/^\s*4(\.|(\s*$))/.test(v)) {
-                console.warn(`Unsupported odata version: ${v}. Only version 4 is suppoerted` + supressUnableToVerifyOdataVersionMessage)
+                warn(warningConfig, "suppressUnableToVerifyOdataVersion", `Unsupported odata version: ${v}. Only version 4 is suppoerted`)
             }
         }
     } catch {
-        // TODO: verbosity
-        console.warn("Error checking odata version. " + supressUnableToVerifyOdataVersionMessage)
+        warn(warningConfig, "suppressUnableToVerifyOdataVersion", "Error checking odata version")
     }
 }
 
@@ -178,12 +177,11 @@ function sortEntitySetsIntoNamespace(root: ODataEntitySetNamespaces, type: OData
     };
 }
 
-const suppressEnumIssuesValueMessage = "To supress this warning, set warningSettings.suppressEnumIssuesValue to false"
 function getEnumValue(warningConfig: SupressWarnings, attr?: Attr) {
 
     if (!attr) {
         if (!warningConfig?.suppressEnumIssuesValue) {
-            console.warn(`Found enum member with no value. Ignoring. ` + suppressEnumIssuesValueMessage);
+            warn(warningConfig, "suppressEnumIssuesValue", `Found enum member with no value. Ignoring.`);
         }
 
         return null;
@@ -192,7 +190,7 @@ function getEnumValue(warningConfig: SupressWarnings, attr?: Attr) {
     const value = parseInt(attr.value || "");
     if (isNaN(value)) {
         if (!warningConfig?.suppressEnumIssuesValue) {
-            console.warn(`Found enum member with invalid value: ${attr.value}. Ignoring. ` + suppressEnumIssuesValueMessage);
+            warn(warningConfig, "suppressEnumIssuesValue", `Found enum member with invalid value: ${attr.value}. Ignoring.`);
         }
 
         return null;
@@ -205,7 +203,7 @@ function getEnumMember(warningConfig: SupressWarnings, attr?: Attr) {
 
     if (!attr) {
         if (!warningConfig?.suppressEnumIssuesValue) {
-            console.warn(`Found enum member with no name. Ignoring. ` + suppressEnumIssuesValueMessage);
+            warn(warningConfig, "suppressEnumIssuesValue", `Found enum member with no name. Ignoring.`);
         }
 
         return null;
@@ -230,15 +228,12 @@ function mapEnumType(warningConfig: SupressWarnings, node: Node): ODataEnum | nu
 
     const name = nsLookup<Attr>(node, "@Name");
     if (!name.length) {
-        if (!warningConfig?.suppressEnumIssuesValue) {
-            console.warn(`Found enum with no name. Ignoring. ` + suppressEnumIssuesValueMessage);
-        }
-
+        warn(warningConfig, "suppressEnumIssuesValue", `Found enum with no name. Ignoring.`);
         return null;
     }
 
     if (name.length !== 1 && !warningConfig?.suppressEnumIssuesValue) {
-        console.warn(`Found enum with no multiple names. Using first. ` + suppressEnumIssuesValueMessage);
+        warn(warningConfig, "suppressEnumIssuesValue", `Found enum with no multiple names. Using first.`);
     }
 
     return {
@@ -265,7 +260,6 @@ function mapEntityType(warningConfig: SupressWarnings, node: Node): ODataComplex
 
     function keyTypes() {
 
-        // TODO: is there another node other than PropertyRef
         const t = (nsLookup(node, "edm:Key/edm:PropertyRef/@Name") as Attr[]).map(x => x.value);
         return t.length ? t : undefined;
     }
@@ -297,7 +291,7 @@ function mapEntityType(warningConfig: SupressWarnings, node: Node): ODataComplex
     }
 }
 
-function parseTypeStr(type: string | undefined): ODataTypeRef {
+function parseTypeStr(type: string): ODataTypeRef {
     const collectionType = /^Collection\((.+?)\)$/.exec(type || "");
     if (collectionType) {
         return {
@@ -306,8 +300,6 @@ function parseTypeStr(type: string | undefined): ODataTypeRef {
         };
     }
 
-    // TODO: setting no type to string?
-    type ??= "Edm.String";
     const nameI = type.lastIndexOf(".");
     const name = nameI === -1 ? type : type.substring(nameI + 1);
     const namespace = (nameI === -1 ? null : type.substring(0, nameI)) || "";
@@ -319,8 +311,8 @@ function parseTypeStr(type: string | undefined): ODataTypeRef {
     }
 }
 
-function parseType(type: Attr | undefined) {
-    return parseTypeStr(type?.value);
+function parseType(type: Attr) {
+    return parseTypeStr(type.value);
 }
 
 function mapProperty(x: { navigationProp: boolean, prop: Node }) {
@@ -328,13 +320,14 @@ function mapProperty(x: { navigationProp: boolean, prop: Node }) {
     const type = nsLookup(x.prop, "@Type")[0] as Attr | undefined
     const nullable = nsLookup(x.prop, "@Nullable")[0] as Attr | undefined
 
-    // TODO: ignore errors?
     if (!name) {
         throw new Error("Found edm:Property with no name");
     }
 
-    // TODO: parse type correctly
-    // TODO: setting default type to string
+    if (!type) {
+        throw new Error(`Found edm:Property with no type: ${name}`);
+    }
+
     return {
         [name.value]: {
             nullable: !nullable || /^\s*true\s*$/.test(nullable.value),

@@ -33,7 +33,6 @@ type EntityTypeInfo = {
     type: IsComplexType | IsPrimitiveType | IsEnumType
 }
 
-// TODO: allow multiple paths in a single call... e.g. x => x.BlogPost.Blog.User
 function buildGetSubPathProps(
     allTypes: ODataServiceTypes,
     fullyQualifiedTsType: FullyQualifiedTsType,

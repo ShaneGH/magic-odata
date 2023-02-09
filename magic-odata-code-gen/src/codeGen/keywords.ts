@@ -20,7 +20,7 @@ export type Keywords = {
     RequestTools: string,
     ODataComplexType: string,
     ODataTypeRef: string
-    _httpClientArgs: string,    // TODO: keyword should be against collection namespaces
+    _httpClientArgs: string,
     WithKeyType: string
     ODataCollectionResult: string
     ODataResult: string
@@ -56,7 +56,6 @@ export function generateKeywords(allNamespaces: string[], rootLevelTypes: string
 
     const keys = Object.keys(lookup)
 
-    // TODO: tests for all keyword re-mappings
     return {
         mergeMap: getKeyword("mergeMap"),
         map: getKeyword("map"),

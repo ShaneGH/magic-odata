@@ -83,7 +83,7 @@ export const buildEntityCasting = (tab: Tab, settings: CodeGenConfig | null | un
 
     return (type: ComplexTypeOrEnum) => type.containerType === "ComplexType"
         ? complexType(type.type)
-        : enumType(type.type);
+        : null; // https://github.com/ShaneGH/magic-odata/issues/12
 
     function complexType(type: ODataComplexType) {
         const casterName = getCasterName(type.name)
@@ -93,12 +93,6 @@ ${tab(single(type))}
 
 ${tab(collection(type))}
 }`
-    }
-
-    function enumType(type: ODataEnum) {
-        const casterName = getCasterName(type.name)
-
-        return `export module ${casterName} { /* TODO */ }`
     }
 
     function single(type: ODataComplexType) {

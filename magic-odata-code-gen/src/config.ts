@@ -52,7 +52,6 @@ export type Config = {
     warningSettings?: SupressWarnings
 }
 
-// TODO: double check that the "to supress this warning, set.... " messages are correct
 /**
  * Structure of settings to supress warnings
  */

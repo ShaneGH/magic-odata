@@ -1,8 +1,7 @@
 import { ComplexTypeOrEnum, ODataComplexTypeProperty, ODataEntitySetNamespaces, ODataEntitySets, ODataServiceConfig, ODataSingleTypeRef, ODataTypeRef } from "magic-odata-shared";
 import { Config } from "./config.js";
-import { typeNameString } from "./utils.js";
+import { typeNameString, warn } from "./utils.js";
 
-// TODO: ignore primitive types? Auto ignore unused primitives?
 type IsWhiteListed = (type: { name: string, namespace: string }) => boolean
 
 export function applyWhitelist(serviceConfig: ODataServiceConfig, settings: Config): ODataServiceConfig {
@@ -70,8 +69,7 @@ export function applyWhitelist(serviceConfig: ODataServiceConfig, settings: Conf
                 if (!settings.warningSettings?.suppressAll && !settings.warningSettings?.suppressIgnoredBaseType) {
                     const t = typeNameString(type.type)
                     const tBase = typeNameString(type.type.baseType)
-                    console.warn(`Type ${t} is not ignored, however it's parent type ${tBase} is. Ignoring ${t}. ` +
-                        "To supress this warning, set warningSettings.suppressIgnoredBaseType to false")
+                    warn(settings.warningSettings, "suppressIgnoredBaseType", `Type ${t} is not ignored, however it's parent type ${tBase} is. Ignoring ${t}.`)
                 }
 
                 return false;
@@ -87,8 +85,7 @@ export function applyWhitelist(serviceConfig: ODataServiceConfig, settings: Conf
                         const k = unwrapTypeRef(type.type.properties[type.type.keyProps[i]].type)
                         const tKey = typeNameString(k)
 
-                        console.warn(`Type ${t} is not ignored, however (part of) it's key type ${tKey} is. Ignoring ${t}. ` +
-                            "To supress this warning, set warningSettings.suppressIgnoredKeyType to false")
+                        warn(settings.warningSettings, "suppressIgnoredKeyType", `Type ${t} is not ignored, however (part of) it's key type ${tKey} is. Ignoring ${t}`)
                     }
 
                     return false;
