@@ -30,7 +30,6 @@ export function buildTab(settings: CodeGenConfig | null | undefined): Tab {
     return f;
 }
 
-// TODO: some licensing or marketing?
 export function lintingAndComments() {
     return `// ReSharper disable InconsistentNaming
 /* tslint:disable */
@@ -78,14 +77,12 @@ export const buildSanitizeNamespace = (settings: CodeGenConfig | null | undefine
 
 export type LookupType = (t: ODataSingleTypeRef) => ComplexTypeOrEnum | undefined
 
-// TODO: if the key type is a collection, I think this function will fall over
 export const buildLookupType = (serviceConfig: ODataServiceConfig): LookupType => (t: ODataSingleTypeRef) => {
     return (serviceConfig.types[t.namespace] && serviceConfig.types[t.namespace][t.name]) || undefined
 }
 
 export type LookupComplexType = (t: ODataSingleTypeRef) => ODataComplexType | undefined
 
-// TODO: if the key type is a collection, I think this function will fall over
 export const buildLookupComplexType = (serviceConfig: ODataServiceConfig): LookupComplexType => {
     const lt = buildLookupType(serviceConfig);
     return (t: ODataSingleTypeRef) => {
@@ -120,7 +117,6 @@ type KeyPropDescriptor = { name: string, type: ODataTypeRef }
 function getKeyPropertyType(prop: ODataTypeRef, fullyQualifiedTsType: FullyQualifiedTsType): string {
 
     if (prop.isCollection) {
-        // TODO: test
         return getKeyPropertyType(prop.collectionType, fullyQualifiedTsType) + "[]"
     }
 

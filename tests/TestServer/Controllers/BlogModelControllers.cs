@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Formatter;
@@ -6,7 +5,6 @@ using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Query.Expressions;
 using Microsoft.AspNetCore.OData.Results;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.OData.UriParser;
 using TestServer.Model;
 
@@ -287,6 +285,7 @@ public class HasIdsController : ODataControllerBase<HasId>
     }
 
     [HttpGet("HasIds({key})/My.Odata.Entities.User/BlogPostComments")]
+    [HttpGet("HasIds({key})/My.Odata.Entities.User/BlogPostComments/My.Odata.Entities.Comment")]
     [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
     public IQueryable<Comment> GetUsersCommentsFromHasIds([FromRoute] string key)
     {

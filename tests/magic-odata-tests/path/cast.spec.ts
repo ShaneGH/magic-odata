@@ -102,7 +102,19 @@ describe("Cast", function () {
 
     describe("Path Cast Combos", () => {
 
-        // TODO: path -> cast
+        it("Should retrieve correct values after cast => path => cast (multi)", async () => {
+            const ctxt = await addFullUserChain();
+            const comments = await client.HasIds
+                .withKey(x => x.key(ctxt.commentUser.Id!))
+                .cast(c => c.User())
+                .subPath(u => u.BlogPostComments)
+                .cast(x => x.Comment())
+                .get();
+
+            expect(comments.value.length).toBe(1);
+            expect(comments.value[0].Text).toBe(ctxt.comment.Text);
+        });
+
         it("Should retrieve correct values after cast and path (multi)", async () => {
             const ctxt = await addFullUserChain();
             const comments = await client.HasIds

@@ -2,7 +2,7 @@ import { ODataComplexType, ODataTypeRef, ODataServiceConfig, ODataServiceTypes, 
 import { CodeGenConfig } from "../config.js";
 import { typeNameString } from "../utils.js";
 import { Keywords } from "./keywords.js";
-import { buildFullyQualifiedTsType, buildGetCasterName, buildGetKeyBuilderName, buildGetKeyType, buildGetQueryableName, buildGetSubPathName, buildSanitizeNamespace, FullyQualifiedTsType, GetCasterName, GetKeyBuilderName, GetKeyType, GetQueryableName, GetSubPathName, httpClientType, Tab } from "./utils.js"
+import { buildFullyQualifiedTsType, buildGetCasterName, buildGetKeyBuilderName, buildGetQueryableName, buildGetSubPathName, buildSanitizeNamespace, FullyQualifiedTsType, GetCasterName, GetKeyBuilderName, GetKeyType, GetQueryableName, GetSubPathName, httpClientType, Tab } from "./utils.js"
 
 // TODO: duplicate_logic_key: subPath
 enum ObjectType {

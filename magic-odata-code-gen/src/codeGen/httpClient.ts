@@ -2,7 +2,7 @@ import { ODataComplexType, ODataEntitySet, ODataServiceConfig } from "magic-odat
 import { CodeGenConfig, SupressWarnings } from "../config.js";
 import { typeNameString, warn } from "../utils.js";
 import { Keywords } from "./keywords.js";
-import { buildFullyQualifiedTsType, buildGetCasterName, buildGetKeyBuilderName, buildGetKeyType, buildGetQueryableName, buildGetSubPathName, buildLookupComplexType, buildLookupType, buildSanitizeNamespace, httpClientType, Tab } from "./utils.js";
+import { buildFullyQualifiedTsType, buildGetCasterName, buildGetKeyBuilderName, buildGetQueryableName, buildGetSubPathName, buildLookupComplexType, buildLookupType, buildSanitizeNamespace, httpClientType, Tab } from "./utils.js";
 
 export function httpClient(
     serviceConfig: ODataServiceConfig,

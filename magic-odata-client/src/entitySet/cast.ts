@@ -16,9 +16,11 @@ function buildCaster<TFetchResult, TResult, TCaster>(
             .map(t => data.tools.root.types[ns][t]))
         .reduce((s, x) => [...s, ...x], [])
         .filter(x => x.containerType === "ComplexType"
-            && x.type.baseType
-            && x.type.baseType.namespace === namespace
-            && x.type.baseType.name === name)
+            && ((x.type.baseType
+                && x.type.baseType.namespace === namespace
+                && x.type.baseType.name === name)
+                || x.type.namespace === namespace
+                && x.type.name === name))
         .map(x => x.type as ODataComplexType)
         .map((x: ODataComplexType): ODataSingleTypeRef => ({
             isCollection: false,

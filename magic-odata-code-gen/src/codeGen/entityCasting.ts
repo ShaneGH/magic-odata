@@ -29,9 +29,11 @@ function buildGetComplexCasterProps(
 
         const casterType = singleCasterType ? "Single" : "Collection"
         const complexInherits = allComplexTypeFlatList
-            .filter(x => x.baseType
+            .filter(x => (x.baseType
                 && x.baseType.namespace === type.namespace
-                && x.baseType.name === type.name);
+                && x.baseType.name === type.name)
+                || (x.namespace === type.namespace
+                    && x.name === type.name));
 
         const distinctNames = Object.keys(complexInherits
             .reduce((s, x) => ({ ...s, [x.name]: true }), {} as { [key: string]: boolean }))
