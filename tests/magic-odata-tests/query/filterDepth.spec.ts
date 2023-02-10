@@ -436,7 +436,6 @@ describe("Query.Filter Depth", function () {
 
     const { filter: { hassubset, any, eq, and } } = queryUtils();
 
-    // TODO: not sure if HasSubset is a real thing
     // BlogPost, Words, HasSubset
     testCase("Complex -> Array<Simple> -> HasSubset", function () {
 
@@ -446,31 +445,6 @@ describe("Query.Filter Depth", function () {
 
             expect(q["$filter"]).toBe("hassubset(Words,['something'])");
         });
-
-        // it("Should filter (success)", execute.bind(null, true));
-        // it("Should filter (failure)", execute.bind(null, false))
-
-        // async function execute(success: boolean) {
-
-        //     const blogPostText = uniqueString("custom_blog_post_")
-        //     const user = await addFullUserChain({ blogPostContent: blogPostText });
-        //     const blogPostWord = success
-        //         ? blogPostText
-        //         : "Not a valid name";
-
-        //     const result = await client.BlogPosts
-        //         .withQuery((q, { filter: { eq, and } }) => q
-        //             .filter(bp => and(
-        //                 hasSubset(bp.Words, [blogPostWord]))))
-        //         .get({ requestInterceptor: toListRequestInterceptor });
-
-        //     if (success) {
-        //         expect(result.value.length).toBe(1);
-        //         expect(result.value[0].Name).toBe(user.blogPost.Name);
-        //     } else {
-        //         expect(result.value.length).toBe(0);
-        //     }
-        // }
     });
 
     // BlogPost, Comments, Comment, Words, Word

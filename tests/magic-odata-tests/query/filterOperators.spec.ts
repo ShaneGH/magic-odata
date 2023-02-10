@@ -4,6 +4,7 @@ import { My, ODataClient, rootConfigExporter } from "../generatedCode.js";
 import { buildQuery, NonNumericTypes, Query, QueryComplexObject, queryUtils } from "magic-odata-client";
 import { uniqueString } from "../utils/utils.js";
 import { buildComplexTypeRef } from "magic-odata-client";
+import { queryBuilder } from "../utils/odataClient.js";
 
 const rootConfig = rootConfigExporter();
 
@@ -564,20 +565,6 @@ describe("Query.Filter Operators", function () {
         }
     });
 
-    function qb<T>(fullName: string, q: (x: QueryComplexObject<T>) => Query | Query[]) {
-
-        const dot = fullName.lastIndexOf(".");
-        const namespace = dot === -1 ? "" : fullName.substring(0, dot)
-        const name = dot === -1 ? fullName : fullName.substring(dot + 1)
-        const type = rootConfig.types[namespace] && rootConfig.types[namespace][name]
-        if (!type || type.containerType !== "ComplexType") {
-            throw new Error(fullName);
-        }
-
-        const typeRef: QueryComplexObject<T> = buildComplexTypeRef(type.type, rootConfig.types);
-        return buildQuery(q(typeRef), false)
-    }
-
     testCase("add", function () {
 
         it("Should work correctly (success)", execute.bind(null, true));
@@ -1104,45 +1091,11 @@ describe("Query.Filter Operators", function () {
         }
     });
 
-
-    // testCase("concatCollection (TODO: make work with server)", function () {
-    //     // + add caes for all overloads
-    // });
-
-    // testCase("containsCollection (TODO: make work with server)", function () {
-    //     // + add caes for all overloads
-
-    //     describe("string", () => {
-    //         it("Should work correctly (success)", execute.bind(null, true));
-    //         it("Should work correctly (failure)", execute.bind(null, false))
-
-    //         async function execute(success: boolean) {
-
-    //             const ctxt = await addFullUserChain();
-    //             const searchString = success ? ctxt.blogPost.Name.split(" ")[0] : "invalid"
-
-    //             const result = await client.BlogPosts
-    //                 .withQuery((q, { filter: { eq, and, containsCollection } }) => q
-    //                     .filter(bp => and(
-    //                         eq(bp.Id, ctxt.blogPost.Id),
-    //                         containsCollection(bp.Words, searchString))))
-    //                 .get();
-
-    //             if (success) {
-    //                 expect(result.value.length).toBe(1);
-    //                 expect(result.value[0].Content).toBe(ctxt.blogPost.Content);
-    //             } else {
-    //                 expect(result.value.length).toBe(0);
-    //             }
-    //         }
-    //     });
-    // });
-
     testCase("hassubset", function () {
 
         it("Should build filter (server can't process)", () => {
             const { filter: { hassubset } } = queryUtils();
-            const q = qb<My.Odata.Entities.QueryableBlogPost>("My.Odata.Entities.BlogPost", bp =>
+            const q = queryBuilder<My.Odata.Entities.QueryableBlogPost>("My.Odata.Entities.BlogPost", bp =>
                 hassubset(bp.Words, ["something"]));
 
             expect(q["$filter"]).toBe("hassubset(Words,['something'])");
@@ -1153,7 +1106,7 @@ describe("Query.Filter Operators", function () {
 
         it("Should build filter (server can't process)", () => {
             const { filter: { collectionFunction } } = queryUtils();
-            const q = qb<My.Odata.Entities.QueryableBlogPost>("My.Odata.Entities.BlogPost", bp =>
+            const q = queryBuilder<My.Odata.Entities.QueryableBlogPost>("My.Odata.Entities.BlogPost", bp =>
                 collectionFunction("hassubset", bp.Words, ["something"]));
 
             expect(q["$filter"]).toBe("hassubset(Words,['something'])");
@@ -1164,7 +1117,7 @@ describe("Query.Filter Operators", function () {
 
         it("Should build filter (server can't process)", () => {
             const { filter: { divby, eq, group } } = queryUtils();
-            const q = qb<My.Odata.Entities.QueryableBlogPost>("My.Odata.Entities.BlogPost", u =>
+            const q = queryBuilder<My.Odata.Entities.QueryableBlogPost>("My.Odata.Entities.BlogPost", u =>
                 eq(u.Likes, group(divby(u.Likes, 2.1))));
 
             expect(q["$filter"]).toBe("Likes eq (Likes divby 2.1)");

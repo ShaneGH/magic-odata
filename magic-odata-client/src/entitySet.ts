@@ -61,6 +61,12 @@ export interface IEntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, 
      * @param overrideRequestTools Override any request tools needed
      */
     get<TOverrideResultType>(overrideRequestTools?: Partial<RequestTools<TFetchResult, TOverrideResultType>>): TOverrideResultType;
+
+    /**
+     * Execute a get request, casting the result to something custom
+     * @param overrideRequestTools Override any request tools needed
+     */
+    get<TOverrideFetchResult, TOverrideResultType>(overrideRequestTools?: Partial<RequestTools<TOverrideFetchResult, TOverrideResultType>>): TOverrideResultType;
 }
 
 export class EntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSingleCaster, TSubPath, TSingleSubPath, TFetchResult>
@@ -112,6 +118,7 @@ export class EntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSing
 
     get(overrideRequestTools?: Partial<RequestTools<TFetchResult, TResult>>): TResult;
     get<TOverrideResultType>(overrideRequestTools?: Partial<RequestTools<TFetchResult, TOverrideResultType>>): TOverrideResultType;
+    get<TOverrideFetchResult, TOverrideResultType>(overrideRequestTools?: Partial<RequestTools<TOverrideFetchResult, TOverrideResultType>>): TOverrideResultType;
     get(overrideRequestTools?: Partial<RequestTools<TFetchResult, TResult>>): TResult {
         return executeRequest(this.state, this.path(), overrideRequestTools)
     }

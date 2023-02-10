@@ -1,24 +1,6 @@
 import { User } from './generatedCode-angular'
 import { uniqueNumber, uniqueString } from './utils'
 
-// for debug
-export async function drain() {
-    throw new Error("TODO")
-    // const users = getUsers(x => x)
-    // const blogs = getBlogs(x => x)
-    // const blogPosts = getBlogPosts(x => x)
-    // const comments = getComments(x => x)
-
-    // return {
-    //     users: await users,
-    //     blogs: await blogs,
-    //     blogPosts: await blogPosts,
-    //     comments: await comments
-    //     // not implemented correctly yet
-    //     // tags: await getTags(x => x)
-    // }
-}
-
 export function postUser(val: User) {
     return post("Users", val);
 }

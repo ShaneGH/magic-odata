@@ -9,24 +9,6 @@ type Comment = My.Odata.Entities.Comment
 type CommentTag = My.Odata.Entities.CommentTag
 type CommentMood = My.Odata.Entities.CommentMood
 
-// for debug
-export async function drain() {
-    throw new Error("TODO")
-    // const users = getUsers(x => x)
-    // const blogs = getBlogs(x => x)
-    // const blogPosts = getBlogPosts(x => x)
-    // const comments = getComments(x => x)
-
-    // return {
-    //     users: await users,
-    //     blogs: await blogs,
-    //     blogPosts: await blogPosts,
-    //     comments: await comments
-    //     // not implemented correctly yet
-    //     // tags: await getTags(x => x)
-    // }
-}
-
 export type AddFullUserChainArgs = Partial<{
     userName: string
     userType: My.Odata.Entities.UserType
