@@ -25,19 +25,21 @@ const oDataClient = new ODataClient({
     request: (input, init) => fetch(input, init),
 
     // add a root URI
-    uriRoot: "http://my.odata.server/odata"
+    uriRoot: "https://my.odata.server/odata"
 })
 
-// Use the client!
-const users = oDataClient.BlogPosts
-    .withQuery((blog, {
-        filter: {gt, or}, 
-        orderBy: {orderBy}, 
-        paging
+// use the client!
+const popularBlogPosts = oDataClient.BlogPosts
+    .withQuery((blogPost, {
+        $filter: {gt, or}, 
+        $orderby: {orderBy}, 
+        $skip, 
+        $top
     }) => [ 
-        or(gt(blog.Comments.$count, 100), gt(blog.Likes, 100)),
-        orderBy(blog.Name),
-        paging(10, 0)
+        or(gt(blogPost.Comments.$count, 100), gt(blogPost.Likes, 100)),
+        orderBy(blogPost.Name),
+        $skip(0),
+        $top(10)
     ])
     .get();
 ```

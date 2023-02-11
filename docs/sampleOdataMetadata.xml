@@ -110,7 +110,7 @@
                 <Member Name="Happy" Value="1" />
                 <Member Name="Sad" Value="2" />
             </EnumType>
-            <EntityContainer Name="My/Odata.Container">
+            <EntityContainer Name="">
                 <EntitySet Name="UserProfiles" EntityType="My.Odata.Entities.UserProfile" />
                 <EntitySet Name="UserRoles" EntityType="My.Odata.Entities.UserRole" />
                 <EntitySet Name="HasIds" EntityType="My.Odata.Entities.HasId">
