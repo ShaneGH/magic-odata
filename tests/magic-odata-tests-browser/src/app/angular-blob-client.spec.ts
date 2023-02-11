@@ -53,7 +53,7 @@ describe('Angular client with Blob output', () => {
     const user = await addUser();
     // keep type annotation here. It is part of the test
     const items: Observable<ODataCollectionResult<User[]>> = client.Users
-      .withQuery((u, { filter: { eq } }) => eq(u.Id, user.Id))
+      .withQuery((u, { $filter: { eq } }) => eq(u.Id, user.Id))
       .get();
 
     return await new Promise((res, rej) => {
@@ -73,7 +73,7 @@ describe('Angular client with Blob output', () => {
   it('Should process failed requests', async () => {
     const client = TestBed.createComponent(AppComponent).componentInstance.angularBlobClient;
     const items = client.Users
-      .withQuery((_, { filter: { filterRaw } }) => filterRaw("sadkas"))
+      .withQuery((_, { $filter: { filterRaw } }) => filterRaw("sadkas"))
       .get();
 
     return await new Promise((res, rej) => {

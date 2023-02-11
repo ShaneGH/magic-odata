@@ -38,7 +38,7 @@ describe('Fetch client', () => {
     const user = await addUser();
     // keep type annotation here. It is part of the test
     const items: ODataCollectionResult<User[]> = await client.Users
-      .withQuery((u, { filter: { eq } }) => eq(u.Id, user.Id))
+      .withQuery((u, { $filter: { eq } }) => eq(u.Id, user.Id))
       .get();
 
     expect(items.value.length).toBe(1);
@@ -49,7 +49,7 @@ describe('Fetch client', () => {
     const client = TestBed.createComponent(AppComponent).componentInstance.fetchClient;
     try {
       await client.Users
-        .withQuery((_, { filter: { filterRaw } }) => filterRaw("sadkas"))
+        .withQuery((_, { $filter: { filterRaw } }) => filterRaw("sadkas"))
         .get();
 
       expect(true).toBe(false)
