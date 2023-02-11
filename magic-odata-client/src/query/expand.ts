@@ -1,4 +1,4 @@
-import { Expand, Query } from "../queryBuilder.js"
+import { buildQuery, Expand, Query } from "../queryBuilder.js"
 import { PathSegment, QueryCollection, QueryComplexObject, QueryObjectType, reContext } from "./queryComplexObjectBuilder.js"
 
 export type ExpandUtils = {
@@ -55,6 +55,8 @@ function expandAll($ref?: boolean): Expand {
     }
 }
 
+type BuildQuery = (q: Query | Query[], encode: boolean) => { [k: string]: string }
+
 function expand<T>(obj: QueryComplexObject<T> | QueryCollection<QueryComplexObject<T>, T>, and?: ((x: QueryComplexObject<T>) => Query | Query[]) | undefined): Expand {
 
     const $$expand = _expand(obj.$$oDataQueryMetadata.path);
@@ -73,52 +75,16 @@ function expand<T>(obj: QueryComplexObject<T> | QueryCollection<QueryComplexObje
         ? reContext(obj.childObjConfig)
         : reContext(obj);
 
-    const innerQ = and(reContexted);
-    const inner = Array.isArray(innerQ)
-        ? innerQ.map(queryToString).join(";")
-        : queryToString(innerQ);
+    const innerQ = buildQuery(and(reContexted), false);
+    const inner = Object
+        .keys(innerQ)
+        .map(k => `${k}=${innerQ[k]}`)
+        .join(";")
 
     return {
         $$oDataQueryObjectType: "Expand",
         $$expand: `${$$expand}(${inner})`
     }
-}
-
-function queryToString(result: Query) {
-
-    if (result.$$oDataQueryObjectType === "Expand") {
-        return `$expand=${result.$$expand}`
-    }
-
-    if (result.$$oDataQueryObjectType === "Filter") {
-        return `$filter=${result.$$filter}`
-    }
-
-    if (result.$$oDataQueryObjectType === "OrderBy") {
-        return `$orderBy=${result.$$orderBy}`
-    }
-
-    if (result.$$oDataQueryObjectType === "Search") {
-        return `$search=${result.$$search}`
-    }
-
-    if (result.$$oDataQueryObjectType === "Custom") {
-        return `${result.$$key}=${result.$$value}`
-    }
-
-    if (result.$$oDataQueryObjectType === "Count") {
-        return `$count=true`
-    }
-
-    if (result.$$oDataQueryObjectType === "Top") {
-        return `$top=${result.$$top}`
-    }
-
-    if (result.$$oDataQueryObjectType === "Skip") {
-        return `$skip=${result.$$skip}`
-    }
-
-    return `$select=${result.$$select}`;
 }
 
 function _expand(pathSegment: PathSegment[]): string | null {
