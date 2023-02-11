@@ -45,7 +45,7 @@ function toListRequestInterceptor(_: any, r: RequestInit): RequestInit {
 describe("Query.Search", function () {
 
     afterAll(() => {
-        const operations = Object.keys(queryUtils().search);
+        const operations = Object.keys(queryUtils().$search);
         const missing = operations
             .filter(o => !testCases.filter(tc => tc === o).length);
 
@@ -69,7 +69,7 @@ describe("Query.Search", function () {
                 const ctxt = await addFullUserChain();
 
                 const result = await client.BlogPosts
-                    .withQuery((u, { filter: { eq }, search: { term, searchNot } }) => [
+                    .withQuery((u, { $filter: { eq }, $search: { term, searchNot } }) => [
                         eq(u.Id, ctxt.blogPost.Id),
                         positive
                             ? term(ctxt.blogPost.Content.substring(2, 5))
@@ -91,7 +91,7 @@ describe("Query.Search", function () {
             const ctxt = await addFullUserChain();
 
             const result = await client.BlogPosts
-                .withQuery((u, { filter: { eq }, search: { searchRaw, searchNot } }) => [
+                .withQuery((u, { $filter: { eq }, $search: { searchRaw, searchNot } }) => [
                     eq(u.Id, ctxt.blogPost.Id),
                     positive
                         ? searchRaw('"' + ctxt.blogPost.Content.substring(2, 5) + '"')
@@ -112,7 +112,7 @@ describe("Query.Search", function () {
             const ctxt = await addFullUserChain();
 
             const result = await client.BlogPosts
-                .withQuery((u, { filter: { eq }, search: { term, searchAnd, searchNot } }) => [
+                .withQuery((u, { $filter: { eq }, $search: { term, searchAnd, searchNot } }) => [
                     eq(u.Id, ctxt.blogPost.Id),
                     positive
                         ? searchAnd(term(ctxt.blogPost.Content.substring(2, 5)), term(ctxt.blogPost.Content.substring(2, 5)))
@@ -133,7 +133,7 @@ describe("Query.Search", function () {
             const ctxt = await addFullUserChain();
 
             const result = await client.BlogPosts
-                .withQuery((u, { filter: { eq }, search: { term, searchOr, searchNot } }) => [
+                .withQuery((u, { $filter: { eq }, $search: { term, searchOr, searchNot } }) => [
                     eq(u.Id, ctxt.blogPost.Id),
                     positive
                         ? searchOr(term(ctxt.blogPost.Content.substring(2, 5)), term(ctxt.blogPost.Content.substring(2, 5)))

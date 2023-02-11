@@ -299,7 +299,7 @@ describe("SubPath", function () {
             const comment = await oDataClient.Comments
                 .withKey(x => x.key(user.comment.Id!))
                 .subPath(x => x.Tags)
-                .withQuery((t, { filter: { eq } }) => eq(t.Tag, success ? tag.Tag : "invalid"))
+                .withQuery((t, { $filter: { eq } }) => eq(t.Tag, success ? tag.Tag : "invalid"))
                 .get();
 
             if (success) {

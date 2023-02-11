@@ -69,7 +69,7 @@ describe("Query.Filter Depth", function () {
             const result = await client.BlogPosts
                 .withKey(x => x.key(user.blogPost.Id!))
                 .subPath(x => x.Words)
-                .withQuery((n, { filter: { eq, and } }) => eq(n, word))
+                .withQuery((n, { $filter: { eq, and } }) => eq(n, word))
                 .get();
 
             if (success) {
@@ -95,7 +95,7 @@ describe("Query.Filter Depth", function () {
 
             const result = await client.AppDetails
                 .subPath(x => x.AppNameWords)
-                .withQuery((w, { filter: { eq, and } }) => eq(w, word))
+                .withQuery((w, { $filter: { eq, and } }) => eq(w, word))
                 .get();
 
             if (success) {
@@ -120,7 +120,7 @@ describe("Query.Filter Depth", function () {
                 ? user.blog.Name
                 : "Not a valid name";
 
-            const result = await client.BlogPosts.withQuery((bp, { filter: { eq, and } }) =>
+            const result = await client.BlogPosts.withQuery((bp, { $filter: { eq, and } }) =>
                 and(
                     eq(bp.Id, user.blogPost.Id),
                     eq(bp.Blog.Name, blogName)))
@@ -148,7 +148,7 @@ describe("Query.Filter Depth", function () {
                 ? user.blog.Name
                 : "Not a valid name";
 
-            const result = await client.Users.withQuery((u, { filter: { eq, and, any } }) =>
+            const result = await client.Users.withQuery((u, { $filter: { eq, and, any } }) =>
                 and(
                     eq(u.Id, user.blogUser.Id),
                     any(u.Blogs, b1 => eq(b1.Name, userBlogName))))
@@ -176,7 +176,7 @@ describe("Query.Filter Depth", function () {
                 ? user.blogUser.Name
                 : "Not a valid name";
 
-            const result = await client.Users.withQuery((u, { filter: { eq, and } }) =>
+            const result = await client.Users.withQuery((u, { $filter: { eq, and } }) =>
                 and(
                     eq(u.Id, user.blogUser.Id),
                     eq(u.Name, userName)))
@@ -207,7 +207,7 @@ describe("Query.Filter Depth", function () {
                 ? My.Odata.Entities.UserType.Admin
                 : My.Odata.Entities.UserType.User;
 
-            const result = await client.Users.withQuery((u, { filter: { eq, and } }) =>
+            const result = await client.Users.withQuery((u, { $filter: { eq, and } }) =>
                 and(
                     eq(u.Id, user.blogUser.Id),
                     eq(u.UserType, userType)))
@@ -234,7 +234,7 @@ describe("Query.Filter Depth", function () {
                 ? My.Odata.Entities.UserProfileType.Advanced
                 : My.Odata.Entities.UserProfileType.Standard;
 
-            const result = await client.Users.withQuery((u, { filter: { eq, and } }) =>
+            const result = await client.Users.withQuery((u, { $filter: { eq, and } }) =>
                 and(
                     eq(u.Id, user.blogUser.Id),
                     eq(u.UserProfileType, userProfileType)))
@@ -261,7 +261,7 @@ describe("Query.Filter Depth", function () {
             const expectedCount = success ? 1 : 111;
 
             const result = await client.Users
-                .withQuery((u, { filter: { eq, and, count } }) =>
+                .withQuery((u, { $filter: { eq, and, count } }) =>
                     and(
                         eq(u.Id, user.blogUser.Id),
                         eq(count(u.Blogs), expectedCount)))
@@ -289,7 +289,7 @@ describe("Query.Filter Depth", function () {
                 ? user.blogPost.Name
                 : "Not a valid name";
 
-            const result = await client.Users.withQuery((u, { filter: { eq, and, any } }) =>
+            const result = await client.Users.withQuery((u, { $filter: { eq, and, any } }) =>
                 and(
                     eq(u.Id, user.blogUser.Id),
                     any(u.Blogs, b => any(b.Posts, bp => eq(bp.Name, postName)))))
@@ -317,7 +317,7 @@ describe("Query.Filter Depth", function () {
                 ? user.commentUser.Name
                 : "Not a valid name";
 
-            const result = await client.BlogPosts.withQuery((bp, { filter: { eq, and, any } }) =>
+            const result = await client.BlogPosts.withQuery((bp, { $filter: { eq, and, any } }) =>
                 and(
                     eq(bp.Id, user.blogPost.Id),
                     any(bp.Comments, c => eq(c.User.Name, userName))))
@@ -347,7 +347,7 @@ describe("Query.Filter Depth", function () {
 
             // blogs where the owner user has commented on a blog with a post name "blogPostName"
             const result = await client.Blogs
-                .withQuery((b, { filter: { eq, and, any } }) =>
+                .withQuery((b, { $filter: { eq, and, any } }) =>
                     and(
                         eq(b.Id, user.commentUserChain!.blog.Id),
                         any(b.User.BlogPostComments, c => eq(c.BlogPost.Name, blogPostName))))
@@ -375,7 +375,7 @@ describe("Query.Filter Depth", function () {
                 ? user.commentUserChain!.blog.Name
                 : "Not a valid name";
 
-            const result = await client.Comments.withQuery((c, { filter: { eq, and, any } }) =>
+            const result = await client.Comments.withQuery((c, { $filter: { eq, and, any } }) =>
                 and(
                     eq(c.Id, user.comment.Id),
                     any(c.User.Blogs, b => eq(b.Name, blogName))))
@@ -405,7 +405,7 @@ describe("Query.Filter Depth", function () {
                 : "Not a valid name";
 
             const result = await client.BlogPosts
-                .withQuery((bp, { filter: { eq, and, any } }) =>
+                .withQuery((bp, { $filter: { eq, and, any } }) =>
                     and(
                         eq(bp.Id, user.blogPost.Id),
                         any(bp.Words, w => eq(w, blogPostWord))))
@@ -434,7 +434,7 @@ describe("Query.Filter Depth", function () {
         return buildQuery(q(typeRef), false)
     }
 
-    const { filter: { hassubset, any, eq, and } } = queryUtils();
+    const { $filter: { hassubset, any, eq, and } } = queryUtils();
 
     // BlogPost, Words, HasSubset
     testCase("Complex -> Array<Simple> -> HasSubset", function () {

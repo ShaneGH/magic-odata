@@ -14,7 +14,7 @@ describe("Query", function () {
         it("Should query string enums correctly", async () => {
             const result = await oDataClient.AppDetails
                 .subPath(x => x.UserProfileTypes)
-                .withQuery((app, { filter: { eq } }) => eq(app, My.Odata.Entities.UserProfileType.Advanced))
+                .withQuery((app, { $filter: { eq } }) => eq(app, My.Odata.Entities.UserProfileType.Advanced))
                 .get();
 
             expect(result.value.length).toBe(1);
@@ -24,7 +24,7 @@ describe("Query", function () {
         it("Should query numberic enums correctly", async () => {
             const result = await oDataClient.AppDetails
                 .subPath(x => x.UserTypes)
-                .withQuery((app, { filter: { eq } }) => eq(app, My.Odata.Entities.UserType.User))
+                .withQuery((app, { $filter: { eq } }) => eq(app, My.Odata.Entities.UserType.User))
                 .get();
 
             expect(result.value.length).toBe(1);

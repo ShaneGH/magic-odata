@@ -48,7 +48,7 @@ function toListRequestInterceptor(_: any, r: RequestInit): RequestInit {
 describe("Query.Filter Operators", function () {
 
     afterAll(() => {
-        const operations = Object.keys(queryUtils().filter);
+        const operations = Object.keys(queryUtils().$filter);
         const missing = operations
             .filter(o => !testCases.filter(tc => tc === o).length);
 
@@ -69,7 +69,7 @@ describe("Query.Filter Operators", function () {
             const ctxt = await addFullUserChain();
 
             const result = await client.Users
-                .withQuery((u, { filter: { eq, and } }) =>
+                .withQuery((u, { $filter: { eq, and } }) =>
                     and(eq(u.Id, ctxt.blogUser.Id), eq(u.Name, null)))
                 .get();
 
@@ -93,7 +93,7 @@ describe("Query.Filter Operators", function () {
                     : uniqueString("FilterByWord");
 
                 const result = await client.Users
-                    .withQuery((u, { filter: { eq, and, filterRaw } }) =>
+                    .withQuery((u, { $filter: { eq, and, filterRaw } }) =>
                         and(eq(u.Id, ctxt.blogUser.Id), filterRaw({ n: u.Name }, x => `${x.n} eq '${name}'`)))
                     .get();
 
@@ -121,7 +121,7 @@ describe("Query.Filter Operators", function () {
                     : uniqueString("FilterByWord");
 
                 const result = await client.Users
-                    .withQuery((u, { filter: { eq, and, filterRaw } }) =>
+                    .withQuery((u, { $filter: { eq, and, filterRaw } }) =>
                         and(eq(u.Id, ctxt.blogUser.Id), filterRaw(`Name eq '${name}'`, addTypeInfo ? NonNumericTypes.Boolean : undefined)))
                     .get();
 
@@ -148,7 +148,7 @@ describe("Query.Filter Operators", function () {
                 : uniqueString("FilterByWord");
 
             const result = await client.Users
-                .withQuery((u, { filter: { eq, and, logicalOp } }) =>
+                .withQuery((u, { $filter: { eq, and, logicalOp } }) =>
                     and(eq(u.Id, ctxt.blogUser.Id), logicalOp(u.Name, "eq", name)))
                 .get();
 
@@ -174,7 +174,7 @@ describe("Query.Filter Operators", function () {
                 : uniqueString("FilterByWord");
 
             const result = await client.Users
-                .withQuery((u, { filter: { eq, and } }) =>
+                .withQuery((u, { $filter: { eq, and } }) =>
                     and(eq(u.Id, ctxt.blogUser.Id), eq(u.Name, name)))
                 .get();
 
@@ -189,10 +189,12 @@ describe("Query.Filter Operators", function () {
 
     testCase("isIn", function () {
 
-        it("Should work correctly (success)", execute.bind(null, true));
-        it("Should work correctly (failure)", execute.bind(null, false))
+        it("Should work correctly (success)", execute.bind(null, true, false));
+        it("Should work correctly (failure)", execute.bind(null, false, false))
+        it("Should work correctly (success) (custom mapper)", execute.bind(null, true, true));
+        it("Should work correctly (failure) (custom mapper)", execute.bind(null, false, true))
 
-        async function execute(success: boolean) {
+        async function execute(success: boolean, customMapper: boolean) {
 
             const ctxt = await addFullUserChain();
             const name = success
@@ -200,8 +202,8 @@ describe("Query.Filter Operators", function () {
                 : uniqueString("FilterByWord");
 
             const result = await client.Users
-                .withQuery((u, { filter: { eq, and, isIn } }) =>
-                    and(eq(u.Id, ctxt.blogUser.Id), isIn(u.Name, [name])))
+                .withQuery((u, { $filter: { eq, and, isIn } }) =>
+                    and(eq(u.Id, ctxt.blogUser.Id), isIn(u.Name, [name], customMapper ? x => `'${x}'` : undefined)))
                 .get();
 
             if (success) {
@@ -226,7 +228,7 @@ describe("Query.Filter Operators", function () {
                 : ctxt.blogUser.Name;
 
             const result = await client.Users
-                .withQuery((u, { filter: { eq, ne, and } }) =>
+                .withQuery((u, { $filter: { eq, ne, and } }) =>
                     and(eq(u.Id, ctxt.blogUser.Id), ne(u.Name, name)))
                 .get();
 
@@ -252,7 +254,7 @@ describe("Query.Filter Operators", function () {
                 : ctxt.blogPost.Likes + 1;
 
             const result = await client.BlogPosts
-                .withQuery((u, { filter: { eq, gt, and } }) =>
+                .withQuery((u, { $filter: { eq, gt, and } }) =>
                     and(eq(u.Id, ctxt.blogPost.Id), gt(u.Likes, likes)))
                 .get();
 
@@ -278,7 +280,7 @@ describe("Query.Filter Operators", function () {
                 : ctxt.blogPost.Likes + 1;
 
             const result = await client.BlogPosts
-                .withQuery((u, { filter: { eq, ge, and } }) =>
+                .withQuery((u, { $filter: { eq, ge, and } }) =>
                     and(eq(u.Id, ctxt.blogPost.Id), ge(u.Likes, likes)))
                 .get();
 
@@ -304,7 +306,7 @@ describe("Query.Filter Operators", function () {
                 : ctxt.blogPost.Likes - 1;
 
             const result = await client.BlogPosts
-                .withQuery((u, { filter: { eq, lt, and } }) =>
+                .withQuery((u, { $filter: { eq, lt, and } }) =>
                     and(eq(u.Id, ctxt.blogPost.Id), lt(u.Likes, likes)))
                 .get();
 
@@ -330,7 +332,7 @@ describe("Query.Filter Operators", function () {
                 : ctxt.blogPost.Likes - 1;
 
             const result = await client.BlogPosts
-                .withQuery((u, { filter: { eq, le, and } }) =>
+                .withQuery((u, { $filter: { eq, le, and } }) =>
                     and(eq(u.Id, ctxt.blogPost.Id), le(u.Likes, likes)))
                 .get();
 
@@ -356,7 +358,7 @@ describe("Query.Filter Operators", function () {
                 : uniqueString("FilterByWord");
 
             const result = await client.Users
-                .withQuery((u, { filter: { eq, and } }) =>
+                .withQuery((u, { $filter: { eq, and } }) =>
                     and(eq(u.Id, ctxt.blogUser.Id), eq(u.Name, name)))
                 .get();
 
@@ -382,7 +384,7 @@ describe("Query.Filter Operators", function () {
                 : uniqueString(`FilterByWord${success}`);
 
             const result = await client.Users
-                .withQuery((u, { filter: { eq, and, or } }) =>
+                .withQuery((u, { $filter: { eq, and, or } }) =>
                     and(
                         eq(u.Id, ctxt.blogUser.Id),
                         or(eq(u.Name, "Something invalid"), eq(u.Name, name))))
@@ -410,7 +412,7 @@ describe("Query.Filter Operators", function () {
                 : ctxt.blogUser.Name
 
             const result = await client.Users
-                .withQuery((u, { filter: { eq, and, not } }) =>
+                .withQuery((u, { $filter: { eq, and, not } }) =>
                     and(
                         eq(u.Id, ctxt.blogUser.Id),
                         not(eq(u.Name, name))))
@@ -438,7 +440,7 @@ describe("Query.Filter Operators", function () {
                 : ctxt.blogUser.Name
 
             const result = await client.Users
-                .withQuery((u, { filter: { eq, and, not, group } }) =>
+                .withQuery((u, { $filter: { eq, and, not, group } }) =>
                     and(
                         eq(u.Id, ctxt.blogUser.Id),
                         not(group(eq(u.Name, name)), false)))
@@ -466,7 +468,7 @@ describe("Query.Filter Operators", function () {
                 : uniqueString("Invalid")
 
             const result = await client.Users
-                .withQuery((u, { filter: { eq, and, any } }) =>
+                .withQuery((u, { $filter: { eq, and, any } }) =>
                     and(
                         eq(u.Id, ctxt.blogUser.Id),
                         any(u.Blogs, b => eq(b.Name, name))))
@@ -494,7 +496,7 @@ describe("Query.Filter Operators", function () {
                 : uniqueString("Invalid")
 
             const result = await client.Users
-                .withQuery((u, { filter: { eq, and, all } }) =>
+                .withQuery((u, { $filter: { eq, and, all } }) =>
                     and(
                         eq(u.Id, ctxt.blogUser.Id),
                         all(u.Blogs, b => eq(b.Name, name))))
@@ -522,7 +524,7 @@ describe("Query.Filter Operators", function () {
                 : uniqueString("Invalid")
 
             const result = await client.Users
-                .withQuery((u, { filter: { eq, and, collectionFilter } }) =>
+                .withQuery((u, { $filter: { eq, and, collectionFilter } }) =>
                     and(
                         eq(u.Id, ctxt.blogUser.Id),
                         collectionFilter(u.Blogs, "all", b => eq(b.Name, name))))
@@ -550,7 +552,7 @@ describe("Query.Filter Operators", function () {
                 : 11
 
             const result = await client.Users
-                .withQuery((u, { filter: { eq, and, count } }) =>
+                .withQuery((u, { $filter: { eq, and, count } }) =>
                     and(
                         eq(u.Id, ctxt.blogUser.Id),
                         eq(count(u.Blogs), itemCount)))
@@ -578,7 +580,7 @@ describe("Query.Filter Operators", function () {
                 : ctxt.blogPost.Likes;
 
             const result = await client.BlogPosts
-                .withQuery((u, { filter: { eq, and, add, filterRaw } }) =>
+                .withQuery((u, { $filter: { eq, and, add, filterRaw } }) =>
                     and(eq(u.Id, ctxt.blogPost.Id), eq(u.Likes, add(filterRaw(likes.toString()), 1))))
                 .get();
 
@@ -604,7 +606,7 @@ describe("Query.Filter Operators", function () {
                 : ctxt.blogPost.Likes;
 
             const result = await client.BlogPosts
-                .withQuery((u, { filter: { eq, and, sub, filterRaw } }) =>
+                .withQuery((u, { $filter: { eq, and, sub, filterRaw } }) =>
                     and(eq(u.Id, ctxt.blogPost.Id), eq(u.Likes, sub(filterRaw(likes.toString()), 1))))
                 .get();
 
@@ -628,7 +630,7 @@ describe("Query.Filter Operators", function () {
             const likes = success ? 1 : 2;
 
             const result = await client.BlogPosts
-                .withQuery((u, { filter: { eq, and, mul } }) =>
+                .withQuery((u, { $filter: { eq, and, mul } }) =>
                     and(eq(u.Id, ctxt.blogPost.Id), eq(u.Likes, mul(u.Likes, likes))))
                 .get();
 
@@ -652,7 +654,7 @@ describe("Query.Filter Operators", function () {
             const likes = success ? 1 : 2;
 
             const result = await client.BlogPosts
-                .withQuery((u, { filter: { eq, and, div } }) =>
+                .withQuery((u, { $filter: { eq, and, div } }) =>
                     and(eq(u.Id, ctxt.blogPost.Id), eq(u.Likes, div(u.Likes, likes))))
                 .get();
 
@@ -676,7 +678,7 @@ describe("Query.Filter Operators", function () {
             const likes = success ? 1 : 10000000;
 
             const result = await client.BlogPosts
-                .withQuery((u, { filter: { eq, and, mod, filterRaw } }) =>
+                .withQuery((u, { $filter: { eq, and, mod, filterRaw } }) =>
                     and(eq(u.Id, ctxt.blogPost.Id), eq(filterRaw("0"), mod(u.Likes, likes))))
                 .get();
 
@@ -702,7 +704,7 @@ describe("Query.Filter Operators", function () {
                 const searchString = title + "s"
 
                 const result = await client.BlogPosts
-                    .withQuery((bp, { filter: { eq, and, concatString } }) =>
+                    .withQuery((bp, { $filter: { eq, and, concatString } }) =>
                         and(
                             eq(bp.Id, ctxt.blogPost.Id),
                             eq(concatString(bp.Name, "s"), searchString)))
@@ -727,7 +729,7 @@ describe("Query.Filter Operators", function () {
                     const searchString = "s" + title
 
                     const result = await client.BlogPosts
-                        .withQuery((bp, { filter: { eq, and, concatString } }) =>
+                        .withQuery((bp, { $filter: { eq, and, concatString } }) =>
                             and(
                                 eq(bp.Id, ctxt.blogPost.Id),
                                 eq(concatString("s", bp.Name), searchString)))
@@ -756,7 +758,7 @@ describe("Query.Filter Operators", function () {
                 const searchString = success ? ctxt.blogPost.Name.substring(5) : "invalid"
 
                 const result = await client.BlogPosts
-                    .withQuery((bp, { filter: { eq, and, containsString } }) =>
+                    .withQuery((bp, { $filter: { eq, and, containsString } }) =>
                         and(
                             eq(bp.Id, ctxt.blogPost.Id),
                             containsString(bp.Name, searchString)))
@@ -782,7 +784,7 @@ describe("Query.Filter Operators", function () {
                         : "invalid"
 
                     const result = await client.BlogPosts
-                        .withQuery((bp, { filter: { eq, and, containsString } }) =>
+                        .withQuery((bp, { $filter: { eq, and, containsString } }) =>
                             and(
                                 eq(bp.Id, ctxt.blogPost.Id),
                                 containsString(searchString, bp.Name)))
@@ -810,7 +812,7 @@ describe("Query.Filter Operators", function () {
             const searchString = success ? ctxt.blogPost.Name.substring(0, 5) : "invalid"
 
             const result = await client.BlogPosts
-                .withQuery((bp, { filter: { eq, and, startsWithString } }) =>
+                .withQuery((bp, { $filter: { eq, and, startsWithString } }) =>
                     and(
                         eq(bp.Id, ctxt.blogPost.Id),
                         startsWithString(bp.Name, searchString)))
@@ -836,7 +838,7 @@ describe("Query.Filter Operators", function () {
                     : "invalid"
 
                 const result = await client.BlogPosts
-                    .withQuery((bp, { filter: { eq, and, startsWithString } }) =>
+                    .withQuery((bp, { $filter: { eq, and, startsWithString } }) =>
                         and(
                             eq(bp.Id, ctxt.blogPost.Id),
                             startsWithString(searchString, bp.Name)))
@@ -863,7 +865,7 @@ describe("Query.Filter Operators", function () {
             const searchString = success ? ctxt.blogPost.Name.substring(5) : "invalid"
 
             const result = await client.BlogPosts
-                .withQuery((bp, { filter: { eq, and, endsWithString } }) =>
+                .withQuery((bp, { $filter: { eq, and, endsWithString } }) =>
                     and(
                         eq(bp.Id, ctxt.blogPost.Id),
                         endsWithString(bp.Name, searchString)))
@@ -889,7 +891,7 @@ describe("Query.Filter Operators", function () {
                     : "invalid"
 
                 const result = await client.BlogPosts
-                    .withQuery((bp, { filter: { eq, and, endsWithString } }) =>
+                    .withQuery((bp, { $filter: { eq, and, endsWithString } }) =>
                         and(
                             eq(bp.Id, ctxt.blogPost.Id),
                             endsWithString(searchString, bp.Name)))
@@ -916,7 +918,7 @@ describe("Query.Filter Operators", function () {
             const searchString = success ? ctxt.blogPost.Name.substring(0, 5) : "invalid"
 
             const result = await client.BlogPosts
-                .withQuery((bp, { filter: { eq, and, indexOfString } }) =>
+                .withQuery((bp, { $filter: { eq, and, indexOfString } }) =>
                     and(
                         eq(bp.Id, ctxt.blogPost.Id),
                         eq(indexOfString(bp.Name, searchString), 0)))
@@ -942,7 +944,7 @@ describe("Query.Filter Operators", function () {
                     : "invalid"
 
                 const result = await client.BlogPosts
-                    .withQuery((bp, { filter: { eq, and, indexOfString } }) =>
+                    .withQuery((bp, { $filter: { eq, and, indexOfString } }) =>
                         and(
                             eq(bp.Id, ctxt.blogPost.Id),
                             eq(indexOfString(searchString, bp.Name), 0)))
@@ -970,7 +972,7 @@ describe("Query.Filter Operators", function () {
             if (!success) length++;
 
             const result = await client.BlogPosts
-                .withQuery((bp, { filter: { eq, and, lengthString } }) =>
+                .withQuery((bp, { $filter: { eq, and, lengthString } }) =>
                     and(
                         eq(bp.Id, ctxt.blogPost.Id),
                         eq(lengthString(bp.Name), length)))
@@ -996,7 +998,7 @@ describe("Query.Filter Operators", function () {
             const partial = success ? ctxt.blogPost.Name.substring(5) : "invalid"
 
             const result = await client.BlogPosts
-                .withQuery((bp, { filter: { eq, and, subString } }) =>
+                .withQuery((bp, { $filter: { eq, and, subString } }) =>
                     and(
                         eq(bp.Id, ctxt.blogPost.Id),
                         eq(subString(bp.Name, 5), partial)))
@@ -1021,7 +1023,7 @@ describe("Query.Filter Operators", function () {
                 const partial = success ? ctxt.blogPost.Name.substring(5, 7) : "invalid"
 
                 const result = await client.BlogPosts
-                    .withQuery((bp, { filter: { eq, and, subString } }) =>
+                    .withQuery((bp, { $filter: { eq, and, subString } }) =>
                         and(
                             eq(bp.Id, ctxt.blogPost.Id),
                             eq(subString(bp.Name, 5, 2), partial)))
@@ -1043,7 +1045,7 @@ describe("Query.Filter Operators", function () {
 
             const ctxt = await addFullUserChain({ userScore: 1.2 });
             const result = await client.Users
-                .withQuery((u, { filter: { eq, and, ceiling } }) =>
+                .withQuery((u, { $filter: { eq, and, ceiling } }) =>
                     and(
                         eq(u.Id, ctxt.blogUser.Id),
                         eq(ceiling(u.Score), 2)))
@@ -1060,7 +1062,7 @@ describe("Query.Filter Operators", function () {
 
             const ctxt = await addFullUserChain({ userScore: 1.2 });
             const result = await client.Users
-                .withQuery((u, { filter: { eq, and, floor } }) =>
+                .withQuery((u, { $filter: { eq, and, floor } }) =>
                     and(
                         eq(u.Id, ctxt.blogUser.Id),
                         eq(floor(u.Score), 1)))
@@ -1080,7 +1082,7 @@ describe("Query.Filter Operators", function () {
 
             const ctxt = await addFullUserChain({ userScore: roundUp ? 1.6 : 1.2 });
             const result = await client.Users
-                .withQuery((u, { filter: { eq, and, round } }) =>
+                .withQuery((u, { $filter: { eq, and, round } }) =>
                     and(
                         eq(u.Id, ctxt.blogUser.Id),
                         eq(round(u.Score), roundUp ? 2 : 1)))
@@ -1094,7 +1096,7 @@ describe("Query.Filter Operators", function () {
     testCase("hassubset", function () {
 
         it("Should build filter (server can't process)", () => {
-            const { filter: { hassubset } } = queryUtils();
+            const { $filter: { hassubset } } = queryUtils();
             const q = queryBuilder<My.Odata.Entities.QueryableBlogPost>("My.Odata.Entities.BlogPost", bp =>
                 hassubset(bp.Words, ["something"]));
 
@@ -1105,7 +1107,7 @@ describe("Query.Filter Operators", function () {
     testCase("collectionFunction", function () {
 
         it("Should build filter (server can't process)", () => {
-            const { filter: { collectionFunction } } = queryUtils();
+            const { $filter: { collectionFunction } } = queryUtils();
             const q = queryBuilder<My.Odata.Entities.QueryableBlogPost>("My.Odata.Entities.BlogPost", bp =>
                 collectionFunction("hassubset", bp.Words, ["something"]));
 
@@ -1116,7 +1118,7 @@ describe("Query.Filter Operators", function () {
     testCase("divby", function () {
 
         it("Should build filter (server can't process)", () => {
-            const { filter: { divby, eq, group } } = queryUtils();
+            const { $filter: { divby, eq, group } } = queryUtils();
             const q = queryBuilder<My.Odata.Entities.QueryableBlogPost>("My.Odata.Entities.BlogPost", u =>
                 eq(u.Likes, group(divby(u.Likes, 2.1))));
 

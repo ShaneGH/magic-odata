@@ -1,4 +1,4 @@
-import { Expand, OrderBy, Paging, Query, Select } from "../queryBuilder.js"
+import { Expand, Query } from "../queryBuilder.js"
 import { PathSegment, QueryCollection, QueryComplexObject, QueryObjectType, reContext } from "./queryComplexObjectBuilder.js"
 
 export type ExpandUtils = {
@@ -21,9 +21,9 @@ export type ExpandUtils = {
      * 
      * @example expand(my.user)
      * @example expand(my.user.blogPosts)
-     * @example expand(my.user.blogPosts, p => gt(p.likes, 10), p => select(p.title), _ => "$count")
+     * @example expand(my.user.blogPosts, p => [ gt(p.likes, 10), select(p.title), $count() ])
      */
-    expand<T>(obj: QueryComplexObject<T> | QueryCollection<QueryComplexObject<T>, T>, ...and: ((x: QueryComplexObject<T>) => Query)[]): Expand;
+    expand<T>(obj: QueryComplexObject<T> | QueryCollection<QueryComplexObject<T>, T>, and?: ((x: QueryComplexObject<T>) => Query | Query[]) | undefined): Expand;
 
     /**
      * Combine multiple expanded properties
@@ -55,14 +55,14 @@ function expandAll($ref?: boolean): Expand {
     }
 }
 
-function expand<T>(obj: QueryComplexObject<T> | QueryCollection<QueryComplexObject<T>, T>, ...and: ((x: QueryComplexObject<T>) => Query)[]): Expand {
+function expand<T>(obj: QueryComplexObject<T> | QueryCollection<QueryComplexObject<T>, T>, and?: ((x: QueryComplexObject<T>) => Query | Query[]) | undefined): Expand {
 
     const $$expand = _expand(obj.$$oDataQueryMetadata.path);
     if (!$$expand) {
         throw new Error("Object cannot be expanded");
     }
 
-    if (!and.length) {
+    if (!and) {
         return {
             $$oDataQueryObjectType: "Expand",
             $$expand
@@ -73,9 +73,10 @@ function expand<T>(obj: QueryComplexObject<T> | QueryCollection<QueryComplexObje
         ? reContext(obj.childObjConfig)
         : reContext(obj);
 
-    const inner = and
-        .map(f => executeInnerContext(reContexted, f))
-        .join(";");
+    const innerQ = and(reContexted);
+    const inner = Array.isArray(innerQ)
+        ? innerQ.map(queryToString).join(";")
+        : queryToString(innerQ);
 
     return {
         $$oDataQueryObjectType: "Expand",
@@ -83,11 +84,7 @@ function expand<T>(obj: QueryComplexObject<T> | QueryCollection<QueryComplexObje
     }
 }
 
-function executeInnerContext<T>(
-    reContextedObj: QueryComplexObject<T>,
-    and: (x: QueryComplexObject<T>) => Query
-) {
-    const result = and(reContextedObj)
+function queryToString(result: Query) {
 
     if (result.$$oDataQueryObjectType === "Expand") {
         return `$expand=${result.$$expand}`
@@ -109,14 +106,16 @@ function executeInnerContext<T>(
         return `${result.$$key}=${result.$$value}`
     }
 
-    if (result.$$oDataQueryObjectType === "Paging") {
-        return [
-            result.$$top != null ? `$top=${result.$$top}` : null,
-            result.$$skip != null ? `$skip=${result.$$skip}` : null,
-            result.$$count != null ? `$count=true` : null
-        ]
-            .filter(x => !!x)
-            .join(";")
+    if (result.$$oDataQueryObjectType === "Count") {
+        return `$count=true`
+    }
+
+    if (result.$$oDataQueryObjectType === "Top") {
+        return `$top=${result.$$top}`
+    }
+
+    if (result.$$oDataQueryObjectType === "Skip") {
+        return `$skip=${result.$$skip}`
     }
 
     return `$select=${result.$$select}`;

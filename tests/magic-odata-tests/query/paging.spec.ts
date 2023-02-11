@@ -71,10 +71,12 @@ describe("Query.Paging", function () {
             ].sort()
 
             const result = await client.Users
-                .withQuery((u, { paging, filter: { isIn }, orderBy: { orderBy } }) => [
+                .withQuery((u, { $skip, $top, $count, $filter: { isIn }, $orderby: { orderBy } }) => [
                     isIn(u.Id, userIds),
                     orderBy(u.Id),
-                    paging(1, 1, true)
+                    $skip(1),
+                    $top(1),
+                    $count()
                 ])
                 .get();
 
@@ -95,7 +97,7 @@ describe("Query.Paging", function () {
             ].sort()
 
             const result = await client.Users
-                .withQuery((u, { count, filter: { isIn }, orderBy: { orderBy } }) => [
+                .withQuery((u, { $count: count, $filter: { isIn }, $orderby: { orderBy } }) => [
                     isIn(u.Id, userIds),
                     count()
                 ])

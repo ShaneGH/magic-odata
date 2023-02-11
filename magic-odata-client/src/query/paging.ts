@@ -1,22 +1,33 @@
-import { Paging } from "../queryBuilder.js"
+import { Top, Skip, Count } from "../queryBuilder.js"
 
 /**
- * Add paging and a count to the query
+ * Add a $top paging parameter to the query
  */
-export function paging(top: number | undefined | null, skip?: number | undefined | null, count?: boolean | undefined | null): Paging {
+export function top(top: number): Top {
 
     return {
-        $$oDataQueryObjectType: "Paging",
-        $$top: top === null ? undefined : top,
-        $$skip: skip === null ? undefined : skip,
-        $$count: count === null ? undefined : count
+        $$oDataQueryObjectType: "Top",
+        $$top: top
     }
 }
 
 /**
- * Add a count to the query
+ * Add a $skip paging parameter to the query
  */
-export function count(): Paging {
+export function skip(skip: number): Skip {
 
-    return paging(null, null, true)
+    return {
+        $$oDataQueryObjectType: "Skip",
+        $$skip: skip
+    }
+}
+
+/**
+ * Add a $count parameter to the query
+ */
+export function count(): Count {
+
+    return {
+        $$oDataQueryObjectType: "Count"
+    }
 }

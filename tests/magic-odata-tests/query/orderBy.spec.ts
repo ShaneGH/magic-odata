@@ -45,7 +45,7 @@ function toListRequestInterceptor(_: any, r: RequestInit): RequestInit {
 describe("Query.OrderBy", function () {
 
     afterAll(() => {
-        const operations = Object.keys(queryUtils().orderBy);
+        const operations = Object.keys(queryUtils().$orderby);
         const missing = operations
             .filter(o => !testCases.filter(tc => tc === o).length);
 
@@ -70,7 +70,7 @@ describe("Query.OrderBy", function () {
             ]
 
             const result = await client.Users
-                .withQuery((u, { filter: { isIn }, orderBy: { orderByRaw } }) => [
+                .withQuery((u, { $filter: { isIn }, $orderby: { orderByRaw } }) => [
                     isIn(u.Id, userIds),
                     orderByRaw("Name")
                 ])
@@ -98,7 +98,7 @@ describe("Query.OrderBy", function () {
                 ]
 
                 const result = await client.Users
-                    .withQuery((u, { filter: { isIn }, orderBy: { orderBy } }) => [
+                    .withQuery((u, { $filter: { isIn }, $orderby: { orderBy } }) => [
                         isIn(u.Id, userIds),
                         orderBy(asc ? u.Name : [u.Name, "desc"])
                     ])
@@ -122,7 +122,7 @@ describe("Query.OrderBy", function () {
                 ]
 
                 const result = await client.Users
-                    .withQuery((u, { filter: { isIn }, orderBy: { orderBy } }) => [
+                    .withQuery((u, { $filter: { isIn }, $orderby: { orderBy } }) => [
                         isIn(u.Id, userIds),
                         orderBy(u.Name, u.UserType)
                     ])
@@ -145,7 +145,7 @@ describe("Query.OrderBy", function () {
                 ]
 
                 const result = await client.Users
-                    .withQuery((u, { filter: { isIn }, orderBy: { orderBy } }) => [
+                    .withQuery((u, { $filter: { isIn }, $orderby: { orderBy } }) => [
                         isIn(u.Id, userIds),
                         orderBy([u.Blogs.$count, "desc"])
                     ])

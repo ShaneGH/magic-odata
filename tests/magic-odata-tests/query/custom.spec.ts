@@ -71,7 +71,7 @@ describe("Query.Custom", function () {
             ].sort()
 
             const result = await client.Users
-                .withQuery((u, { custom, filter: { isIn }, orderBy: { orderBy } }) => [
+                .withQuery((u, { custom, $filter: { isIn }, $orderby: { orderBy } }) => [
                     isIn(u.Id, userIds),
                     orderBy(u.Id),
                     custom("$skip", "1"),
@@ -97,9 +97,9 @@ describe("Query.Custom", function () {
             ].sort()
 
             const result = await client.Users
-                .withQuery((u, { count, filter: { isIn }, orderBy: { orderBy } }) => [
+                .withQuery((u, { $count, $filter: { isIn }, $orderby: { orderBy } }) => [
                     isIn(u.Id, userIds),
-                    count()
+                    $count()
                 ])
                 .get();
 

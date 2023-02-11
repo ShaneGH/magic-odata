@@ -49,7 +49,7 @@ function toListRequestInterceptor(_: any, r: RequestInit): RequestInit {
 describe("Query.Select", function () {
 
     afterAll(() => {
-        const operations = Object.keys(queryUtils().select);
+        const operations = Object.keys(queryUtils().$select);
         const missing = operations
             .filter(o => !testCases.filter(tc => tc === o).length);
 
@@ -69,7 +69,7 @@ describe("Query.Select", function () {
             const ctxt = await addFullUserChain();
             const result = await client.Users
                 .withKey(x => x.key(ctxt.blogUser.Id))
-                .withQuery((_, { select: { selectRaw } }) =>
+                .withQuery((_, { $select: { selectRaw } }) =>
                     selectRaw("Name,Score"))
                 .get();
 
@@ -86,7 +86,7 @@ describe("Query.Select", function () {
                 const ctxt = await addFullUserChain();
                 const result = await client.Users
                     .withKey(x => x.key(ctxt.blogUser.Id))
-                    .withQuery((x, { select: { select } }) =>
+                    .withQuery((x, { $select: { select } }) =>
                         select(x.Name, x.Score))
                     .get();
 
@@ -103,7 +103,7 @@ describe("Query.Select", function () {
                 const ctxt = await addFullUserChain({ commentMood: My.Odata.Entities.Mood.Happy });
                 const result = await client.Comments
                     .withKey(x => x.key(ctxt.comment.Id))
-                    .withQuery((x, { select: { select } }) => select(x.Mood))
+                    .withQuery((x, { $select: { select } }) => select(x.Mood))
                     .get();
 
                 expect(result.Mood!.Key).toBe(ctxt.comment.Mood!.Key);
@@ -118,7 +118,7 @@ describe("Query.Select", function () {
                 const ctxt = await addFullUserChain({ commentMood: My.Odata.Entities.Mood.Happy });
                 const result = await client.Comments
                     .withKey(x => x.key(ctxt.comment.Id))
-                    .withQuery((x, { select: { select } }) => select(x.Mood.Mood))
+                    .withQuery((x, { $select: { select } }) => select(x.Mood.Mood))
                     .get();
 
                 expect(result.Mood!.Key).toBeUndefined();

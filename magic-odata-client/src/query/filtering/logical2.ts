@@ -84,9 +84,11 @@ export function or(...conditions: Filter[]): Filter {
 }
 
 function makeCollectionMapper<T>(mapper: ((x: T) => string) | undefined, metadata: TypeLookup) {
+    if (mapper) {
+        return (xs: T[]) => `(${xs?.map(mapper!).join(",")})`
+    }
 
-    return (mapper && ((xs: T[]) => xs?.map(mapper!).join(",")))
-        || ((xs: T[]) => serialize(xs, metadata.typeRef && { isCollection: true, collectionType: metadata.typeRef }, metadata.root))
+    return (xs: T[]) => `(${xs?.map(x => serialize(x, metadata.typeRef, metadata.root)) || ""})`
 }
 
 export function isIn<T>(lhs: Operable<T>, rhs: T[] | OperableCollection<T>, mapper?: (x: T) => string): Filter {

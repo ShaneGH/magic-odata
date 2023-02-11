@@ -3,29 +3,31 @@ import { SelectUtils, newUtils as select } from "./select.js";
 import { ExpandUtils, newUtils as expand } from "./expand.js";
 import { OrderingUtils, newUtils as orderBy } from "./orderBy.js";
 import { SearchUtils, newUtils as search } from "./search.js";
-import { count, paging } from "./paging.js";
+import { count, top, skip } from "./paging.js";
 import { Custom } from "../queryBuilder.js";
 
 export type Utils = {
-    filter: FilterUtils
-    select: SelectUtils
-    expand: ExpandUtils,
-    orderBy: OrderingUtils
-    search: SearchUtils
-    paging: typeof paging
-    count: typeof count
+    $filter: FilterUtils
+    $select: SelectUtils
+    $expand: ExpandUtils,
+    $orderby: OrderingUtils
+    $search: SearchUtils
+    $top: typeof top
+    $skip: typeof skip
+    $count: typeof count
     custom: typeof custom
 }
 
 export function utils(): Utils {
     return {
-        filter: filter(),
-        select: select(),
-        expand: expand(),
-        orderBy: orderBy(),
-        search: search(),
-        paging,
-        count,
+        $filter: filter(),
+        $select: select(),
+        $expand: expand(),
+        $orderby: orderBy(),
+        $search: search(),
+        $top: top,
+        $skip: skip,
+        $count: count,
         custom
     }
 }

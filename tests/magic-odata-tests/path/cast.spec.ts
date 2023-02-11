@@ -45,7 +45,7 @@ describe("Cast", function () {
         const user = await addUser();
         const items = await client.HasIds
             .cast(x => x.User())
-            .withQuery((u, { filter: { eq } }) => eq(u.Id, user.Id!))
+            .withQuery((u, { $filter: { eq } }) => eq(u.Id, user.Id!))
             .get();
 
         expect(items.value.length).toBe(1);
@@ -66,7 +66,7 @@ describe("Cast", function () {
         const user = await addUser();
         const items = await client.HasIds
             .cast(x => x.Blog())
-            .withQuery((u, { filter: { eq } }) => eq(u.Id, user.Id!))
+            .withQuery((u, { $filter: { eq } }) => eq(u.Id, user.Id!))
             .get();
 
         expect(items.value.length).toBe(0);

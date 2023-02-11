@@ -7,14 +7,23 @@ export type QueryParts = Partial<{
     filter: Filter
     expand: Expand,
     orderBy: OrderBy,
-    paging: Paging
+    top: Top,
+    skip: Skip,
+    count: Count
 }>
 
-export type Paging = {
-    $$oDataQueryObjectType: "Paging"
-    $$top: number | undefined
-    $$skip: number | undefined
-    $$count: boolean | undefined
+export type Top = {
+    $$oDataQueryObjectType: "Top"
+    $$top: number
+}
+
+export type Skip = {
+    $$oDataQueryObjectType: "Skip"
+    $$skip: number
+}
+
+export type Count = {
+    $$oDataQueryObjectType: "Count"
 }
 
 export type Expand = {
@@ -50,7 +59,7 @@ export type Filter = {
     $$root?: ODataServiceTypes
 }
 
-export type Query = Paging | Expand | OrderBy | Select | Filter | Custom | Search
+export type Query = Top | Skip | Count | Expand | OrderBy | Select | Filter | Custom | Search
 
 function hasOwnProperty(s: Dict<string>, prop: string) {
     return Object.prototype.hasOwnProperty.call(s, prop)
@@ -100,21 +109,22 @@ export function buildQuery(q: Query | Query[], encode = true): Dict<string> {
             }
 
             if (x.$$oDataQueryObjectType === "Custom") {
-                return maybeAdd(encode, s, x.$$key, x.$$value, "Multiple select clauses detected");
+                return maybeAdd(encode, s, x.$$key, x.$$value, "Multiple custom clauses detected");
             }
 
             if (x.$$oDataQueryObjectType === "Search") {
-                return maybeAdd(encode, s, "$search", x.$$search, "Multiple select clauses detected");
+                return maybeAdd(encode, s, "$search", x.$$search, "Multiple search clauses detected");
             }
 
-            if (hasOwnProperty(s, "$count") || hasOwnProperty(s, "$skip") || hasOwnProperty(s, "$top")) {
-                throw new Error("Multiple paging clauses detected")
+            if (x.$$oDataQueryObjectType === "Top") {
+                return maybeAdd(encode, s, "$top", x.$$top.toString(), "Multiple top clauses detected");
             }
 
-            const err = "Multiple paging clauses detected. If using a count and paging, both must use the same \"paging(...)\" function call"
-            s = maybeAdd(encode, s, "$skip", x.$$skip?.toString(), err)
-            s = maybeAdd(encode, s, "$top", x.$$top?.toString(), err)
-            return maybeAdd(encode, s, "$count", (x.$$count || undefined) && "true", err)
+            if (x.$$oDataQueryObjectType === "Count") {
+                return maybeAdd(encode, s, "$count", "true", "Multiple count clauses detected");
+            }
+
+            return maybeAdd(encode, s, "$skip", x.$$skip.toString(), "Multiple skip clauses detected");
         }, {} as Dict<string>);
 }
 

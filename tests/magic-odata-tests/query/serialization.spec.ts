@@ -114,7 +114,7 @@ describe("Query.Select", function () {
         it("Should escape characters in query", async () => {
 
             const result = await client.Users
-                .withQuery((u, { filter: { eq } }) => eq(u.Id, "hello ' ''"))
+                .withQuery((u, { $filter: { eq } }) => eq(u.Id, "hello ' ''"))
                 .get();
 
             expect(result.value.length).toEqual(0);

@@ -45,7 +45,7 @@ function toListRequestInterceptor(_: any, r: RequestInit): RequestInit {
 describe("Query.Expand", function () {
 
     afterAll(() => {
-        const operations = Object.keys(queryUtils().expand);
+        const operations = Object.keys(queryUtils().$expand);
         const missing = operations
             .filter(o => !testCases.filter(tc => tc === o).length);
 
@@ -65,7 +65,7 @@ describe("Query.Expand", function () {
             const ctxt = await addFullUserChain();
             const result = await client.BlogPosts
                 .withKey(x => x.key(ctxt.blogPost.Id))
-                .withQuery((p, { expand: { expandRaw } }) => expandRaw("Blog"))
+                .withQuery((p, { $expand: { expandRaw } }) => expandRaw("Blog"))
                 .get();
 
             expect(result.Blog!.Name).toBe(ctxt.blog.Name);
@@ -78,7 +78,7 @@ describe("Query.Expand", function () {
             const ctxt = await addFullUserChain();
             const result = await client.BlogPosts
                 .withKey(x => x.key(ctxt.blogPost.Id))
-                .withQuery((_, { expand: { expandAll } }) => expandAll())
+                .withQuery((_, { $expand: { expandAll } }) => expandAll())
                 .get();
 
             expect(result.Blog!.Name).toBe(ctxt.blog.Name);
@@ -89,7 +89,7 @@ describe("Query.Expand", function () {
             const ctxt = await addFullUserChain();
             const result = await client.BlogPosts
                 .withKey(x => x.key(ctxt.blogPost.Id))
-                .withQuery((_, { expand: { expandAll } }) => expandAll(true))
+                .withQuery((_, { $expand: { expandAll } }) => expandAll(true))
                 .get();
 
             expect((result.Blog as any)["@odata.id"]).toBe(`Blogs('${ctxt.blog.Id}')`);
@@ -102,7 +102,7 @@ describe("Query.Expand", function () {
             const ctxt = await addFullUserChain();
             const result = await client.BlogPosts
                 .withKey(x => x.key(ctxt.blogPost.Id))
-                .withQuery((p, { expand: { expand } }) =>
+                .withQuery((p, { $expand: { expand } }) =>
                     expand(p.Blog))
                 .get();
 
@@ -119,7 +119,7 @@ describe("Query.Expand", function () {
                 const ctxt = await addFullUserChain();
                 const result = await client.BlogPosts
                     .withKey(x => x.key(ctxt.blogPost.Id))
-                    .withQuery((p, { expand: { expand } }) => {
+                    .withQuery((p, { $expand: { expand } }) => {
                         return twoCalls
                             ? expand(p.Blog, b => expand(b.User))
                             : expand(p.Blog.User);
@@ -136,8 +136,8 @@ describe("Query.Expand", function () {
             const ctxt = await addFullUserChain();
             const result = await client.BlogPosts
                 .withKey(x => x.key(ctxt.blogPost.Id))
-                .withQuery((p, { expand: { expand }, paging }) =>
-                    expand(p.Comments, _ => paging(null, null, true)))
+                .withQuery((p, { $expand: { expand }, $count }) =>
+                    expand(p.Comments, _ => $count()))
                 .get();
 
             expect((result as any)["Comments@odata.count"]).toBe(1);
@@ -149,7 +149,7 @@ describe("Query.Expand", function () {
             const ctxt = await addFullUserChain();
             const result = await client.Users
                 .withKey(x => x.key(ctxt.blogUser.Id))
-                .withQuery((p, { expand: { expand } }) =>
+                .withQuery((p, { $expand: { expand } }) =>
                     expand(p.Blogs, b => expand(b.Posts)))
                 .get();
 
@@ -166,7 +166,7 @@ describe("Query.Expand", function () {
             const ctxt = await addFullUserChain();
             const result = await client.BlogPosts
                 .withKey(x => x.key(ctxt.blogPost.Id))
-                .withQuery((p, { expand: { expand }, select: { select } }) =>
+                .withQuery((p, { $expand: { expand }, $select: { select } }) =>
                     expand(p.Blog, b => select(b.Name)))
                 .get();
 
@@ -179,8 +179,8 @@ describe("Query.Expand", function () {
             const ctxt = await addFullUserChain();
             const result = await client.BlogPosts
                 .withKey(x => x.key(ctxt.blogPost.Id))
-                .withQuery((p, { expand: { expand }, select: { select }, paging }) =>
-                    expand(p.Comments, b => select(b.Title), _ => paging(null, null, true)))
+                .withQuery((p, { $expand: { expand }, $select: { select }, $count }) =>
+                    expand(p.Comments, b => [select(b.Title), $count()]))
                 .get();
 
             expect((result as any)["Comments@odata.count"]).toBe(1);
@@ -218,7 +218,7 @@ describe("Query.Expand", function () {
             const ctxt = await addFullUserChain();
             const result = await client.BlogPosts
                 .withKey(x => x.key(ctxt.blogPost.Id))
-                .withQuery((p, { expand: { expand }, select: { select } }) =>
+                .withQuery((p, { $expand: { expand }, $select: { select } }) =>
                     expand(p.Comments, b => select(b.Title)))
                 .get();
 
@@ -231,23 +231,34 @@ describe("Query.Expand", function () {
             const ctxt = await addFullUserChain();
             const result = await client.BlogPosts
                 .withKey(x => x.key(ctxt.blogPost.Id))
-                .withQuery((p, { expand: { expand }, orderBy: { orderBy } }) =>
+                .withQuery((p, { $expand: { expand }, $orderby: { orderBy } }) =>
                     expand(p.Comments, b => orderBy(b.Title)))
                 .get();
 
             expect(result.Comments![0].Title).toBe(ctxt.comment.Title);
         });
 
-        it("Should work correctly with multiple entity + paging", async () => {
+        describe("Multiple entity + paging", () => {
+            const ctxtP = addFullUserChain();
 
-            const ctxt = await addFullUserChain();
-            const result = await client.BlogPosts
-                .withKey(x => x.key(ctxt.blogPost.Id))
-                .withQuery((p, { expand: { expand }, paging }) =>
-                    expand(p.Comments, b => paging(0, 1, true)))
-                .get();
+            it("Should execute correctly, 0, 1, 1", execute.bind(null, 0, 1, 1))
+            it("Should execute correctly, 0, 0, 0", execute.bind(null, 0, 0, 0))
+            it("Should execute correctly, 100, 1, 0", execute.bind(null, 100, 1, 0))
 
-            expect(result.Comments?.length).toBe(0);
+            async function execute(skip: number, top: number, expected: number) {
+
+                const ctxt = await ctxtP
+                const result = await client.BlogPosts
+                    .withKey(x => x.key(ctxt.blogPost.Id))
+                    .withQuery((p, { $expand: { expand }, $skip, $top }) =>
+                        expand(p.Comments, b => [
+                            $skip(skip),
+                            $top(top)
+                        ]))
+                    .get();
+
+                expect(result.Comments?.length).toBe(expected);
+            }
         });
 
         it("Should work correctly with multiple entity + search", async () => {
@@ -255,7 +266,7 @@ describe("Query.Expand", function () {
             const ctxt = await addFullUserChain();
             const result = await client.BlogPosts
                 .withKey(x => x.key(ctxt.blogPost.Id))
-                .withQuery((p, { expand: { expand }, search: { term, searchNot } }) =>
+                .withQuery((p, { $expand: { expand }, $search: { term, searchNot } }) =>
                     expand(p.Comments, _ => searchNot(term("saopidhasodh a"))))
                 .get();
 
@@ -268,7 +279,7 @@ describe("Query.Expand", function () {
             const ctxt = await addFullUserChain();
             const result = await client.BlogPosts
                 .withKey(x => x.key(ctxt.blogPost.Id))
-                .withQuery((p, { expand: { expand }, custom }) =>
+                .withQuery((p, { $expand: { expand }, custom }) =>
                     expand(p.Comments, b => custom("$top", "0")))
                 .get();
 
@@ -289,7 +300,7 @@ describe("Query.Expand", function () {
                 const ctxt = await addFullUserChain();
                 const result = await client.BlogPosts
                     .withKey(x => x.key(ctxt.blogPost.Id))
-                    .withQuery((p, { expand: { expand }, filter: { eq, ne } }) =>
+                    .withQuery((p, { $expand: { expand }, $filter: { eq, ne } }) =>
                         expand(p.Comments, c => returnSomething
                             ? eq(c.Title, ctxt.comment.Title)
                             : ne(c.Title, ctxt.comment.Title)))
@@ -310,7 +321,7 @@ describe("Query.Expand", function () {
             const ctxt = await addFullUserChain();
             const result = await client.BlogPosts
                 .withKey(x => x.key(ctxt.blogPost.Id))
-                .withQuery((p, { expand: { expand, combine } }) =>
+                .withQuery((p, { $expand: { expand, combine } }) =>
                     combine(
                         expand(p.Blog),
                         expand(p.Comments)))
