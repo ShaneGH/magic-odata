@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+    <edmx:DataServices>
+        <Schema Namespace="My.Odata.Entities" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+            <EntityType Name="AppDetailsBase">
+                <Key>
+                    <PropertyRef Name="Id" />
+                </Key>
+                <Property Name="Id" Type="Edm.Int32" Nullable="false" />
+            </EntityType>
+            <EntityType Name="AppDetails" BaseType="My.Odata.Entities.AppDetailsBase">
+                <Property Name="AppName" Type="Edm.String" Nullable="false" />
+                <Property Name="AppNameWords" Type="Collection(Edm.String)" />
+                <Property Name="UserTypes" Type="Collection(My.Odata.Entities.UserType)" Nullable="false" />
+                <Property Name="UserProfileTypes" Type="Collection(My.Odata.Entities.UserProfileType)" Nullable="false" />
+            </EntityType>
+            <EntityType Name="UserProfile">
+                <Key>
+                    <PropertyRef Name="Key" />
+                </Key>
+                <Property Name="Key" Type="My.Odata.Entities.UserProfileType" Nullable="false" />
+                <Property Name="Description" Type="Edm.String" Nullable="false" />
+            </EntityType>
+            <EntityType Name="UserRole">
+                <Key>
+                    <PropertyRef Name="Key" />
+                </Key>
+                <Property Name="Key" Type="My.Odata.Entities.UserType" Nullable="false" />
+                <Property Name="Description" Type="Edm.String" Nullable="false" />
+            </EntityType>
+            <EntityType Name="HasId">
+                <Key>
+                    <PropertyRef Name="Id" />
+                </Key>
+                <Property Name="Id" Type="Edm.String" Nullable="false" />
+            </EntityType>
+            <EntityType Name="User" BaseType="My.Odata.Entities.HasId">
+                <Property Name="Name" Type="Edm.String" Nullable="false" />
+                <Property Name="UserType" Type="My.Odata.Entities.UserType" Nullable="false" />
+                <Property Name="Score" Type="Edm.Double" Nullable="false" />
+                <Property Name="UserProfileType" Type="My.Odata.Entities.UserProfileType" Nullable="false" />
+                <NavigationProperty Name="Blogs" Type="Collection(My.Odata.Entities.Blog)" />
+                <NavigationProperty Name="BlogPostComments" Type="Collection(My.Odata.Entities.Comment)" />
+            </EntityType>
+            <EntityType Name="Blog" BaseType="My.Odata.Entities.HasId">
+                <Property Name="Name" Type="Edm.String" Nullable="false" />
+                <Property Name="UserId" Type="Edm.String" />
+                <Property Name="BlogPostNames" Type="Collection(Edm.String)" />
+                <NavigationProperty Name="User" Type="My.Odata.Entities.User">
+                    <ReferentialConstraint Property="UserId" ReferencedProperty="Id" />
+                </NavigationProperty>
+                <NavigationProperty Name="Posts" Type="Collection(My.Odata.Entities.BlogPost)" />
+            </EntityType>
+            <EntityType Name="BlogPost" BaseType="My.Odata.Entities.HasId">
+                <Property Name="Name" Type="Edm.String" Nullable="false" />
+                <Property Name="Content" Type="Edm.String" Nullable="false" />
+                <Property Name="Likes" Type="Edm.Int64" Nullable="false" />
+                <Property Name="AgeRestriction" Type="Edm.Int64" />
+                <Property Name="Date" Type="Edm.DateTimeOffset" Nullable="false" />
+                <Property Name="BlogId" Type="Edm.String" />
+                <Property Name="Words" Type="Collection(Edm.String)" />
+                <NavigationProperty Name="Blog" Type="My.Odata.Entities.Blog">
+                    <ReferentialConstraint Property="BlogId" ReferencedProperty="Id" />
+                </NavigationProperty>
+                <NavigationProperty Name="Comments" Type="Collection(My.Odata.Entities.Comment)" />
+            </EntityType>
+            <EntityType Name="Comment" BaseType="My.Odata.Entities.HasId">
+                <Property Name="Title" Type="Edm.String" Nullable="false" />
+                <Property Name="Text" Type="Edm.String" Nullable="false" />
+                <Property Name="BlogPostId" Type="Edm.String" />
+                <Property Name="UserId" Type="Edm.String" />
+                <Property Name="Words" Type="Collection(Edm.String)" />
+                <Property Name="Tags" Type="Collection(My.Odata.Entities.CommentTag)" />
+                <Property Name="Mood" Type="My.Odata.Entities.CommentMood" />
+                <NavigationProperty Name="BlogPost" Type="My.Odata.Entities.BlogPost">
+                    <ReferentialConstraint Property="BlogPostId" ReferencedProperty="Id" />
+                </NavigationProperty>
+                <NavigationProperty Name="User" Type="My.Odata.Entities.User">
+                    <ReferentialConstraint Property="UserId" ReferencedProperty="Id" />
+                </NavigationProperty>
+            </EntityType>
+            <ComplexType Name="CommentTag">
+                <Property Name="Tag" Type="Edm.String" />
+                <NavigationProperty Name="Comments" Type="Collection(My.Odata.Entities.Comment)" />
+            </ComplexType>
+            <ComplexType Name="CommentMood">
+                <Property Name="Key" Type="Edm.String" />
+                <Property Name="Mood" Type="My.Odata.Entities.Mood" Nullable="false" />
+                <Property Name="CommentId" Type="Edm.String" />
+                <NavigationProperty Name="Comment" Type="My.Odata.Entities.Comment" />
+            </ComplexType>
+            <EntityType Name="CompositeKeyItem">
+                <Key>
+                    <PropertyRef Name="Id1" />
+                    <PropertyRef Name="Id2" />
+                </Key>
+                <Property Name="Id1" Type="Edm.String" Nullable="false" />
+                <Property Name="Id2" Type="Edm.Guid" Nullable="false" />
+                <Property Name="Data" Type="Edm.String" />
+            </EntityType>
+            <EnumType Name="UserType">
+                <Member Name="User" Value="0" />
+                <Member Name="Admin" Value="1" />
+            </EnumType>
+            <EnumType Name="UserProfileType">
+                <Member Name="Standard" Value="10" />
+                <Member Name="Advanced" Value="11" />
+            </EnumType>
+            <EnumType Name="Mood">
+                <Member Name="Happy" Value="1" />
+                <Member Name="Sad" Value="2" />
+            </EnumType>
+            <EntityContainer Name="My/Odata.Container">
+                <EntitySet Name="UserProfiles" EntityType="My.Odata.Entities.UserProfile" />
+                <EntitySet Name="UserRoles" EntityType="My.Odata.Entities.UserRole" />
+                <EntitySet Name="HasIds" EntityType="My.Odata.Entities.HasId">
+                    <NavigationPropertyBinding Path="My.Odata.Entities.Blog/User" Target="Users" />
+                    <NavigationPropertyBinding Path="My.Odata.Entities.BlogPost/Blog" Target="Blogs" />
+                    <NavigationPropertyBinding Path="My.Odata.Entities.BlogPost/Comments" Target="Comments" />
+                    <NavigationPropertyBinding Path="My.Odata.Entities.Comment/Mood/Comment" Target="Comments" />
+                    <NavigationPropertyBinding Path="My.Odata.Entities.Comment/Tags/Comments" Target="Comments" />
+                    <NavigationPropertyBinding Path="My.Odata.Entities.Comment/User" Target="Users" />
+                    <NavigationPropertyBinding Path="My.Odata.Entities.User/BlogPostComments" Target="Comments" />
+                    <NavigationPropertyBinding Path="My.Odata.Entities.User/Blogs" Target="Blogs" />
+                </EntitySet>
+                <EntitySet Name="Users" EntityType="My.Odata.Entities.User">
+                    <NavigationPropertyBinding Path="BlogPostComments" Target="Comments" />
+                    <NavigationPropertyBinding Path="Blogs" Target="Blogs" />
+                </EntitySet>
+                <EntitySet Name="Blogs" EntityType="My.Odata.Entities.Blog">
+                    <NavigationPropertyBinding Path="User" Target="Users" />
+                </EntitySet>
+                <EntitySet Name="BlogPosts" EntityType="My.Odata.Entities.BlogPost">
+                    <NavigationPropertyBinding Path="Blog" Target="Blogs" />
+                    <NavigationPropertyBinding Path="Comments" Target="Comments" />
+                </EntitySet>
+                <EntitySet Name="BlogPosts2" EntityType="My.Odata.Entities.BlogPost">
+                    <NavigationPropertyBinding Path="Blog" Target="Blogs" />
+                    <NavigationPropertyBinding Path="Comments" Target="Comments" />
+                </EntitySet>
+                <EntitySet Name="Comments" EntityType="My.Odata.Entities.Comment">
+                    <NavigationPropertyBinding Path="Mood/Comment" Target="Comments" />
+                    <NavigationPropertyBinding Path="Tags/Comments" Target="Comments" />
+                    <NavigationPropertyBinding Path="User" Target="Users" />
+                </EntitySet>
+                <EntitySet Name="CompositeKeyItems" EntityType="My.Odata.Entities.CompositeKeyItem" />
+                <Singleton Name="AppDetails" Type="My.Odata.Entities.AppDetails" />
+                <Singleton Name="AppDetailsBase" Type="My.Odata.Entities.AppDetailsBase" />
+            </EntityContainer>
+        </Schema>
+    </edmx:DataServices>
+</edmx:Edmx>
