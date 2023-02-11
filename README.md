@@ -6,11 +6,12 @@ Magical OData client generation for typescript. No more `string`. No more `any`!
 `npm i magic-odata-code-gen --save-dev; npm i magic-odata-client;`
 
  * `magic-odata-code-gen` is a dev dependency required to generate a client at compile time
+     * This tool is small and we recommend installing it locally per project in order to avoid versioning issues
  * `magic-odata-client` is a dependency of your application. The generated code will use this package
 
 ## Generate
 
-`node node_modules/magic-odata-code-gen/dist/index.js --metadataUrl 'http://my.odata.server/odata/$metadata'`
+`node node_modules/magic-odata-code-gen/dist/index.js --metadataUrl "https://raw.githubusercontent.com/ShaneGH/magic-odata/main/docs/sampleOdataMetadata.xml"`
 
 ## Use
 
@@ -28,17 +29,17 @@ const oDataClient = new ODataClient({
 })
 
 // Use the client!
-const users = oDataClient.Users
-    .withQuery((user, {
-        filter: {gt, eq, or}, 
+const users = oDataClient.BlogPosts
+    .withQuery((blog, {
+        filter: {gt, or}, 
         orderBy: {orderBy}, 
         paging
-     }) => [ 
-        or(eq(user.powerUser, true), gt(user.reputation, 100)),
-        orderBy(user.userName),
+    }) => [ 
+        or(gt(blog.Comments.$count, 100), gt(blog.Likes, 100)),
+        orderBy(blog.Name),
         paging(10, 0)
     ])
-    .get(); 
+    .get();
 ```
 
 ## Why?

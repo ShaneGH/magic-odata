@@ -3,6 +3,11 @@ import { queryUtils } from "magic-odata-client";
 import { My } from "../generatedCode.js";
 import { oDataClient } from "../utils/odataClient.js";
 
+function loggingFetcher(input: RequestInfo | URL, init?: RequestInit) {
+    console.log(input, init)
+    return fetch(input, init)
+}
+
 describe("Query", function () {
 
     describe("QueryEnums", () => {
