@@ -50,6 +50,28 @@ public class AppDetailsController : ODataController
             .AsQueryable();
     }
 
+    [HttpGet("AppDetails/UserProfileTypes")]
+    [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
+    public IQueryable<UserProfileType> GetUserProfileTypes()
+    {
+        return _inMemoryDb.AppDetails
+            .AsQueryable()
+            .ToList()
+            .SelectMany(x => x.UserProfileTypes)
+            .AsQueryable();
+    }
+
+    [HttpGet("AppDetails/UserProfileTypes")]
+    [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
+    public IQueryable<UserType> GetUserTypes()
+    {
+        return _inMemoryDb.AppDetails
+            .AsQueryable()
+            .ToList()
+            .SelectMany(x => x.UserTypes)
+            .AsQueryable();
+    }
+
     [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
     public IQueryable<UserRole> Get()
     {

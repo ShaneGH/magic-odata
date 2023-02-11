@@ -4,8 +4,6 @@ import { typeNameString } from "../utils.js";
 import { Keywords } from "./keywords.js";
 import { buildFullyQualifiedTsType, buildGetQueryableName, buildSanitizeNamespace, FullyQualifiedTsType, GetQueryableName, Tab } from "./utils.js";
 
-
-
 function getQueryableTypeString(
     type: ODataTypeRef, wrapInQueryObject: boolean, keywords: Keywords, serviceConfig: ODataServiceConfig,
     settings: CodeGenConfig | null | undefined, fullyQualifiedTsType: FullyQualifiedTsType, getQueryableName: GetQueryableName): string {
@@ -40,16 +38,22 @@ function getQueryableType(type: ODataTypeRef, keywords: Keywords, settings: Code
         throw new Error(`Unknown type: ${typeNameString(type, settings)}`);
     }
 
-    const isEnum = serviceConfig.types[type.namespace][type.name].containerType === "Enum"
-    const t = fullyQualifiedTsType(type, getQueryableName);
+    if (serviceConfig.types[type.namespace][type.name].containerType === "Enum") {
+        const tEnum = fullyQualifiedTsType(type);
+        return {
+            wrapper: keywords.QueryEnum,
+            generics: [tEnum]
+        };
+    }
 
+    const t = fullyQualifiedTsType(type, getQueryableName);
     return {
-        wrapper: isEnum ? keywords.QueryEnum : keywords.QueryComplexObject,
+        wrapper: keywords.QueryComplexObject,
         generics: [t]
     };
 }
 
-export type EntityQuery = (type: ComplexTypeOrEnum) => string
+export type EntityQuery = (type: ComplexTypeOrEnum) => string | null
 export const buildEntityQuery = (settings: CodeGenConfig | null | undefined, tab: Tab, keywords: Keywords, serviceConfig: ODataServiceConfig): EntityQuery => {
 
     const sanitizeNamespace = buildSanitizeNamespace(settings);
@@ -58,7 +62,7 @@ export const buildEntityQuery = (settings: CodeGenConfig | null | undefined, tab
 
     return (type: ComplexTypeOrEnum) => type.containerType === "ComplexType"
         ? complexType(type.type)
-        : enumType(type.type);
+        : null;
 
     function complexType(type: ODataComplexType) {
         const qtName = getQueryableName(type.name)
@@ -78,10 +82,5 @@ export const buildEntityQuery = (settings: CodeGenConfig | null | undefined, tab
         return `export type ${qtName} = ${baseQType}{
 ${tab(queryableProps)}
 }`
-    }
-
-    function enumType(type: ODataEnum) {
-        const qtName = getQueryableName(type.name)
-        return `export type ${qtName} = { /*TODO*/ }`
     }
 }

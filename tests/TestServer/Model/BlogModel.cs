@@ -53,6 +53,10 @@ public class AppDetails : AppDetailsBase
     public string AppName { get; set; }
 
     public IEnumerable<string> AppNameWords => AppName.Split(" ", StringSplitOptions.RemoveEmptyEntries);
+
+    public IEnumerable<UserType> UserTypes => new[] { UserType.Admin, UserType.User };
+
+    public IList<UserProfileType> UserProfileTypes => new[] { UserProfileType.Advanced, UserProfileType.Standard };
 }
 
 public class UserProfile

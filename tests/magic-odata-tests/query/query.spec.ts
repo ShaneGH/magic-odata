@@ -1,7 +1,31 @@
 
 import { queryUtils } from "magic-odata-client";
+import { My } from "../generatedCode.js";
+import { oDataClient } from "../utils/odataClient.js";
 
 describe("Query", function () {
+
+    describe("QueryEnums", () => {
+        it("Should query string enums correctly", async () => {
+            const result = await oDataClient.AppDetails
+                .subPath(x => x.UserProfileTypes)
+                .withQuery((app, { filter: { eq } }) => eq(app, My.Odata.Entities.UserProfileType.Advanced))
+                .get();
+
+            expect(result.value.length).toBe(1);
+            expect(result.value[0]).toBe(My.Odata.Entities.UserProfileType.Advanced);
+        });
+
+        it("Should query numberic enums correctly", async () => {
+            const result = await oDataClient.AppDetails
+                .subPath(x => x.UserTypes)
+                .withQuery((app, { filter: { eq } }) => eq(app, My.Odata.Entities.UserType.User))
+                .get();
+
+            expect(result.value.length).toBe(1);
+            expect(result.value[0]).toBe(My.Odata.Entities.UserType[My.Odata.Entities.UserType.User]);
+        });
+    });
 
     // if there are duplicate keys in adjacent properties, then 
     // the user will not be able to use deconstruction to get operators
