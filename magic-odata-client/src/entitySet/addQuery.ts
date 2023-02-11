@@ -1,7 +1,7 @@
 import { ODataComplexType, ODataEnum, ODataServiceConfig, ODataTypeName } from "magic-odata-shared";
 import { Utils, utils as queryUtils } from "../query/queryUtils.js";
 import { Query } from "../queryBuilder.js";
-import { buildComplexTypeRef, QueryComplexObject, QueryEnum, QueryObjectType, QueryPrimitive } from "../typeRefBuilder.js";
+import { buildComplexTypeRef, QueryComplexObject, QueryEnum, QueryObjectType, QueryPrimitive } from "../query/queryComplexObjectBuilder.js";
 import { EntitySetData, getDeepTypeRef, lookup } from "./utils.js";
 
 type ComplexQueryBuilder<TEntity> = (entity: QueryComplexObject<TEntity>, utils: Utils) => Query | Query[]

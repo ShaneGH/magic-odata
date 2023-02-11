@@ -1,4 +1,4 @@
-import { QueryCollection, QueryObject, QueryPrimitive } from "../typeRefBuilder.js";
+import { QueryCollection, QueryObject, QueryPrimitive } from "./queryComplexObjectBuilder.js";
 import { add, ceiling, div, divby, floor, mod, mul, round, sub } from "./filtering/arithmetic2.js";
 import { all, any, collectionFilter, collectionFunction, count, hassubset, OperableCollection } from "./filtering/collection1.js";
 import {

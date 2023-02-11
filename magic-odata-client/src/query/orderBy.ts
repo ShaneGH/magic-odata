@@ -1,5 +1,5 @@
 import { OrderBy } from "../queryBuilder.js"
-import { QueryEnum, QueryPrimitive } from "../typeRefBuilder.js"
+import { QueryEnum, QueryPrimitive } from "./queryComplexObjectBuilder.js"
 
 export type OrderingUtils = {
 

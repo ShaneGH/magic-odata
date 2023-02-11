@@ -77,7 +77,7 @@ function buildGetSubPathProps(
 
     function getTSubPath(info: EntityTypeInfo, single: boolean) {
 
-        // TODO: is is possible to cast a primitive? (e.g. int -> string)
+        // https://github.com/ShaneGH/magic-odata/issues/12
         if (info.type.objectType !== ObjectType.ComplexType) {
             return keywords.PrimitiveTypesCannotBeTraversed;
         }
@@ -95,7 +95,7 @@ function buildGetSubPathProps(
 
     function getTCaster(info: EntityTypeInfo, forceSingle = false) {
 
-        // TODO: is is possible to cast a primitive? (e.g. int -> string)
+        // https://github.com/ShaneGH/magic-odata/issues/12
         if (info.type.objectType !== ObjectType.ComplexType || info.collectionDepth > 1) {
             return keywords.CastingOnCollectionsOfCollectionsIsNotSupported;
         }

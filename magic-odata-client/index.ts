@@ -67,7 +67,7 @@ export {
     QueryComplexObject,
     QueryObject,
     buildComplexTypeRef // https://github.com/ShaneGH/magic-odata/issues/6
-} from "./src/typeRefBuilder.js"
+} from "./src/query/queryComplexObjectBuilder.js"
 
 /*
  * It is not possible to select an item by key more than once

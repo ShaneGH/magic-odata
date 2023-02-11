@@ -1,6 +1,6 @@
 import { ODataTypeRef } from "magic-odata-shared";
 import { Filter } from "../../queryBuilder.js";
-import { HasODataQueryMetadata } from "../../typeRefBuilder.js";
+import { HasODataQueryMetadata } from "../queryComplexObjectBuilder.js";
 import { combineFilterStrings, getOperableFilterString, getOperableTypeInfo, HasFilterMetadata } from "./operable0.js";
 import { OutputTypes, resolveOutputType } from "./queryPrimitiveTypes0.js";
 

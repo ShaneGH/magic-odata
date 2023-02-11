@@ -1,5 +1,5 @@
 import { Expand, OrderBy, Paging, Query, Select } from "../queryBuilder.js"
-import { PathSegment, QueryCollection, QueryComplexObject, QueryObjectType, reContext } from "../typeRefBuilder.js"
+import { PathSegment, QueryCollection, QueryComplexObject, QueryObjectType, reContext } from "./queryComplexObjectBuilder.js"
 
 export type ExpandUtils = {
 

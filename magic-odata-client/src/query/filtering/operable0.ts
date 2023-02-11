@@ -1,6 +1,6 @@
 import { ODataServiceTypes, ODataTypeRef } from "magic-odata-shared";
 import { Filter } from "../../queryBuilder.js";
-import { QueryEnum, QueryObjectMetadata, QueryObjectType, QueryPrimitive } from "../../typeRefBuilder.js";
+import { QueryEnum, QueryObjectMetadata, QueryObjectType, QueryPrimitive } from "../queryComplexObjectBuilder.js";
 import { serialize } from "../../valueSerializer.js";
 
 export type Operable<T> = QueryPrimitive<T> | QueryEnum<T> | Filter

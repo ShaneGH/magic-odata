@@ -1,5 +1,5 @@
 import { ODataComplexType, ODataTypeRef, ODataServiceTypes, ODataSingleTypeRef, ODataTypeName, ODataEnum, ODataServiceConfig } from "magic-odata-shared";
-import { typeNameString, typeRefString } from "./utils.js";
+import { typeNameString, typeRefString } from "../utils.js";
 
 type Dict<T> = { [key: string]: T }
 
