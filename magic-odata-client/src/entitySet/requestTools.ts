@@ -68,7 +68,7 @@ export type RequestTools<TRequestResult, TDataResult> = {
     uriInterceptor?: (uri: ODataUriParts) => string
 
     /** 
-     * Interceptor for http requests. Use this to add custom http headers
+     * Interceptor for http requests. Use this to do authentication and to add custom http headers
      */
     requestInterceptor?: (url: string, options: RequestOptions) => RequestOptions
 

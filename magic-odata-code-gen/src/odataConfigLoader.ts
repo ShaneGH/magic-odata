@@ -1,10 +1,9 @@
 
-import fetch, { RequestInit, Response } from 'node-fetch'
+import fetch, { Response } from 'node-fetch'
 import prompt from "prompt"
 import * as fs from 'fs'
-import xmldom from 'xmldom'
+import { DOMParser } from '@xmldom/xmldom'
 import { Config } from './config.js';
-const { DOMParser } = xmldom;
 
 export enum LocationType {
     FileLocation = "FileLocation",

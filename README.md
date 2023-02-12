@@ -58,6 +58,8 @@ Write safe, statically typed odata queries in typescript. No more `string`. No m
 
 ## Features
 
+ See [Features.md](https://github.com/ShaneGH/magic-odata/blob/main/docs/Features.md)
+
  * Code gen configuration
     * $metadata files protected with authentication
     * Angular mode
@@ -76,3 +78,5 @@ Write safe, statically typed odata queries in typescript. No more `string`. No m
  * $value
 
 ## Contributing
+
+ See [Contributing.md](https://github.com/ShaneGH/magic-odata/blob/main/Contributing.md)

@@ -6,14 +6,33 @@ export type Config = {
 
     /**
      * Required
-     * The location of the odata config file. This file is usually exposed from an endpoint: "/odata/$metadata"
+     * The location of the odata config file. This file is usually exposed from an endpoint: "/$metadata"
      * Exactly one of the following properties must be entered
+     * 
+     * See https://www.odata.org/blog/queryable-odata-metadata/
      */
     inputFileLocation: Partial<{
+        /**
+         * Read the $metadata file from the file system
+         */
         fromFile: string,
+
+        /**
+         * Read the $metadata file from a remove url
+         */
         fromUri: string,
+
+        /**
+         * Embed the metadata file in this config file
+         */
         fromString: string
     }>,
+
+    /**
+     * Required
+     * The name of the file to store the output in
+     */
+    outputFileLocation: string,
 
     /**
      * If set to true, will disable all command line prompts
@@ -34,12 +53,6 @@ export type Config = {
      * If set to true, will print the value of the odata $metadata used on screen
      */
     printOData$metadata?: boolean,
-
-    /**
-     * Required
-     * The name of the file to store the output in
-     */
-    outputFileLocation: string,
 
     /**
      * Settings for code generation
