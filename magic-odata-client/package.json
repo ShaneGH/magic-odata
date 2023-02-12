@@ -9,6 +9,9 @@
     "build": "tsc",
     "fix-links": "npm link ../magic-odata-shared"
   },
+  "files": [
+    "dist/**/*"
+  ],
   "author": "Shane Connon",
   "license": "MIT",
   "devDependencies": {

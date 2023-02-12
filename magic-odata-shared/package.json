@@ -1,8 +1,12 @@
 {
   "name": "magic-odata-shared",
   "version": "x.x.x",
+  "scripts": {},
+  "files": [
+    "dist/**/*"
+  ],
   "description": "Shared interfaces between magic-odata-client and magic-odata-code-gen",
-  "types": "index.d.ts",
+  "types": "dist/index.d.ts",
   "type": "module",
   "author": "Shane Connon",
   "license": "MIT",
