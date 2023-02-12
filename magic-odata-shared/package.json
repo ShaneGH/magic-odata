@@ -9,6 +9,16 @@
     "type": "git",
     "url": "https://github.com/ShaneGH/magic-odata.git"
   },
+  "keywords": [
+    "odata",
+    "client",
+    "odata-client",
+    "typescript",
+    "generated",
+    "auto-generated",
+    "code-generation",
+    "angular"
+  ],
   "description": "Shared interfaces between magic-odata-client and magic-odata-code-gen",
   "types": "dist/index.d.ts",
   "type": "module",
