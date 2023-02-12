@@ -94,6 +94,7 @@ echo ""
 echo "Step 9: Commit release"
 git add .
 git commit -m "Release version: $version"
+git push --set-upstream origin $branch
 git tag $tag
 git push origin $tag
 
