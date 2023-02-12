@@ -30,12 +30,14 @@ const oDataClient = new ODataClient({
 
 // use the client!
 const popularBlogPosts = oDataClient.BlogPosts
+    // Use object deconstruction to choose query tools
     .withQuery((blogPost, {
         $filter: {gt, or}, 
         $orderby: {orderBy}, 
         $skip, 
         $top
     }) => [ 
+        // Combine query tools to build a query
         or(gt(blogPost.Comments.$count, 100), gt(blogPost.Likes, 100)),
         orderBy(blogPost.Name),
         $skip(0),
