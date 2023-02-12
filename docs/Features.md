@@ -3,6 +3,7 @@
  * [Installation](#installation)
  * [Code generation](#code-generation)
  * [Client configuration](#client-configuration)
+ * [Angular configuration](#angular-configuration)
  * [Key lookup](#key-lookup)
  * [Sub path lookup](#sub-path-lookup)
  * [Query options](#query-options)
@@ -117,6 +118,60 @@ const oDataClient = new ODataClient({
         return defaultResult
     }
 })
+```
+
+# Angular configuration
+
+Angular configutation differs from normal configuration in two ways
+
+ 1. Requests are executed by the angular `HttpClient` rather than the `fetch` api
+ 2. The `HttpClient` returns `Observable` instead of `Promise`
+
+In order to use angular mode you must:
+
+## 1 - Specify `angularMode` in code gen config
+
+See [CodeGenConfig](../magic-odata-code-gen/src/config.ts) for all angular configuration modes
+
+```json
+{
+    "inputFileLocation": {
+        "fromUri": "..."
+    },
+    "outputFileLocation": "...",
+    "angularMode": true
+}
+```
+
+## 2 - Wire up an angular client in a DI factory
+
+In app.module.ts. See [client configuration](#client-configuration) for more info on client input args
+
+```typescript
+@NgModule({
+  providers: [{
+    provide: MyODataClient,
+    deps: [HttpClient],
+    useFactory: (ngClient: HttpClient) => new MyODataClient({
+        request: (x, y) => {
+            // map from fetch headers to ng HttpClient headers
+            const headers: { [k: string]: string[] } = y?.headers?.reduce((s, x) => ({
+                ...s,
+                [x[0]]: [...s[x[0]] || [], x[1]]
+            }), {} as { [k: string]: string[] });
+
+            return ngClient.request(y.method, x.toString(), {
+                headers: headers,
+                observe: "response",
+                responseType: "text"
+            })
+        },
+        uriRoot: ...
+    })
+  }],
+  ...
+})
+export class AppModule { }
 ```
 
 # Key Lookup
