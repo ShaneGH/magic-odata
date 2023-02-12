@@ -1,6 +1,6 @@
 {
   "name": "magic-odata-tests-browser",
-  "version": "0.0.0",
+  "version": "x.x.x",
   "scripts": {
     "fix-links: COMMENT": "Used to link the test project to the modules that it is testing. This command needs to be run after each 'npm install'",
     "fix-links": "npm link ../../magic-odata-client ../../magic-odata-code-gen ../magic-odata-tests",
@@ -16,7 +16,7 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test-only": "ng test"
+    "test-only": "ng test --watch false"
   },
   "private": true,
   "dependencies": {

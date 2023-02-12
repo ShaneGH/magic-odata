@@ -1,6 +1,6 @@
 {
   "name": "magic-odata-client-tests",
-  "version": "1.0.0",
+  "version": "x.x.x",
   "description": "Tests for magic-odata-client and magic-odata-code-gen",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
