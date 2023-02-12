@@ -227,9 +227,23 @@ const users = new MyOdataCliet({...})
 See [FilterUtils](https://github.com/ShaneGH/magic-odata/blob/main/magic-odata-client/src/query/filters.ts) for details of all filters
 
 ```typescript
+// use the inbult eq filter
 const myUser = new MyOdataCliet({...})
     .Users
     .withQuery((user, { $filter: { eq } }) => eq(user.Id, '123'))
+    .get()
+
+// use a custom filter with property paths
+const myUser = new MyOdataCliet({...})
+    .Users
+    .withQuery((user, { $filter: { filterRaw } }) => 
+        filterRaw({id: user.Id}, props => `${props.id} eq '123'`))
+    .get()
+
+// use a custom filter
+const myUser = new MyOdataCliet({...})
+    .Users
+    .withQuery((user, { $filter: { filterRaw } }) => filterRaw("Id eq '123'"))
     .get()
 ```
 
@@ -238,9 +252,16 @@ const myUser = new MyOdataCliet({...})
 See [SelectUtils](https://github.com/ShaneGH/magic-odata/blob/main/magic-odata-client/src/query/select.ts) for details of all select tools
 
 ```typescript
+// use an inbuilt select
 const myUser = new MyOdataCliet({...})
     .Users
     .withQuery((user, { $select: { select } }) => select(user.Name))
+    .get()
+    
+// use a raw select
+const myUser = new MyOdataCliet({...})
+    .Users
+    .withQuery((user, { $select: { selectRaw } }) => selectRaw("Id,Name"))
     .get()
 ```
 
@@ -261,6 +282,12 @@ const myUser = new MyOdataCliet({...})
     .withQuery((user, { $expand: { expand } }, { $filter: { eq } }) =>
         expand(user.Friends, friend => eq(friend.Id, 123)))
     .get()
+
+// custom expand clause
+const myUser = new MyOdataCliet({...})
+    .Users
+    .withQuery((user, { $expand: { expandRaw } }) => expandRaw("Friends"))
+    .get()
 ```
 
 ## $orderby
@@ -268,9 +295,16 @@ const myUser = new MyOdataCliet({...})
 See [OrderingUtils](https://github.com/ShaneGH/magic-odata/blob/main/magic-odata-client/src/query/orderBy.ts) for details of all orderby tools
 
 ```typescript
+// simple orderby clause
 const myUser = new MyOdataCliet({...})
     .Users
     .withQuery((user, { $orderBy: { orderBy } }) => orderBy(user.Name))
+    .get()
+    
+// custom orderby clause
+const myUser = new MyOdataCliet({...})
+    .Users
+    .withQuery((user, { $orderBy: { orderByRaw } }) => orderByRaw("Name"))
     .get()
 ```
 
@@ -279,9 +313,16 @@ const myUser = new MyOdataCliet({...})
 See [SearchUtils](https://github.com/ShaneGH/magic-odata/blob/main/magic-odata-client/src/query/search.ts) for details of all search tools
 
 ```typescript
+// inbuilt search clause
 const myUser = new MyOdataCliet({...})
     .Users
     .withQuery((user, { $search: {term} }) => term("Search term1"))
+    .get()
+    
+// custom search clause
+const myUser = new MyOdataCliet({...})
+    .Users
+    .withQuery((user, { $search: { searchRaw } }) => searchRaw('"John" OR "Bob"'))
     .get()
 ```
 
