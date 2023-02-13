@@ -81,4 +81,4 @@ Write safe, statically typed odata queries in typescript. No more `string`. No m
 
 ## Contributing
 
- See [Contributing.md](https://github.com/ShaneGH/magic-odata/blob/main/Contributing.md)
+See [Contributing.md](https://github.com/ShaneGH/magic-odata/blob/main/Contributing.md)
