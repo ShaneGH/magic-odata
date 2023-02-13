@@ -78,6 +78,7 @@ OData clients are configured using the [RequestTools](https://github.com/ShaneGH
 ```typescript
 const oDataClient = new ODataClient({
     // MANDATORY: the HTTP client that will do all of the low level work
+    // Browser fetch, node fetch API and the "node-fetch" module all work well here
     request: (input, init) => fetch(input, init),
 
     // MANDATORY: the root uri for queries
@@ -153,16 +154,20 @@ In app.module.ts. See [client configuration](#client-configuration) for more inf
     provide: MyODataClient,
     deps: [HttpClient],
     useFactory: (ngClient: HttpClient) => new MyODataClient({
-        request: (x, y) => {
+        request: (uri, args) => {
             // map from fetch headers to ng HttpClient headers
-            const headers: { [k: string]: string[] } = y?.headers?.reduce((s, x) => ({
+            const headers: { [k: string]: string[] } = args.headers?.reduce((s, x) => ({
                 ...s,
                 [x[0]]: [...s[x[0]] || [], x[1]]
             }), {} as { [k: string]: string[] });
 
-            return ngClient.request(y.method, x.toString(), {
+            return ngClient.request(args.method, uri.toString(), {
                 headers: headers,
                 observe: "response",
+
+                // If angularMode is set to true, this value must be set to "text".
+                // angularMode can be set with finer detail, in which case this can 
+                // be set to "arraybuffer" or "blob"
                 responseType: "text"
             })
         },

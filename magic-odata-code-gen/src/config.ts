@@ -117,12 +117,12 @@ export enum TypeCaseSettings {
     Follow$metadata = "Follow$metadata",
 
     /**
-     * Convert property names to "PascalCase" (aka lower camel case)
+     * Convert property names to "PascalCase" (aka upper camel case)
      */
     PascalCase = "PascalCase",
 
     /**
-     * Convert property names to "camelCase"
+     * Convert property names to "camelCase" (aka lower camel case)
      */
     CamelCase = "CamelCase"
 }
@@ -200,7 +200,7 @@ export type CodeGenConfig = Partial<{
     casterTypeNameTemplate: string,
 
     /** 
-     * Specifies how to name caster types. Use "{0}" to inject the name of the type
+     * Specifies how to name sub path types. Use "{0}" to inject the name of the type
      * that this sub path is for
      * @default "{0}SubPath"
      */
@@ -290,7 +290,7 @@ export type CodeGenConfig = Partial<{
     asyncType: AsyncType,
 
     /** 
-     * Remove entities from the generate code which are not specified in the whitelist
+     * Remove entities from the generated code which are not specified in the whitelist
      * ignore is applied before "rename"
      * Values should be a concatenation of the namesapce and name, separated by a "/"
      * 
@@ -299,7 +299,7 @@ export type CodeGenConfig = Partial<{
     entityWhitelist: Partial<{
 
         /** 
-         * Defines rename strategies for entity namespaces.
+         * Defines whitelist strategies for entity namespaces.
          * 
          * @example ["My.OData.Ns/MyType", "My.OData.Ns/MyType2"] - Generate a client for types "MyType" and "MyType2" in namespace "My.OData.Ns" only
          */
