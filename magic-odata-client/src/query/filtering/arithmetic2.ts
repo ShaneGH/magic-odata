@@ -31,40 +31,61 @@ function guessAritmeticOutputType(
  * an operation with 2 nummeric inputs which return a number
  */
 function arithmeticInfixOp(
-    lhs: Operable<number>,
+    lhs: Operable<number> | number,
     operator: string,
     rhs: Operable<number> | number,
     result: RealNumberTypes | undefined): Filter {
+
+    let reverse = false
+    if (typeof lhs === "number") {
+        if (typeof rhs === "number") {
+            throw new Error("Invalid method overload");
+        }
+
+        reverse = true;
+        [lhs, rhs] = [rhs, lhs]
+    }
 
     const mappableRhs = typeof rhs === "number"
         ? new MappableType<number>(rhs, x => x.toString())
         : rhs;
 
     const outputT = resolveOutputType(result || guessAritmeticOutputType(lhs, operator, rhs))
-    return infixOp(lhs, operator, mappableRhs, outputT)
+    return infixOp(lhs, operator, mappableRhs, outputT, reverse)
 }
 
 export function add(lhs: Operable<number>, rhs: Operable<number> | number, result: RealNumberTypes | undefined): Filter {
     return arithmeticInfixOp(lhs, "add", rhs, result);
 }
 
-export function sub(lhs: Operable<number>, rhs: Operable<number> | number, result: RealNumberTypes | undefined): Filter {
+export function sub(lhs: Operable<number>, rhs: Operable<number> | number, result: RealNumberTypes | undefined): Filter;
+export function sub(lhs: Operable<number> | number, rhs: Operable<number>, result: RealNumberTypes | undefined): Filter;
+export function sub(lhs: Operable<number> | number, rhs: Operable<number> | number, result: RealNumberTypes | undefined): Filter {
+
     return arithmeticInfixOp(lhs, "sub", rhs, result);
 }
 
-export function mul(lhs: Operable<number>, rhs: Operable<number> | number, result: RealNumberTypes | undefined): Filter {
+export function mul(lhs: Operable<number>, rhs: Operable<number> | number, result: RealNumberTypes | undefined): Filter;
+export function mul(lhs: Operable<number> | number, rhs: Operable<number>, result: RealNumberTypes | undefined): Filter;
+export function mul(lhs: Operable<number> | number, rhs: Operable<number> | number, result: RealNumberTypes | undefined): Filter {
     return arithmeticInfixOp(lhs, "mul", rhs, result);
 }
 
-export function div(lhs: Operable<number>, rhs: Operable<number> | number, result: RealNumberTypes | undefined): Filter {
+export function div(lhs: Operable<number>, rhs: Operable<number> | number, result: RealNumberTypes | undefined): Filter;
+export function div(lhs: Operable<number> | number, rhs: Operable<number>, result: RealNumberTypes | undefined): Filter;
+export function div(lhs: Operable<number> | number, rhs: Operable<number> | number, result: RealNumberTypes | undefined): Filter {
     return arithmeticInfixOp(lhs, "div", rhs, result);
 }
 
-export function divby(lhs: Operable<number>, rhs: Operable<number> | number, result: RealNumberTypes | undefined): Filter {
+export function divby(lhs: Operable<number>, rhs: Operable<number> | number, result: RealNumberTypes | undefined): Filter;
+export function divby(lhs: Operable<number> | number, rhs: Operable<number>, result: RealNumberTypes | undefined): Filter;
+export function divby(lhs: Operable<number> | number, rhs: Operable<number> | number, result: RealNumberTypes | undefined): Filter {
     return arithmeticInfixOp(lhs, "divby", rhs, result);
 }
 
-export function mod(lhs: Operable<number>, rhs: Operable<number> | number, result: RealNumberTypes | undefined): Filter {
+export function mod(lhs: Operable<number>, rhs: Operable<number> | number, result: RealNumberTypes | undefined): Filter;
+export function mod(lhs: Operable<number> | number, rhs: Operable<number>, result: RealNumberTypes | undefined): Filter;
+export function mod(lhs: Operable<number> | number, rhs: Operable<number> | number, result: RealNumberTypes | undefined): Filter {
     return arithmeticInfixOp(lhs, "mod", rhs, result);
 }
 

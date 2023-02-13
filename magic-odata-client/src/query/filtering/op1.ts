@@ -64,17 +64,22 @@ export function infixOp<T>(
     lhs: HasFilterMetadata,
     operator: string,
     rhs: MappableType<T> | HasFilterMetadata,
-    output: ODataTypeRef): Filter {
+    output: ODataTypeRef,
+    reverseArgs = false): Filter {
 
     try {
         const root = getOperableTypeInfo(lhs).root;
-        const lhsS = getOperableFilterString(lhs);
-        const rhsS = rhs instanceof MappableType<T>
+        let lhsS = getOperableFilterString(lhs);
+        let rhsS = rhs instanceof MappableType<T>
             ? rhs.resolve()
             : getOperableFilterString(rhs);
 
+        if (reverseArgs) {
+            [lhsS, rhsS] = [rhsS, lhsS]
+        }
+
         return combineFilterStrings(" ", output, root, lhsS, operator, rhsS)
     } catch (e) {
-        throw new Error(`Error executing operation:\n  lhs: ${lhs}\n  operator: ${operator}\n  rhs: ${rhs}\n${e}`);
+        throw new Error(`Error executing operation:\n  lhs: ${lhs}\n  operator: ${operator}\n  reverseArgs: ${reverseArgs}\n  rhs: ${rhs}\n${e}`);
     }
 }

@@ -595,28 +595,49 @@ describe("Query.Filter Operators", function () {
 
     testCase("sub", function () {
 
-        it("Should work correctly (success)", execute.bind(null, true));
-        it("Should work correctly (failure)", execute.bind(null, false))
+        describe("forwards", () => {
 
-        async function execute(success: boolean) {
+            it("Should work correctly (success)", execute.bind(null, true));
+            it("Should work correctly (failure)", execute.bind(null, false))
 
-            const ctxt = await addFullUserChain();
-            const likes = success
-                ? ctxt.blogPost.Likes + 1
-                : ctxt.blogPost.Likes;
+            async function execute(success: boolean) {
 
-            const result = await client.BlogPosts
-                .withQuery((u, { $filter: { eq, and, sub, filterRaw } }) =>
-                    and(eq(u.Id, ctxt.blogPost.Id), eq(u.Likes, sub(filterRaw(likes.toString()), 1))))
-                .get();
+                const ctxt = await addFullUserChain({ blogPostLikes: 10 });
+                const result = await client.BlogPosts
+                    .withQuery((u, { $filter: { eq, and, sub } }) =>
+                        and(eq(u.Id, ctxt.blogPost.Id), eq(sub(u.Likes, success ? 10 : 11), 0)))
+                    .get();
 
-            if (success) {
-                expect(result.value.length).toBe(1);
-                expect(result.value[0].Content).toBe(ctxt.blogPost.Content);
-            } else {
-                expect(result.value.length).toBe(0);
+                if (success) {
+                    expect(result.value.length).toBe(1);
+                    expect(result.value[0].Content).toBe(ctxt.blogPost.Content);
+                } else {
+                    expect(result.value.length).toBe(0);
+                }
             }
-        }
+        });
+
+        describe("backwards", () => {
+
+            it("Should work correctly (success)", execute.bind(null, true));
+            it("Should work correctly (failure)", execute.bind(null, false))
+
+            async function execute(success: boolean) {
+
+                const ctxt = await addFullUserChain({ blogPostLikes: 10 });
+                const result = await client.BlogPosts
+                    .withQuery((u, { $filter: { eq, and, sub } }) =>
+                        and(eq(u.Id, ctxt.blogPost.Id), eq(sub(success ? 10 : 11, u.Likes), 0)))
+                    .get();
+
+                if (success) {
+                    expect(result.value.length).toBe(1);
+                    expect(result.value[0].Content).toBe(ctxt.blogPost.Content);
+                } else {
+                    expect(result.value.length).toBe(0);
+                }
+            }
+        });
     });
 
     testCase("mul", function () {
@@ -644,51 +665,102 @@ describe("Query.Filter Operators", function () {
     });
 
     testCase("div", function () {
+        describe("forwards", function () {
 
-        it("Should work correctly (success)", execute.bind(null, true));
-        it("Should work correctly (failure)", execute.bind(null, false))
+            it("Should work correctly (success)", execute.bind(null, true));
+            it("Should work correctly (failure)", execute.bind(null, false))
 
-        async function execute(success: boolean) {
+            async function execute(success: boolean) {
 
-            const ctxt = await addFullUserChain();
-            const likes = success ? 1 : 2;
+                const ctxt = await addFullUserChain();
+                const likes = success ? 1 : 2;
 
-            const result = await client.BlogPosts
-                .withQuery((u, { $filter: { eq, and, div } }) =>
-                    and(eq(u.Id, ctxt.blogPost.Id), eq(u.Likes, div(u.Likes, likes))))
-                .get();
+                const result = await client.BlogPosts
+                    .withQuery((u, { $filter: { eq, and, div } }) =>
+                        and(eq(u.Id, ctxt.blogPost.Id), eq(u.Likes, div(u.Likes, likes))))
+                    .get();
 
-            if (success) {
-                expect(result.value.length).toBe(1);
-                expect(result.value[0].Content).toBe(ctxt.blogPost.Content);
-            } else {
-                expect(result.value.length).toBe(0);
+                if (success) {
+                    expect(result.value.length).toBe(1);
+                    expect(result.value[0].Content).toBe(ctxt.blogPost.Content);
+                } else {
+                    expect(result.value.length).toBe(0);
+                }
             }
-        }
+        });
+
+        describe("backwards", function () {
+
+            it("Should work correctly (success)", execute.bind(null, true));
+            it("Should work correctly (failure)", execute.bind(null, false))
+
+            async function execute(success: boolean) {
+
+                const ctxt = await addFullUserChain({ blogPostLikes: 100 });
+                const likes = success ? 10 : 20;
+
+                const result = await client.BlogPosts
+                    .withQuery((u, { $filter: { eq, and, div } }) =>
+                        and(eq(u.Id, ctxt.blogPost.Id), eq(div(1000, u.Likes), likes)))
+                    .get();
+
+                if (success) {
+                    expect(result.value.length).toBe(1);
+                    expect(result.value[0].Content).toBe(ctxt.blogPost.Content);
+                } else {
+                    expect(result.value.length).toBe(0);
+                }
+            }
+        });
     });
 
     testCase("mod", function () {
+        describe("forwards", function () {
 
-        it("Should work correctly (success)", execute.bind(null, true));
-        it("Should work correctly (failure)", execute.bind(null, false))
+            it("Should work correctly (success)", execute.bind(null, true));
+            it("Should work correctly (failure)", execute.bind(null, false))
 
-        async function execute(success: boolean) {
+            async function execute(success: boolean) {
 
-            const ctxt = await addFullUserChain();
-            const likes = success ? 1 : 10000000;
+                const ctxt = await addFullUserChain();
+                const likes = success ? 1 : 10000000;
 
-            const result = await client.BlogPosts
-                .withQuery((u, { $filter: { eq, and, mod, filterRaw } }) =>
-                    and(eq(u.Id, ctxt.blogPost.Id), eq(filterRaw("0"), mod(u.Likes, likes))))
-                .get();
+                const result = await client.BlogPosts
+                    .withQuery((u, { $filter: { eq, and, mod, filterRaw } }) =>
+                        and(eq(u.Id, ctxt.blogPost.Id), eq(filterRaw("0"), mod(u.Likes, likes))))
+                    .get();
 
-            if (success) {
-                expect(result.value.length).toBe(1);
-                expect(result.value[0].Content).toBe(ctxt.blogPost.Content);
-            } else {
-                expect(result.value.length).toBe(0);
+                if (success) {
+                    expect(result.value.length).toBe(1);
+                    expect(result.value[0].Content).toBe(ctxt.blogPost.Content);
+                } else {
+                    expect(result.value.length).toBe(0);
+                }
             }
-        }
+        });
+
+        describe("backwards", function () {
+
+            it("Should work correctly (success)", execute.bind(null, true));
+            it("Should work correctly (failure)", execute.bind(null, false))
+
+            async function execute(success: boolean) {
+
+                const ctxt = await addFullUserChain({ blogPostLikes: success ? 1 : 3 });
+
+                const result = await client.BlogPosts
+                    .withQuery((u, { $filter: { eq, and, mod } }) =>
+                        and(eq(u.Id, ctxt.blogPost.Id), eq(mod(10, u.Likes), 0)))
+                    .get();
+
+                if (success) {
+                    expect(result.value.length).toBe(1);
+                    expect(result.value[0].Content).toBe(ctxt.blogPost.Content);
+                } else {
+                    expect(result.value.length).toBe(0);
+                }
+            }
+        });
     });
 
     testCase("concatString", function () {
@@ -1117,12 +1189,24 @@ describe("Query.Filter Operators", function () {
 
     testCase("divby", function () {
 
-        it("Should build filter (server can't process)", () => {
-            const { $filter: { divby, eq, group } } = queryUtils();
-            const q = queryBuilder<My.Odata.Entities.QueryableBlogPost>("My.Odata.Entities.BlogPost", u =>
-                eq(u.Likes, group(divby(u.Likes, 2.1))));
+        describe("forwards", () => {
+            it("Should build filter (server can't process)", () => {
+                const { $filter: { divby, eq, group } } = queryUtils();
+                const q = queryBuilder<My.Odata.Entities.QueryableBlogPost>("My.Odata.Entities.BlogPost", u =>
+                    eq(u.Likes, group(divby(u.Likes, 2.1))));
 
-            expect(q["$filter"]).toBe("Likes eq (Likes divby 2.1)");
+                expect(q["$filter"]).toBe("Likes eq (Likes divby 2.1)");
+            });
+        });
+
+        describe("backwards", () => {
+            it("Should build filter (server can't process)", () => {
+                const { $filter: { divby, eq, group } } = queryUtils();
+                const q = queryBuilder<My.Odata.Entities.QueryableBlogPost>("My.Odata.Entities.BlogPost", u =>
+                    eq(u.Likes, group(divby(2.1, u.Likes))));
+
+                expect(q["$filter"]).toBe("Likes eq (2.1 divby Likes)");
+            });
         });
 
         // async function execute(success: boolean) {

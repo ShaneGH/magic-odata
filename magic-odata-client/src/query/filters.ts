@@ -308,6 +308,19 @@ export type FilterUtils = {
     sub(lhs: Operable<number>, rhs: Operable<number> | number, resultType?: RealNumberTypes | undefined): Filter;
 
     /**
+     * An OData "-" operation
+     *
+     * @param lhs  The left operand
+     * 
+     * @param rhs  The right operand
+     * 
+     * @param resultType  The expected type of the result. Default: choose the most appropriate type based on the input types.
+     * 
+     * @example sub(4, my.property)
+     */
+    sub(lhs: Operable<number> | number, rhs: Operable<number>, resultType?: RealNumberTypes | undefined): Filter;
+
+    /**
      * An OData "*" operation
      *
      * @param lhs  The left operand
@@ -334,6 +347,19 @@ export type FilterUtils = {
     div(lhs: Operable<number>, rhs: Operable<number> | number, resultType?: RealNumberTypes | undefined): Filter;
 
     /**
+     * An OData "/" operation on integers
+     *
+     * @param lhs  The left operand
+     * 
+     * @param rhs  The right operand
+     * 
+     * @param resultType  The expected type of the result. Default: choose the most appropriate type based on the input types.
+     * 
+     * @example div(4, my.property)
+     */
+    div(lhs: Operable<number> | number, rhs: Operable<number>, resultType?: RealNumberTypes | undefined): Filter;
+
+    /**
      * An OData "/" operation on decimals
      *
      * @param lhs  The left operand
@@ -347,6 +373,19 @@ export type FilterUtils = {
     divby(lhs: Operable<number>, rhs: Operable<number> | number, resultType?: RealNumberTypes | undefined): Filter;
 
     /**
+     * An OData "/" operation on decimals
+     *
+     * @param lhs  The left operand
+     * 
+     * @param rhs  The right operand
+     * 
+     * @param resultType  The expected type of the result. Default: choose the most appropriate type based on the input types.
+     * 
+     * @example divby(4, my.property)
+     */
+    divby(lhs: Operable<number> | number, rhs: Operable<number>, resultType?: RealNumberTypes | undefined): Filter;
+
+    /**
      * An OData "%" operation on decimals
      *
      * @param lhs  The left operand
@@ -358,6 +397,19 @@ export type FilterUtils = {
      * @example mod(my.property, 4)
      */
     mod(lhs: Operable<number>, rhs: Operable<number> | number, resultType?: RealNumberTypes | undefined): Filter;
+
+    /**
+     * An OData "%" operation on decimals
+     *
+     * @param lhs  The left operand
+     * 
+     * @param rhs  The right operand
+     * 
+     * @param resultType  The expected type of the result. Default: choose the most appropriate type based on the input types.
+     * 
+     * @example mod(4, my.property)
+     */
+    mod(lhs: Operable<number> | number, rhs: Operable<number>, resultType?: RealNumberTypes | undefined): Filter;
 
     /**
      * An OData "concat" operation
