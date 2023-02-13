@@ -14,7 +14,7 @@ function execute($npmInstall) {
         return 1
     }
     else {
-        npm run build-and-test > $outputLog
+        npm run build-and-test-win > $outputLog
         if (-not($?)) {
             return 1
         }

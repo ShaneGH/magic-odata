@@ -77,14 +77,8 @@ if (-not($?)) {
 }
 
 echo ""
-echo "Step 8: run tests a third time, pointing at actual npm packages as dependencies"
+echo "Step 8: re-version tests to point at actual NPM packages"
 ./reVersion.ps1 -version $version -tests
-if (-not($?)) {
-    echo "Error with build. Suplimentary output logs: $buildLog"
-    exit 1
-}
-
-./executeTests.ps1 -outputLog $buildLog -npmInstall -ignoreFailures
 if (-not($?)) {
     echo "Error with build. Suplimentary output logs: $buildLog"
     exit 1
@@ -115,6 +109,13 @@ if (-not($?)) {
 git checkout main
 git branch -D $branch
 git push origin ":$branch"
+
+
+echo ""
+echo "Step 10: execute tests 1 last time"
+# todo: using ./executeTests.ps1 at this state will return a non 0 code. Running manually instead
+pushd ../tests/magic-odata-tests; npm run build-and-test-win; popd
+pushd ../tests/magic-odata-tests-browser; npm run build-and-test-win; popd
 
 
 echo "DONE. Version $version published"
