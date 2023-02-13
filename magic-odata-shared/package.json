@@ -24,7 +24,7 @@
   "type": "module",
   "author": "Shane Connon",
   "license": "MIT",
-  "dependencies": {
+  "devDependencies": {
     "typescript": "^4.9.4"
   }
 }
