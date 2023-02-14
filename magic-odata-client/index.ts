@@ -69,6 +69,13 @@ export {
     buildComplexTypeRef // https://github.com/ShaneGH/magic-odata/issues/6
 } from "./src/query/queryComplexObjectBuilder.js"
 
+export {
+    DateStruct,
+    TimeStruct,
+    DurationStruct,
+    OffsetStruct
+} from "./src/edmTypes.js"
+
 /*
  * It is not possible to select an item by key more than once
  * If you encounter this type, it is a sign that you are doing somethnig incorrect

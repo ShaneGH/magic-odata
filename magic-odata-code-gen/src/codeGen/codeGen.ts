@@ -31,7 +31,7 @@ ${entities()}
 
 ${configObj(serviceConfig, keywords, settings, tab)}
 
-${edm(tab)}`
+${edm(tab, keywords)}`
 
     return output
         .replace(/\r\n/g, "\n")

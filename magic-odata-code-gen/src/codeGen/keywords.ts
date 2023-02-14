@@ -4,6 +4,10 @@ import { Dict, Tab } from "./utils.js";
 export type Keywords = {
     mergeMap: string
     map: string
+    DateStruct: string
+    DurationStruct: string
+    TimeStruct: string
+    OffsetStruct: string
     ODataServiceConfig: string
     QueryPrimitive: string
     QueryCollection: string
@@ -14,6 +18,7 @@ export type Keywords = {
     rootConfig: string
     rootConfigExporter: string
     CastSelection: string
+    DateAlias: string
     KeySelection: string
     SubPathSelection: string
     RequestTools: string,
@@ -52,6 +57,11 @@ export function generateKeywords(allNamespaces: string[], rootLevelTypes: string
     const keys = Object.keys(lookup)
 
     return {
+        DurationStruct: getKeyword("DurationStruct"),
+        DateStruct: getKeyword("DateStruct"),
+        TimeStruct: getKeyword("TimeStruct"),
+        OffsetStruct: getKeyword("OffsetStruct"),
+        DateAlias: getKeyword("DateAlias"),
         mergeMap: getKeyword("mergeMap"),
         map: getKeyword("map"),
         AngularHttpResponse: getKeyword("HttpResponse"),
@@ -110,6 +120,10 @@ export function imports(keywords: Keywords, tab: Tab, config: CodeGenConfig | nu
 } from 'rxjs'`
 
     const odataTsClient = `import {
+${tab(importWithAlias("DateStruct"))},
+${tab(importWithAlias("TimeStruct"))},
+${tab(importWithAlias("DurationStruct"))},
+${tab(importWithAlias("OffsetStruct"))},
 ${tab(importWithAlias("HttpError"))},
 ${tab(importWithAlias("RootResponseInterceptor"))},
 ${tab(importWithAlias("KeySelection"))},

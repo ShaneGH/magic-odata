@@ -14,6 +14,7 @@ public class EntityDbContext : DbContext
     public DbSet<Comment> Comments => Set<Comment>();
     public DbSet<CommentTag> Tags => Set<CommentTag>();
     public DbSet<CompositeKeyItem> CompositeKeyItems => Set<CompositeKeyItem>();
+    public DbSet<OneOfEverything> OneOfEverythings => Set<OneOfEverything>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {

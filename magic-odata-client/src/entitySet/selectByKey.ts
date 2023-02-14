@@ -109,6 +109,24 @@ function keyExpr(keyTypes: KeyType[], key: any, keyEmbedType: WithKeyType, servi
     }
 }
 
+function keyRaw(key: string): KeySelection<any> {
+    return {
+        key,
+        raw: true,
+        // key embed type is ignored. 
+        // There is a weird type error preventing sum types here
+        keyEmbedType: WithKeyType.FunctionCall
+    }
+}
+
+function keyStructured(key: any, keyEmbedType?: WithKeyType.FunctionCall): KeySelection<any> {
+    return {
+        key,
+        raw: false,
+        keyEmbedType: keyEmbedType || WithKeyType.FunctionCall
+    }
+}
+
 export function recontextDataForKey<TFetchResult, TResult, TNewEntityQuery, TKeyBuilder>(
     data: EntitySetData<TFetchResult, TResult>,
     key: (builder: TKeyBuilder) => KeySelection<TNewEntityQuery>) {
@@ -129,21 +147,7 @@ export function recontextDataForKey<TFetchResult, TResult, TNewEntityQuery, TKey
         throw new Error("Cannot search a collection of collections by key. You must search a collection instead");
     }
 
-    const keyResult = key({
-        keyRaw: (key: string): KeySelection<any> => ({
-            key,
-            raw: true,
-            // key embed type is ignored. 
-            // There is a weird type error preventing sum types here
-            keyEmbedType: WithKeyType.FunctionCall
-        }),
-
-        key: (key: any, keyEmbedType?: WithKeyType.FunctionCall): KeySelection<any> => ({
-            key,
-            raw: false,
-            keyEmbedType: keyEmbedType || WithKeyType.FunctionCall
-        })
-    } as any);
+    const keyResult = key({ keyRaw, key: keyStructured } as any);
     const keyTypes = tryFindKeyTypes(data.tools.type.collectionType, data.tools.root.types);
     const keyPath = keyResult.raw
         ? { value: keyResult.key, appendToLatest: keyResult.key[0] === "(" }
