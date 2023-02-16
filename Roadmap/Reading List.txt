@@ -1,0 +1,14 @@
+
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part2-url-conventions.html
+ * https://learn.microsoft.com/en-us/aspnet/web-api/overview/odata-support-in-aspnet-web-api/odata-v4/
+ * https://learn.microsoft.com/en-us/odata/webapi-8/overview
+ * https://learn.microsoft.com/en-us/odata/webapi/getting-started
+ * https://learn.microsoft.com/en-us/aspnet/web-api/overview/odata-support-in-aspnet-web-api/odata-v4/
+ * https://learn.microsoft.com/en-us/odata/webapi-8/fundamentals/entityset-routing?tabs=net60%2Cvisual-studio
+ * http://docs.oasis-open.org/odata/odata/v4.01/cs01/abnf/odata-abnf-construction-rules.txt
+ * http://docs.oasis-open.org/odata/odata/v4.0/odata-v4.0-part2-url-conventions.html
+ * http://docs.oasis-open.org/odata/odata/v4.0/odata-v4.0-part3-csdl.html
+ * http://docs.oasis-open.org/odata/odata-data-aggregation-ext/v4.0/odata-data-aggregation-ext-v4.0.html
+ * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_EntityIdsandEntityReferences
+     * Services are strongly encouraged to use the canonical URL for an entity as defined in OData-URL as its entity-id, but clients cannot assume the entity-id can be used to locate the entity unless the Core.DereferenceableIDs term is applied to the entity container, nor can the client assume any semantics from the structure of the entity-id. The canonical resource $entity provides a general mechanism for resolving an entity-id into an entity representation.
+    

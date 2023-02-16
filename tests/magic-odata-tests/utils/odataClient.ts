@@ -14,7 +14,7 @@ export const oDataClient = new ODataClient({
                     code: r.status,
                     statusText: r.statusText,
                     headers: r.headers,
-                    error: await r.text(),
+                    errorBody: await r.text(),
                     reqValues
                 }
 

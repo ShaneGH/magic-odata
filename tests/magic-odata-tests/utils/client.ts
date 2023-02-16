@@ -114,7 +114,7 @@ export function postComment(val: Partial<Comment>) {
     return post<Comment>("Comments", val as Comment);
 }
 
-export async function addComment(blogPostId: string, userId: string, tags: CommentTag[], mood?: CommentMood) {
+export async function addComment(blogPostId: string, userId: string | undefined, tags: CommentTag[], mood?: CommentMood) {
 
     const blogComment: Partial<Comment> = {
         Title: uniqueString("Comment Title "),

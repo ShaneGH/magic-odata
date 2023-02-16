@@ -1,6 +1,6 @@
 
 import { My, ODataClient } from "../generatedCode.js";
-import { addFullUserChain } from "../utils/client.js";
+import { addComment, addFullUserChain, addUser } from "../utils/client.js";
 import { uniqueString } from "../utils/utils.js";
 import { WithKeyType } from "magic-odata-client";
 import { RequestOptions, ResponseInterceptor } from "magic-odata-client";
@@ -102,6 +102,31 @@ describe("SubPath", function () {
                 .get();
 
             expect(blog.Name).toBe(user.blog.Name);
+        });
+
+        it("Should retrieve empty items", async () => {
+            const user = await addUser();
+            const blogs = await oDataClient.Users
+                .withKey(x => x.key(user.Id!))
+                .subPath(x => x.Blogs)
+                .get();
+
+            expect(blogs.value.length).toBe(0);
+        });
+
+        it("Should retrieve empty item", async () => {
+            const ctxt = await addFullUserChain();
+            const comment = await addComment(ctxt.blogPost.Id!, undefined, []);
+            try {
+                await oDataClient.Comments
+                    .withKey(x => x.key(comment.Id!))
+                    .subPath(x => x.User)
+                    .get();
+
+                expect(true).toBe(false)
+            } catch (e: any) {
+                expect(e.toString()).toContain("404")
+            }
         });
 
         it("Should retrieve items in the path, 2 levels", async () => {

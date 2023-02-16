@@ -146,9 +146,8 @@ public class Comment : HasId
     public string BlogPostId { get; set; }
     public BlogPost BlogPost { get; set; }
 
-    [Required]
-    public string UserId { get; set; }
-    public User User { get; set; }
+    public string? UserId { get; set; }
+    public User? User { get; set; }
     public IQueryable<string> Words => Regex.Split(Text, @"\s").Where(x => !string.IsNullOrWhiteSpace(x)).AsQueryable();
     public IList<CommentTag> Tags { get; set; }
     public CommentMood? Mood { get; set; }
