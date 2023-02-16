@@ -151,4 +151,6 @@ http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part2-url-conventions.h
 http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part2-url-conventions.html#sec_root
 http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part2-url-conventions.html#sec_this cross reference with $it
 http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part2-url-conventions.html#sec_AnnotationValuesinExpressions no
-Finished here: http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part2-url-conventions.html#sec_SystemQueryOptionfilter
+http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part2-url-conventions.html#sec_SystemQueryOptionexpand
+ * expand can be * or $value
+ * cast in expand

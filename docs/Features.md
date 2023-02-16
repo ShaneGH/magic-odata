@@ -303,6 +303,31 @@ const myUser = new MyOdataCliet({...})
     .Users
     .withQuery((user, { $expand: { expand } }) => expand(user.Friends))
     .get()
+    
+// complex expand clause
+const myUser = new MyOdataCliet({...})
+    .Users
+    .withQuery((user, { $expand: { expand }, { $select: { select } }) => 
+        expand(user.Friends, f => select(f.name)))
+    .get()
+
+// expand *
+const myUser = new MyOdataCliet({...})
+    .Users
+    .withQuery((user, { $expand: { expandAll } }) => expandAll())
+    .get()
+
+// expand $ref
+const myUser = new MyOdataCliet({...})
+    .Users
+    .withQuery((user, { $expand: { expandRef } }) => expandRef())
+    .get()
+
+// expand $count
+const myUser = new MyOdataCliet({...})
+    .Users
+    .withQuery((user, { $expand: { expandCount } }) => expandCount(user.friends))
+    .get()
 
 // expand clause with nested query
 const myUser = new MyOdataCliet({...})

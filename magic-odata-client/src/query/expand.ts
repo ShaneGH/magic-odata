@@ -26,6 +26,20 @@ export type ExpandUtils = {
     expand<T>(obj: QueryComplexObject<T> | QueryCollection<QueryComplexObject<T>, T>, and?: ((x: QueryComplexObject<T>) => Query | Query[]) | undefined): Expand;
 
     /**
+     * Expand the count of array of objects. Equivelant of $expand=my/blogPosts/$count
+     * 
+     * @param obj An object to count. 
+     * Entities can be deeply expanded by inputting nested properties. 
+     * FIlter before counting by using the second arg of this method
+     * 
+     * @param and A list of further expansions, transforms and filters to apply
+     * 
+     * @example expandCount(my.blogPosts)
+     * @example expandCount(my.blogPosts, p => gt(p.likes, 10))
+     */
+    expandCount<T>(obj: QueryCollection<QueryComplexObject<T>, T>, and?: ((x: QueryComplexObject<T>) => Query | Query[]) | undefined): Expand;
+
+    /**
      * Combine multiple expanded properties
      * 
      * @example combine(expand(my.property1), expand(my.property2))
@@ -34,10 +48,15 @@ export type ExpandUtils = {
 
     /**
      * Expand all properties of an object
-     * 
-     * @param $ref If true, expand by ref. Default false
+     * $expand=*
      */
-    expandAll($ref?: boolean): Expand
+    expandAll(): Expand
+
+    /**
+     * Expand all properties of an object by $ref
+     * $expand=* /$ref
+     */
+    expandRef($ref?: boolean): Expand
 }
 
 function expandRaw(expand: string): Expand {
@@ -48,28 +67,55 @@ function expandRaw(expand: string): Expand {
     }
 }
 
-function expandAll($ref?: boolean): Expand {
+function expandAll(): Expand {
     return {
         $$oDataQueryObjectType: "Expand",
-        $$expand: $ref ? "*/$ref" : "*"
+        $$expand: "*"
     }
 }
 
-type BuildQuery = (q: Query | Query[], encode: boolean) => { [k: string]: string }
+function expandRef(): Expand {
+    return {
+        $$oDataQueryObjectType: "Expand",
+        $$expand: "*/$ref"
+    }
+}
 
 function expand<T>(obj: QueryComplexObject<T> | QueryCollection<QueryComplexObject<T>, T>, and?: ((x: QueryComplexObject<T>) => Query | Query[]) | undefined): Expand {
 
-    const $$expand = _expand(obj.$$oDataQueryMetadata.path);
+    return _expand(obj, null, and);
+}
+
+function expandCount<T>(obj: QueryCollection<QueryComplexObject<T>, T>, and?: ((x: QueryComplexObject<T>) => Query | Query[]) | undefined): Expand {
+
+    return _expand(obj, "/$count", and);
+}
+
+function _expand<T>(
+    obj: QueryComplexObject<T> | QueryCollection<QueryComplexObject<T>, T>,
+    addPath: string | null,
+    and: ((x: QueryComplexObject<T>) => Query | Query[]) | undefined): Expand {
+
+    const innerExpand = and && addPath
+        ? `${addPath}(${innerBit(obj, and)})`
+        : and
+            ? `(${innerBit(obj, and)})`
+            : addPath;
+
+    const $$expand = expandString(obj.$$oDataQueryMetadata.path, innerExpand);
     if (!$$expand) {
         throw new Error("Object cannot be expanded");
     }
 
-    if (!and) {
-        return {
-            $$oDataQueryObjectType: "Expand",
-            $$expand
-        }
+    return {
+        $$oDataQueryObjectType: "Expand",
+        $$expand
     }
+}
+
+function innerBit<T>(
+    obj: QueryComplexObject<T> | QueryCollection<QueryComplexObject<T>, T>,
+    and: ((x: QueryComplexObject<T>) => Query | Query[])) {
 
     const reContexted = obj.$$oDataQueryObjectType === QueryObjectType.QueryCollection
         ? reContext(obj.childObjConfig)
@@ -81,20 +127,17 @@ function expand<T>(obj: QueryComplexObject<T> | QueryCollection<QueryComplexObje
         .map(k => `${k}=${innerQ[k]}`)
         .join(";")
 
-    return {
-        $$oDataQueryObjectType: "Expand",
-        $$expand: `${$$expand}(${inner})`
-    }
+    return inner
 }
 
-function _expand(pathSegment: PathSegment[]): string | null {
+function expandString(pathSegment: PathSegment[], addPath: string | null): string | null {
     if (!pathSegment.length) return null
 
     const head = pathSegment[0].path;
     const tail = pathSegment.slice(1);
-    const next = _expand(tail);
+    const next = expandString(tail, addPath);
     if (next == undefined) {
-        return head;
+        return addPath ? `${head}${addPath}` : head;
     }
 
     return tail[0].navigationProperty
@@ -112,8 +155,10 @@ function combine(...expansions: Expand[]): Expand {
 export function newUtils(): ExpandUtils {
     return {
         expand,
+        expandCount,
         combine,
         expandRaw,
-        expandAll
+        expandAll,
+        expandRef
     }
 }

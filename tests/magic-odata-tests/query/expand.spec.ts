@@ -83,13 +83,69 @@ describe("Query.Expand", function () {
 
             expect(result.Blog!.Name).toBe(ctxt.blog.Name);
         });
+    });
+
+    testCase("expandCount", function () {
+
+        it("Should work correctly with entity collection", async () => {
+
+            const ctxt = await addFullUserChain();
+            const result = await client.BlogPosts
+                .withKey(x => x.key(ctxt.blogPost.Id))
+                .withQuery((p, { $expand: { expandCount } }) =>
+                    expandCount(p.Comments))
+                .get();
+
+            expect((result.Comments![0] as any)["@odata.id"]).toBe(`Comments('${ctxt.comment.Id}')`);
+        });
+
+        it("Should work correctly with entity collection and inner expand (1)", ex1.bind(null, true));
+        it("Should work correctly with entity collection and inner expand (2)", ex1.bind(null, false));
+
+        async function ex1(hasResults: boolean) {
+
+            const ctxt = await addFullUserChain();
+            const result = await client.BlogPosts
+                .withKey(x => x.key(ctxt.blogPost.Id))
+                .withQuery((p, { $filter: { eq }, $expand: { expandCount } }) =>
+                    expandCount(p.Comments, c => eq(c.Id, hasResults ? ctxt.comment.Id : "asdasd")))
+                .get();
+
+            if (hasResults) {
+                expect((result.Comments![0] as any)["@odata.id"]).toBe(`Comments('${ctxt.comment.Id}')`);
+            } else {
+                expect(result.Comments?.length).toBe(0)
+            }
+        }
+
+        it("Should work correctly with navigation property (1)", ex2.bind(null, true));
+        it("Should work correctly with navigation property (2)", ex2.bind(null, false));
+
+        async function ex2(hasResults: boolean) {
+
+            const ctxt = await addFullUserChain({ addFullChainToCommentUser: {} });
+            const result = await client.BlogPosts
+                .withKey(x => x.key(ctxt.commentUserChain!.blogPost.Id))
+                .withQuery((p, { $filter: { eq }, $expand: { expandCount } }) =>
+                    expandCount(p.Blog.User.BlogPostComments, c => eq(c.Id, hasResults ? ctxt.comment.Id : "sdsadas")))
+                .get();
+
+            if (hasResults) {
+                expect((result.Blog?.User?.BlogPostComments![0] as any)["@odata.id"]).toBe(`Comments('${ctxt.comment.Id}')`);
+            } else {
+                expect(result.Blog?.User?.BlogPostComments!.length).toBe(0);
+            }
+        }
+    });
+
+    testCase("expandRef", function () {
 
         it("Should work correctly with $ref", async () => {
 
             const ctxt = await addFullUserChain();
             const result = await client.BlogPosts
                 .withKey(x => x.key(ctxt.blogPost.Id))
-                .withQuery((_, { $expand: { expandAll } }) => expandAll(true))
+                .withQuery((_, { $expand: { expandRef } }) => expandRef())
                 .get();
 
             expect((result.Blog as any)["@odata.id"]).toBe(`Blogs('${ctxt.blog.Id}')`);
@@ -187,6 +243,25 @@ describe("Query.Expand", function () {
             expect(result.Comments![0].Title).toBe(ctxt.comment.Title);
             expect(result.Comments![0].Id).toBeUndefined();
         });
+
+        it("Should work correctly with navigation property (1)", ex2.bind(null, true));
+        it("Should work correctly with navigation property (2)", ex2.bind(null, false));
+
+        async function ex2(hasResults: boolean) {
+
+            const ctxt = await addFullUserChain({ addFullChainToCommentUser: {} });
+            const result = await client.BlogPosts
+                .withKey(x => x.key(ctxt.commentUserChain!.blogPost.Id))
+                .withQuery((p, { $filter: { eq }, $expand: { expand } }) =>
+                    expand(p.Blog.User.BlogPostComments, c => eq(c.Id, hasResults ? ctxt.comment.Id : "sdsadas")))
+                .get();
+
+            if (hasResults) {
+                expect(result.Blog?.User?.BlogPostComments![0].Text).toBe(ctxt.comment.Text);
+            } else {
+                expect(result.Blog?.User?.BlogPostComments!.length).toBe(0);
+            }
+        }
 
         describe("Single entity + filter", () => {
             // not sure this is possible
