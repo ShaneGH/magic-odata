@@ -7,12 +7,14 @@ import { recontextDataForQuery } from "./entitySet/addQuery.js";
 import { CastSelection, recontextDataForCasting } from "./entitySet/cast.js";
 import { recontextDataForSubPath, SubPathSelection } from "./entitySet/subPath.js";
 import { executeRequest } from "./entitySet/executeRequest.js";
+import { Accept } from "./entitySet/utils.js";
 
 export type ODataResultMetadata = Partial<{
 
     "@odata.context": string
 }>
 
+// TODO: rename to ODataNestedResult
 export type ODataCollectionResult<T> = ODataResultMetadata & {
 
     value: T
@@ -83,6 +85,7 @@ export class EntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSing
         this.state = {
             tools,
             state: state || {
+                accept: Accept.Json,
                 path: [tools.entitySet.name]
             }
         };
@@ -122,12 +125,6 @@ export class EntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSing
     get(overrideRequestTools?: Partial<RequestTools<TFetchResult, TResult>>): TResult {
         return executeRequest(this.state, this.path(), overrideRequestTools)
     }
-
-    // https://github.com/ShaneGH/magic-odata/issues/3
-    // count(overrideRequestTools?: Partial<RequestTools<TResult>>): Promise<TDataResult> {
-    //     throw new Error()
-    //     //return this.fetch(this.path("$count"), overrideRequestTools);
-    // }
 
     private path(append?: string[] | string | undefined) {
 

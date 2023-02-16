@@ -1,7 +1,7 @@
 import { ComplexTypeOrEnum, ODataComplexType, ODataEnum, ODataServiceConfig, ODataServiceTypes, ODataSingleTypeRef } from "magic-odata-shared";
 import { CodeGenConfig } from "../config.js";
 import { Keywords } from "./keywords.js";
-import { buildFullyQualifiedTsType, buildGetCasterName, buildGetKeyBuilderName, buildGetQueryableName, buildGetSubPathName, FullyQualifiedTsType, GetCasterName, GetKeyBuilderName, GetQueryableName, GetSubPathName, httpClientType, Tab } from "./utils.js"
+import { buildFullyQualifiedTsType, buildGetCasterName, buildGetKeyBuilderName, buildGetQueryableName, buildGetSubPathName, FullyQualifiedTsType, GetCasterName, GetKeyBuilderName, GetQueryableName, GetSubPathName, buildHttpClientType, Tab, HttpClientType } from "./utils.js"
 
 // https://github.com/ShaneGH/magic-odata/issues/4
 function buildGetComplexCasterProps(
@@ -11,9 +11,8 @@ function buildGetComplexCasterProps(
     getCasterName: GetCasterName,
     getSubPathName: GetSubPathName,
     getKeyBuilderName: GetKeyBuilderName,
-    keywords: Keywords,
-    settings: CodeGenConfig | null,
-    tab: Tab) {
+    httpClientType: HttpClientType,
+    keywords: Keywords) {
 
     const allComplexTypeFlatList = Object
         .keys(allTypes)
@@ -45,26 +44,23 @@ function buildGetComplexCasterProps(
         return complexInherits
             .map(t => {
                 const typeRef: ODataSingleTypeRef = { namespace: t.namespace, name: t.name, isCollection: false };
-                const resultType = fullyQualifiedTsType(typeRef)
                 const caster = fullyQualifiedTsType(typeRef, getCasterName)
                 const subProps = fullyQualifiedTsType(typeRef, getSubPathName)
                 const keyProp = fullyQualifiedTsType(typeRef, getKeyBuilderName);
 
                 const generics = {
-                    tEntity: resultType,
                     tKeyBuilder: keyProp,
                     tQueryable: fullyQualifiedTsType(typeRef, getQueryableName),
                     tCaster: `${caster}.${casterType}`,
                     tSingleCaster: `${caster}.Single`,
-                    tSubPath: singleCasterType ? `${subProps}` : keywords.CollectionsCannotBeTraversed,
-                    tSingleSubPath: singleCasterType ? keywords.CollectionsCannotBeTraversed : `${subProps}`,
-                    tResult: {
-                        collection: collectionResult,
-                        resultType: resultType + (singleCasterType ? "" : "[]")
-                    }
+                    tSubPath: singleCasterType ? subProps : keywords.CollectionSubPath,
+                    tSingleSubPath: singleCasterType ? "never" : subProps,
+                    tResult: collectionResult
+                        ? { isCollection: true as true, collectionType: typeRef }
+                        : typeRef
                 }
 
-                const entityQueryType = httpClientType(keywords, generics, tab, settings || null);
+                const entityQueryType = httpClientType(generics, true);
                 return `${name(t)}(): ${keywords.CastSelection}<${entityQueryType}>`
             })
     }
@@ -79,9 +75,10 @@ export const buildEntityCasting = (tab: Tab, settings: CodeGenConfig | null | un
     const getQueryableName = buildGetQueryableName(settings);
     const getKeyBuilderName = buildGetKeyBuilderName(settings);
     const fullyQualifiedTsType = buildFullyQualifiedTsType(settings);
+    const httpClientType = buildHttpClientType(serviceConfig.types, keywords, tab, settings || null);
     const getComplexCasterProps = buildGetComplexCasterProps(serviceConfig.types,
         fullyQualifiedTsType, getQueryableName, getCasterName, getSubPathName, getKeyBuilderName,
-        keywords, settings || null, tab);
+        httpClientType, keywords);
 
     return (type: ComplexTypeOrEnum) => type.containerType === "ComplexType"
         ? complexType(type.type)

@@ -16,7 +16,9 @@
         "entityWhitelist": {
             "entities": [
                 "My.Odata.Entities/HasId",
-                "My.Odata.Entities/User"
+                "My.Odata.Entities/User",
+                "My.Odata.Entities/UserType",
+                "My.Odata.Entities/UserProfileType"
             ]
         }
     },

@@ -56,6 +56,8 @@ export {
     RequestTools,
     RequestOptions,
     ODataUriParts,
+    DefaultResponseInterceptor,
+    ResponseInterceptor,
     RootResponseInterceptor
 } from "./src/entitySet/requestTools.js"
 
@@ -85,21 +87,6 @@ export {
 export type SingleItemsCannotBeQueriedByKey = never
 
 /*
- * It is not possible to traverse or select a property of an item inside a collection
- * You must first apply a key to the collection, and then you can traverse the item
- * 
- * This is a type designed not to be used
- */
-export type CollectionsCannotBeTraversed = never
-
-/*
- * It is not possible to traverse or select a property of a primitive type, e.g. a string or an Int32
- * 
- * This is a type designed not to be used
- */
-export type PrimitiveTypesCannotBeTraversed = never
-
-/*
  * We are not sure if this is a valid use case. The odata spec is vague on the matter
  * Many OData server implementations do not support this
  * 
@@ -122,3 +109,10 @@ export type QueryingOnCollectionsOfCollectionsIsNotSupported = never
  * This is a type designed not to be used
  */
 export type ThisItemDoesNotHaveAKey = never
+
+/*
+ * Once you specify a $value or a $count for something, you cannot cast or get it's sub path
+ * 
+ * This is a type designed not to be used
+ */
+export type $ValueAnd$CountTypesCanNotBeOperatedOn = never

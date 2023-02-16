@@ -3,8 +3,9 @@ import { My, ODataClient } from "../generatedCode.js";
 import { addFullUserChain } from "../utils/client.js";
 import { uniqueString } from "../utils/utils.js";
 import { WithKeyType } from "magic-odata-client";
-import { RequestOptions, RootResponseInterceptor } from "magic-odata-client";
-import { oDataClient } from "../utils/odataClient.js";
+import { RequestOptions, ResponseInterceptor } from "magic-odata-client";
+import { oDataClient, uriClient } from "../utils/odataClient.js";
+import { RootResponseInterceptor } from "magic-odata-client";
 
 function toListRequestInterceptor(_: any, r: RequestInit): RequestInit {
     return {
@@ -310,4 +311,87 @@ describe("SubPath", function () {
             }
         };
     });
+
+    describe("$value", () => {
+
+        it("Should retrieve enum as $value", async () => {
+            const user = await addFullUserChain();
+            const userProfileType: string = await oDataClient.Users
+                .withKey(x => x.key(user.blogUser.Id!))
+                .subPath(x => x.UserProfileType)
+                .subPath(x => x.$value)
+                .get();
+
+            expect(userProfileType).toBe(user.blogUser.UserProfileType);
+        });
+
+        it("Should retrieve primitive as $value", async () => {
+            const user = await addFullUserChain();
+            const likes: string = await oDataClient.BlogPosts
+                .withKey(x => x.key(user.blogPost.Id!))
+                .subPath(x => x.Likes)
+                .subPath(x => x.$value)
+                .get();
+
+            expect(typeof likes).toBe("string");
+            expect(likes).toBe(user.blogPost.Likes.toString());
+        });
+    })
+
+    describe("$count", () => {
+
+        it("Should retrieve entity set $count", async () => {
+            await addFullUserChain();
+            const count: number = await oDataClient.Users
+                .subPath(x => x.$count)
+                .get();
+
+            expect(typeof count).toBe("number");
+            expect(count).toBeGreaterThan(2);
+        });
+
+        it("Should retrieve sub entity set $count", async () => {
+            const user = await addFullUserChain();
+            const uri: any = await uriClient.Users
+                .withKey(u => u.key(user.blogUser.Id!))
+                .subPath(x => x.Blogs)
+                .subPath(x => x.$count)
+                .get();
+
+            expect(uri).toBe(`xxx/Users('${user.blogUser.Id}')/Blogs/$count`);
+        });
+
+        it("Should retrieve complex type set $count", async () => {
+            const user = await addFullUserChain({ commentTags: [{ Tag: uniqueString() }] });
+            const uri: any = await uriClient.Comments
+                .withKey(u => u.key(user.comment.Id!))
+                .subPath(x => x.Tags)
+                .subPath(x => x.$count)
+                .get();
+
+            expect(uri).toBe(`xxx/Comments('${user.comment.Id}')/Tags/$count`);
+        });
+
+        it("Should retrieve complex type set $count", async () => {
+
+            const count: number = await oDataClient.AppDetails
+                .subPath(x => x.AppNameWords)
+                .subPath(x => x.$count)
+                .get();
+
+            expect(typeof count).toBe("number");
+            expect(count).toBe(2);
+        });
+
+        it("Should retrieve casted entity set $count", async () => {
+
+            const user = await addFullUserChain();
+            const uri: any = await uriClient.Users
+                .cast(x => x.User())
+                .subPath(x => x.$count)
+                .get();
+
+            expect(uri).toBe(`xxx/Users/My.Odata.Entities.User/$count`);
+        });
+    })
 });

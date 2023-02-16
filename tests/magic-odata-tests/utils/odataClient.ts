@@ -38,3 +38,9 @@ export function queryBuilder<T>(fullName: string, q: (x: QueryComplexObject<T>) 
     const typeRef: QueryComplexObject<T> = buildComplexTypeRef(type.type, rootConfig.types);
     return buildQuery(q(typeRef), false)
 }
+
+export const uriClient = new ODataClient({
+    request: x => Promise.resolve(x) as any,
+    responseInterceptor: x => x,
+    uriRoot: "xxx"
+}).My.Odata.Container;

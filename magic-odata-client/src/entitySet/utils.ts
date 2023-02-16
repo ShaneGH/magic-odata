@@ -1,7 +1,7 @@
 import { ODataComplexType, ODataEntitySet, ODataEnum, ODataServiceConfig, ODataServiceTypes, ODataTypeName, ODataTypeRef } from "magic-odata-shared"
 import { Query } from "../queryBuilder.js"
 import { typeNameString } from "../utils.js"
-import { RequestTools, RootResponseInterceptor } from "./requestTools.js"
+import { DefaultResponseInterceptor, RequestTools } from "./requestTools.js"
 
 
 export type EntitySetData<TFetchResult, TResult> = {
@@ -11,14 +11,21 @@ export type EntitySetData<TFetchResult, TResult> = {
 
 export type EntitySetTools<TFetchResult, TResult> = {
     requestTools: RequestTools<TFetchResult, TResult>,
-    defaultResponseInterceptor: RootResponseInterceptor<TFetchResult, TResult>,
+    defaultResponseInterceptor: DefaultResponseInterceptor<TFetchResult, TResult>,
     type: ODataTypeRef,
     entitySet: ODataEntitySet,
     root: ODataServiceConfig
 }
 
+export enum Accept {
+    Json = "Json",
+    Raw = "Raw",
+    Integer = "Integer"
+}
+
 export type EntityQueryState = {
     path: string[]
+    accept: Accept
     query?: {
         query: Query | Query[]
         urlEncode: boolean

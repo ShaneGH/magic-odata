@@ -6,6 +6,7 @@
  * [Angular configuration](#angular-configuration)
  * [Key lookup](#key-lookup)
  * [Sub path lookup](#sub-path-lookup)
+    * [$value and $count](#value-and-count)
  * [Query options](#query-options)
     * [$filter](#filter)
     * [$select](#select)
@@ -205,6 +206,28 @@ const userName = new MyOdataCliet({...})
     .get()
 ```
 
+## $value and $count
+
+The $value path allows you to get a primitive value as a string
+
+```typescript
+const userName = new MyOdataCliet({...})
+    .User
+    .withKey(k => k.key(user.Id))
+    .subPath(user => user.Name)
+    .subPath(name => name.$value)
+    .get();
+```
+
+The $count path allows you to get a raw count of items as a number
+
+```typescript
+const userName = new MyOdataCliet({...})
+    .User
+    .subPath(user => user.$count)
+    .get();
+```
+
 # Query Options
 
 Use the `withQuery` function to add query params to a request. Query tools can be combined to form a complex query url
@@ -332,6 +355,8 @@ const myUser = new MyOdataCliet({...})
 ```
 
 ## Paging
+
+For a raw `$count` of entities or values, see [$value and $count](#value-and-count)
 
 ```typescript
 const users = new MyOdataCliet({...})

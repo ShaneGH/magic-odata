@@ -2,7 +2,7 @@
 import { addFullUserChain } from "../utils/client.js";
 import { My, ODataClient, rootConfigExporter } from "../generatedCode.js";
 import { queryUtils, WithKeyType } from "magic-odata-client";
-import { oDataClient } from "../utils/odataClient.js";
+import { oDataClient, uriClient } from "../utils/odataClient.js";
 
 const rootConfig = rootConfigExporter();
 
@@ -24,15 +24,6 @@ const client = new ODataClient({
     request: fetch,
     uriRoot: "http://localhost:5432/odata/test-entities"
 }).My.Odata.Container;
-
-const uriClient = new ODataClient({
-    request: x => Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve(x)
-    }) as any,
-    uriRoot: "xxx"
-}).My.Odata.Container;
-
 
 describe("Query.Select", function () {
 

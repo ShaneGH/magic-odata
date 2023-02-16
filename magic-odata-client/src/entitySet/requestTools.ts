@@ -28,8 +28,8 @@ export type ODataUriParts = {
     query: { [key: string]: string }
 }
 
+export type DefaultResponseInterceptor<TFetchResult, TResult> = (input: TFetchResult, url: string, options: RequestOptions, stringParser: (string: string, contentType?: string) => any) => TResult
 export type RootResponseInterceptor<TFetchResult, TResult> = (input: TFetchResult, url: string, options: RequestOptions) => TResult
-
 export type ResponseInterceptor<TFetchResult, TResult> = (input: TFetchResult, url: string, options: RequestOptions, defaultInterceptor: RootResponseInterceptor<TFetchResult, TResult>) => TResult
 
 /**
@@ -76,4 +76,9 @@ export type RequestTools<TRequestResult, TDataResult> = {
      * Interceptor for http responses. Use this to add custom error handling or deserialization
      */
     responseInterceptor?: ResponseInterceptor<TRequestResult, TDataResult>
+
+    /**
+     * If true will ignore warnings of inconsitent content
+     */
+    ignoreWarnings?: boolean
 }

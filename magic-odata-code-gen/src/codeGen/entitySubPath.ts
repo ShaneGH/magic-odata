@@ -2,7 +2,7 @@ import { ODataComplexType, ODataTypeRef, ODataServiceConfig, ODataServiceTypes, 
 import { CodeGenConfig } from "../config.js";
 import { typeNameString } from "../utils.js";
 import { Keywords } from "./keywords.js";
-import { buildFullyQualifiedTsType, buildGetCasterName, buildGetKeyBuilderName, buildGetQueryableName, buildGetSubPathName, buildSanitizeNamespace, FullyQualifiedTsType, GetCasterName, GetKeyBuilderName, GetKeyType, GetQueryableName, GetSubPathName, httpClientType, Tab } from "./utils.js"
+import { buildFullyQualifiedTsType, buildGetCasterName, buildGetKeyBuilderName, buildGetQueryableName, buildGetSubPathName, buildSanitizeNamespace, FullyQualifiedTsType, GetCasterName, GetKeyBuilderName, GetQueryableName, GetSubPathName, buildHttpClientType, Tab, HttpClientType } from "./utils.js"
 
 // TODO: duplicate_logic_key: subPath
 enum ObjectType {
@@ -41,8 +41,8 @@ function buildGetSubPathProps(
     getSubPathName: GetSubPathName,
     getKeyBuilderName: GetKeyBuilderName,
     keywords: Keywords,
-    settings: CodeGenConfig | null,
-    tab: Tab) {
+    httpClientType: HttpClientType,
+    settings: CodeGenConfig | null) {
 
     return (type: ODataComplexType): string[] => {
 
@@ -54,44 +54,68 @@ function buildGetSubPathProps(
                 // TODO: test with arrays of arrays?
 
                 const entityInfo = getEntityTypeInfo(value)
-                const tEntity = typeName(entityInfo, 1)
 
                 const generics = {
-                    tEntity,
                     tKeyBuilder: getTKeyBuilder(entityInfo),
                     tQueryable: getTQuery(entityInfo),
                     tCaster: getTCaster(entityInfo),
                     tSingleCaster: getTCaster(entityInfo, true),
-                    tSubPath: entityInfo.collectionDepth ? keywords.CollectionsCannotBeTraversed : getTSubPath(entityInfo, false),
-                    tSingleSubPath: entityInfo.collectionDepth ? getTSubPath(entityInfo, true) : keywords.CollectionsCannotBeTraversed,
-                    tResult: {
-                        collection: entityInfo.type.objectType !== ObjectType.ComplexType || !!entityInfo.collectionDepth,
-                        resultType: tEntity + (entityInfo.collectionDepth ? "[]" : "")
-                    }
+                    tSubPath: getTSubPath(value),
+                    tSingleSubPath: value.isCollection ? getTSubPath(value.collectionType) : "never",
+                    tResult: value
                 }
 
-                const entityQueryType = httpClientType(keywords, generics, tab, settings || null);
+                const entityQueryType = httpClientType(generics, true);
                 return `${key}: ${keywords.SubPathSelection}<${entityQueryType}>`
             })
     }
 
-    function getTSubPath(info: EntityTypeInfo, single: boolean) {
+    function getTSubPath(typeRef: ODataTypeRef) {
+
+        if (typeRef.isCollection) {
+            return keywords.CollectionSubPath
+        }
 
         // https://github.com/ShaneGH/magic-odata/issues/12
-        if (info.type.objectType !== ObjectType.ComplexType) {
-            return keywords.PrimitiveTypesCannotBeTraversed;
+        if (typeRef.namespace === "Edm") {
+            return keywords.PrimitiveSubPath;
         }
 
-        if (info.collectionDepth > 1 || (info.collectionDepth && !single)) {
-            return keywords.CollectionsCannotBeTraversed;
+        const type = allTypes[typeRef.namespace] && allTypes[typeRef.namespace][typeRef.name]
+        if (!type) {
+            throw new Error(`Could not find key for type ${typeNameString(typeRef, settings)}`);
         }
 
-        return fullyQualifiedTsType({
-            isCollection: false,
-            namespace: info.type.complexType.namespace,
-            name: info.type.complexType.name
-        }, getSubPathName)
+        // https://github.com/ShaneGH/magic-odata/issues/12
+        if (type.containerType === "Enum") {
+            return keywords.PrimitiveSubPath;
+        }
+
+        return fullyQualifiedTsType(typeRef, getSubPathName)
     }
+
+    // function getTSubPath(info: EntityTypeInfo) {
+
+    //     // https://github.com/ShaneGH/magic-odata/issues/12
+    //     if (info.collectionDepth === 0
+    //         && (info.type.objectType === ObjectType.EnumType || info.type.objectType === ObjectType.PrimitiveType)) {
+    //         return keywords.PrimitiveSubPath;
+    //     }
+
+    //     if (info.collectionDepth) {
+    //         return keywords.CollectionSubPath;
+    //     }
+
+    //     if (info.type.objectType !== ObjectType.ComplexType) {
+    //         return "PrimitiveTypesCannotBeTraversed_B";
+    //     }
+
+    //     return fullyQualifiedTsType({
+    //         isCollection: false,
+    //         namespace: info.type.complexType.namespace,
+    //         name: info.type.complexType.name
+    //     }, getSubPathName)
+    // }
 
     function getTCaster(info: EntityTypeInfo, forceSingle = false) {
 
@@ -173,6 +197,8 @@ function buildGetSubPathProps(
         return resultStr + collectionStr
     }
 
+    // TODO: this is a messy abstraction. Remove if possible
+    // Might be entwined with TEntity on EntitySet. TEntity is never an array, even though maybe it should be
     function getEntityTypeInfo(propertyType: ODataTypeRef): EntityTypeInfo {
         if (propertyType.isCollection) {
             const innerResult = getEntityTypeInfo(propertyType.collectionType)
@@ -227,8 +253,9 @@ export const buildEntitySubPath = (tab: Tab, settings: CodeGenConfig | null | un
     const fullyQualifiedTsType = buildFullyQualifiedTsType(settings);
     const getKeyBuilderName = buildGetKeyBuilderName(settings);
     const getQueryableName = buildGetQueryableName(settings);
+    const httpClientType = buildHttpClientType(serviceConfig.types, keywords, tab, settings || null);
     const getSubPathProps = buildGetSubPathProps(serviceConfig.types, fullyQualifiedTsType, getQueryableName,
-        getCasterName, getSubPathName, getKeyBuilderName, keywords, settings || null, tab);
+        getCasterName, getSubPathName, getKeyBuilderName, keywords, httpClientType, settings || null);
 
     return (type: ODataComplexType) => {
         const subPathName = getSubPathName(type.name)

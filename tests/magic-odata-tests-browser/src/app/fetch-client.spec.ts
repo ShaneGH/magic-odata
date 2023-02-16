@@ -57,4 +57,46 @@ describe('Fetch client', () => {
       // GREATE SUCCESS
     }
   });
+
+  describe("$value", () => {
+
+    it("Should retrieve enum as $value", async () => {
+      const client = TestBed.createComponent(AppComponent).componentInstance.fetchClient;
+      const user = await addUser();
+      const userProfileType: string = await client.Users
+        .withKey(x => x.key(user.Id!))
+        .subPath(x => x.UserProfileType)
+        .subPath(x => x.$value)
+        .get();
+
+      expect(userProfileType).toBe(user.UserProfileType);
+    });
+
+    it("Should retrieve primitive as $value", async () => {
+      const client = TestBed.createComponent(AppComponent).componentInstance.fetchClient;
+      const user = await addUser();
+      const likes: string = await client.Users
+        .withKey(x => x.key(user.Id!))
+        .subPath(x => x.Score)
+        .subPath(x => x.$value)
+        .get();
+
+      expect(typeof likes).toBe("string");
+      expect(likes).toBe(user.Score.toString());
+    });
+  })
+
+  describe("$count", () => {
+
+    it("Should retrieve entity set $count", async () => {
+      const client = TestBed.createComponent(AppComponent).componentInstance.fetchClient;
+      await addUser();
+      const count: number = await client.Users
+        .subPath(x => x.$count)
+        .get();
+
+      expect(typeof count).toBe("number");
+      expect(count).toBeGreaterThan(1);
+    });
+  })
 });

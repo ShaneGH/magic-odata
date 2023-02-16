@@ -4,6 +4,7 @@ import { Dict, Tab } from "./utils.js";
 export type Keywords = {
     mergeMap: string
     map: string
+    RequestOptions: string
     DateStruct: string
     DurationStruct: string
     TimeStruct: string
@@ -28,18 +29,21 @@ export type Keywords = {
     ODataCollectionResult: string
     ODataResult: string
     SingleItemsCannotBeQueriedByKey: string
-    CollectionsCannotBeTraversed: string
-    PrimitiveTypesCannotBeTraversed: string
     CastingOnCollectionsOfCollectionsIsNotSupported: string
     QueryingOnCollectionsOfCollectionsIsNotSupported: string
     ThisItemDoesNotHaveAKey: string,
     toODataTypeRef: string,
     responseParser: string,
-    RootResponseInterceptor: string
-    parseBlob: string
+    DefaultResponseInterceptor: string
+    parseAngularBlob: string
+    parseAngularString: string
+    parseAngularArrayBuffer: string
     Observable: string
     HttpError: string,
     AngularHttpResponse: string
+    $ValueAnd$CountTypesCanNotBeOperatedOn: string
+    PrimitiveSubPath: string
+    CollectionSubPath: string
 };
 
 export function generateKeywords(allNamespaces: string[], rootLevelTypes: string[]): Keywords {
@@ -57,6 +61,9 @@ export function generateKeywords(allNamespaces: string[], rootLevelTypes: string
     const keys = Object.keys(lookup)
 
     return {
+        CollectionSubPath: getKeyword("CollectionSubPath"),
+        RequestOptions: getKeyword("RequestOptions"),
+        $ValueAnd$CountTypesCanNotBeOperatedOn: getKeyword("$ValueAnd$CountTypesCanNotBeOperatedOn"),
         DurationStruct: getKeyword("DurationStruct"),
         DateStruct: getKeyword("DateStruct"),
         TimeStruct: getKeyword("TimeStruct"),
@@ -65,10 +72,12 @@ export function generateKeywords(allNamespaces: string[], rootLevelTypes: string
         mergeMap: getKeyword("mergeMap"),
         map: getKeyword("map"),
         AngularHttpResponse: getKeyword("HttpResponse"),
-        parseBlob: getKeyword("parseBlob"),
+        parseAngularBlob: getKeyword("parseBlob"),
+        parseAngularString: getKeyword("parseAngularString"),
+        parseAngularArrayBuffer: getKeyword("parseAngularArrayBuffer"),
         HttpError: getKeyword("HttpError"),
         Observable: getKeyword("Observable"),
-        RootResponseInterceptor: getKeyword("RootResponseInterceptor"),
+        DefaultResponseInterceptor: getKeyword("DefaultResponseInterceptor"),
         responseParser: getKeyword("responseParser"),
         toODataTypeRef: getKeyword("toODataTypeRef"),
         QueryEnum: getKeyword("QueryEnum"),
@@ -90,8 +99,7 @@ export function generateKeywords(allNamespaces: string[], rootLevelTypes: string
         ODataResult: getKeyword("ODataResult"),
         _httpClientArgs: getKeyword("_httpClientArgs"),
         SingleItemsCannotBeQueriedByKey: getKeyword("SingleItemsCannotBeQueriedByKey"),
-        CollectionsCannotBeTraversed: getKeyword("CollectionsCannotBeTraversed"),
-        PrimitiveTypesCannotBeTraversed: getKeyword("PrimitiveTypesCannotBeTraversed"),
+        PrimitiveSubPath: getKeyword("PrimitiveSubPath"),
         CastingOnCollectionsOfCollectionsIsNotSupported: getKeyword("CastingOnCollectionsOfCollectionsIsNotSupported"),
         QueryingOnCollectionsOfCollectionsIsNotSupported: getKeyword("QueryingOnCollectionsOfCollectionsIsNotSupported"),
         ThisItemDoesNotHaveAKey: getKeyword("ThisItemDoesNotHaveAKey")
@@ -120,12 +128,14 @@ export function imports(keywords: Keywords, tab: Tab, config: CodeGenConfig | nu
 } from 'rxjs'`
 
     const odataTsClient = `import {
+${tab(importWithAlias("RequestOptions"))},
+${tab(importWithAlias("$ValueAnd$CountTypesCanNotBeOperatedOn"))},
 ${tab(importWithAlias("DateStruct"))},
 ${tab(importWithAlias("TimeStruct"))},
 ${tab(importWithAlias("DurationStruct"))},
 ${tab(importWithAlias("OffsetStruct"))},
 ${tab(importWithAlias("HttpError"))},
-${tab(importWithAlias("RootResponseInterceptor"))},
+${tab(importWithAlias("DefaultResponseInterceptor"))},
 ${tab(importWithAlias("KeySelection"))},
 ${tab(importWithAlias("WithKeyType"))},
 ${tab(importWithAlias("QueryEnum"))},
@@ -143,8 +153,6 @@ ${tab(importWithAlias("ODataCollectionResult"))},
 ${tab(importWithAlias("ODataResult"))},
 ${tab(importWithAlias("SingleItemsCannotBeQueriedByKey"))},
 ${tab(importWithAlias("ThisItemDoesNotHaveAKey"))},
-${tab(importWithAlias("CollectionsCannotBeTraversed"))},
-${tab(importWithAlias("PrimitiveTypesCannotBeTraversed"))},
 ${tab(importWithAlias("CastingOnCollectionsOfCollectionsIsNotSupported"))},
 ${tab(importWithAlias("QueryingOnCollectionsOfCollectionsIsNotSupported"))}
 } from 'magic-odata-client';`

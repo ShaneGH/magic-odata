@@ -47,8 +47,8 @@ export function applyWhitelist(serviceConfig: ODataServiceConfig, settings: Conf
         return shouldTakeType(t, anyWhitelisted)
     }
 
-    serviceConfig = renameEntities(serviceConfig, deepWhitelist)
-    serviceConfig = renameEntityContainers(serviceConfig, deepWhitelist)
+    serviceConfig = whitelistEntities(serviceConfig, deepWhitelist)
+    serviceConfig = whitelistEntityContainers(serviceConfig, deepWhitelist)
 
     return serviceConfig
 
@@ -120,7 +120,7 @@ export function applyWhitelist(serviceConfig: ODataServiceConfig, settings: Conf
     }
 }
 
-function renameEntityContainers(serviceConfig: ODataServiceConfig, whiteList: IsWhiteListed): ODataServiceConfig {
+function whitelistEntityContainers(serviceConfig: ODataServiceConfig, whiteList: IsWhiteListed): ODataServiceConfig {
     const roughRemoval: ODataServiceConfig = {
         ...serviceConfig,
         entitySets: Object
@@ -151,7 +151,7 @@ function renameEntityContainers(serviceConfig: ODataServiceConfig, whiteList: Is
     }
 }
 
-function renameEntities(serviceConfig: ODataServiceConfig, whiteList: IsWhiteListed): ODataServiceConfig {
+function whitelistEntities(serviceConfig: ODataServiceConfig, whiteList: IsWhiteListed): ODataServiceConfig {
 
     const roughRemoval = {
         ...serviceConfig,

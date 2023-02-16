@@ -1,12 +1,23 @@
-import { ODataComplexType, ODataServiceTypes, ODataTypeName } from "magic-odata-shared";
-import { EntitySetData, lookupComplex, tryFindBaseType, tryFindPropertyType } from "./utils.js";
+import { ODataComplexType, ODataServiceTypes, ODataTypeRef } from "magic-odata-shared";
+import { Accept, EntitySetData, lookup, tryFindBaseType, tryFindPropertyType } from "./utils.js";
 
+const $count = {};
+const $value = {};
 
 function buildSubPathProperties<TFetchResult, TResult, TSubPath>(
     data: EntitySetData<TFetchResult, TResult>,
-    type: ODataTypeName): TSubPath {
+    type: ODataTypeRef): TSubPath {
 
-    return listAllProperties(lookupComplex(type, data.tools.root.types), data.tools.root.types, true)
+    if (type.isCollection) {
+        return { $count } as any
+    }
+
+    const t = lookup(type, data.tools.root.types);
+    if (t.flag === "Primitive" || t.flag === "Enum") {
+        return { $value } as any
+    }
+
+    return listAllProperties(t.type, data.tools.root.types, true)
         .reduce((s, x) => ({ ...s, [x]: { propertyName: x } }), {} as any);
 }
 
@@ -39,21 +50,36 @@ export function recontextDataForSubPath<TFetchResult, TResult, TSubPath, TNewEnt
         throw new Error("You cannot add query components before navigating a sub path");
     }
 
-    if (data.tools.type.isCollection) {
-        console.log(data.tools.type)
-        throw new Error("You cannot navigate the subpath of a collection. Try to filter by key first");
-    }
-
     const newT = subPath(buildSubPathProperties(data, data.tools.type));
-    const prop = tryFindPropertyType(data.tools.type, newT.propertyName, data.tools.root.types);
-    if (!prop) {
+    const propType = newT === $value
+        ? { isCollection: false as false, namespace: "Edm", name: "String" }
+        : newT === $count
+            ? { isCollection: false as false, namespace: "Edm", name: "Int32" }
+            : data.tools.type.isCollection
+                ? null
+                : tryFindPropertyType(data.tools.type, newT.propertyName, data.tools.root.types);
+    if (!propType) {
         throw new Error(`Invalid property ${newT.propertyName}`);
     }
 
-    const path = data.state.path?.length ? [...data.state.path, newT.propertyName] : [newT.propertyName];
+    const propName = newT === $value
+        ? "$value"
+        : newT === $count
+            ? "$count"
+            : newT.propertyName
+
+    const path = data.state.path?.length ? [...data.state.path, propName] : [propName];
 
     return {
-        tools: { ...data.tools, type: prop },
-        state: { ...data.state, path }
+        tools: { ...data.tools, type: propType },
+        state: {
+            ...data.state,
+            path,
+            accept: newT === $value
+                ? Accept.Raw
+                : newT === $count
+                    ? Accept.Integer
+                    : data.state.accept
+        }
     }
 }

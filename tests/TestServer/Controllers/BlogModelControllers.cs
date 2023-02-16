@@ -61,7 +61,7 @@ public class AppDetailsController : ODataController
             .AsQueryable();
     }
 
-    [HttpGet("AppDetails/UserProfileTypes")]
+    [HttpGet("AppDetails/UserTypes")]
     [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
     public IQueryable<UserType> GetUserTypes()
     {
@@ -369,6 +369,29 @@ public class UsersController : ODataControllerBase<User>
             .AsSingleResult();
     }
 
+    [HttpGet("Users({key})/Score")]
+    [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
+    public SingleResult<double> GetUserScore([FromRoute] string key)
+    {
+        return _inMemoryDb.Users
+            .Where(x => x.Id == key)
+            .Select(u => u.Score)
+            .AsSingleResult();
+    }
+
+    [HttpGet("Users({key})/Score/$value")]
+    [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
+    public SingleResult<string> GetUserScoreValue([FromRoute] string key)
+    {
+        return _inMemoryDb.Users
+            .Where(x => x.Id == key)
+            .Select(u => u.Score)
+            .ToList()
+            .Select(x => x.ToString())
+            .AsQueryable()
+            .AsSingleResult();
+    }
+
     [HttpGet("Users({key})/UserType")]
     [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
     public SingleResult<UserType> GetUserType([FromRoute] string key)
@@ -387,6 +410,15 @@ public class UsersController : ODataControllerBase<User>
             .Where(x => x.Id == key)
             .Select(u => u.UserProfileType)
             .AsSingleResult();
+    }
+
+    [HttpGet("Users({key})/Blogs")]
+    [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
+    public IQueryable<Blog> GetUserBlogs([FromRoute] string key)
+    {
+        return _inMemoryDb.Users
+            .Where(x => x.Id == key)
+            .SelectMany(u => u.Blogs);
     }
 
     protected override void AddEntity(EntityDbContext db, User entity) => db.Users.Add(entity);
@@ -538,6 +570,27 @@ public class BlogPostsController : ODataControllerBase<BlogPost>
     {
         return SingleResult.Create(
             _inMemoryDb.BlogPosts.Where(x => x.Id == key).Select(x => x.Blog));
+    }
+
+    [HttpGet("BlogPosts({key})/Likes")]
+    [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
+    public SingleResult<long> GetBlogPostLikes([FromRoute] string key)
+    {
+        return SingleResult.Create(
+            _inMemoryDb.BlogPosts.Where(x => x.Id == key).Select(x => x.Likes));
+    }
+
+    [HttpGet("BlogPosts({key})/Likes/$value")]
+    [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
+    public SingleResult<string> GetBlogPostLikesValue([FromRoute] string key)
+    {
+        return SingleResult.Create(
+            _inMemoryDb.BlogPosts
+                .Where(x => x.Id == key)
+                .Select(x => x.Likes)
+                .ToList()
+                .Select(x => x.ToString())
+                .AsQueryable());
     }
 
     [HttpGet("BlogPosts({key})/Words")]

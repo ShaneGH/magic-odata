@@ -1,7 +1,7 @@
 import { ODataComplexType, ODataServiceConfig, ODataSingleTypeRef } from "magic-odata-shared";
 import { CodeGenConfig } from "../config.js";
 import { Keywords } from "./keywords.js";
-import { buildFullyQualifiedTsType, buildGetCasterName, buildGetKeyType, buildGetKeyBuilderName, buildGetQueryableName, buildGetSubPathName, FullyQualifiedTsType, GetCasterName, GetKeyBuilderName, GetKeyType, GetQueryableName, GetSubPathName, httpClientType, Tab } from "./utils.js"
+import { buildFullyQualifiedTsType, buildGetCasterName, buildGetKeyType, buildGetKeyBuilderName, buildGetQueryableName, buildGetSubPathName, buildHttpClientType, Tab } from "./utils.js"
 
 export type EntityCasting = (type: ODataComplexType) => string
 export const buildEntityKeyBuilder = (tab: Tab, settings: CodeGenConfig | null | undefined, serviceConfig: ODataServiceConfig,
@@ -13,7 +13,7 @@ export const buildEntityKeyBuilder = (tab: Tab, settings: CodeGenConfig | null |
     const getKeyBuilderName = buildGetKeyBuilderName(settings);
     const fullyQualifiedTsType = buildFullyQualifiedTsType(settings);
     const getKeyType = buildGetKeyType(settings, serviceConfig, keywords);
-
+    const httpClientType = buildHttpClientType(serviceConfig.types, keywords, tab, settings || null);
 
     return (type: ODataComplexType) => {
         const keyBuilderName = getKeyBuilderName(type.name)
@@ -28,25 +28,20 @@ keyRaw(key: string): ${getResultType(type)}`)}
     function getResultType(t: ODataComplexType) {
 
         const typeRef: ODataSingleTypeRef = { namespace: t.namespace, name: t.name, isCollection: false };
-        const resultType = fullyQualifiedTsType(typeRef)
         const caster = fullyQualifiedTsType(typeRef, getCasterName)
         const subProps = fullyQualifiedTsType(typeRef, getSubPathName)
 
         const generics = {
-            tEntity: resultType,
             tKeyBuilder: keywords.SingleItemsCannotBeQueriedByKey,
             tQueryable: fullyQualifiedTsType(typeRef, getQueryableName),
             tCaster: `${caster}.Single`,
             tSingleCaster: `${caster}.Single`,
             tSubPath: subProps,
             tSingleSubPath: subProps,
-            tResult: {
-                collection: false,
-                resultType: resultType
-            }
+            tResult: typeRef
         }
 
-        const entityQueryType = httpClientType(keywords, generics, tab, settings || null);
+        const entityQueryType = httpClientType(generics, true);
         return `${keywords.KeySelection}<${entityQueryType}>`
     }
 }

@@ -1,6 +1,6 @@
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
-import { Observable, tap } from 'rxjs';
+import { firstValueFrom, Observable, tap } from 'rxjs';
 import { addUser } from 'src/clients/client';
 import { ODataClient as StringClient } from 'src/clients/generatedCode-angular';
 import { ODataClient as FetchClient } from 'src/clients/generatedCode-fetch';
@@ -91,4 +91,46 @@ describe('Angular client with Blob output', () => {
       });
     })
   });
+
+  describe("$value", () => {
+
+    it("Should retrieve enum as $value", async () => {
+      const client = TestBed.createComponent(AppComponent).componentInstance.angularBlobClient;
+      const user = await addUser();
+      const userProfileType: string = await firstValueFrom(client.Users
+        .withKey(x => x.key(user.Id!))
+        .subPath(x => x.UserProfileType)
+        .subPath(x => x.$value)
+        .get());
+
+      expect(userProfileType).toBe(user.UserProfileType);
+    });
+
+    it("Should retrieve primitive as $value", async () => {
+      const client = TestBed.createComponent(AppComponent).componentInstance.angularBlobClient;
+      const user = await addUser();
+      const likes: string = await firstValueFrom(client.Users
+        .withKey(x => x.key(user.Id!))
+        .subPath(x => x.Score)
+        .subPath(x => x.$value)
+        .get());
+
+      expect(typeof likes).toBe("string");
+      expect(likes).toBe(user.Score.toString());
+    });
+  })
+
+  describe("$count", () => {
+
+    it("Should retrieve entity set $count", async () => {
+      const client = TestBed.createComponent(AppComponent).componentInstance.angularBlobClient;
+      await addUser();
+      const count: number = await firstValueFrom(client.Users
+        .subPath(x => x.$count)
+        .get());
+
+      expect(typeof count).toBe("number");
+      expect(count).toBeGreaterThan(1);
+    });
+  })
 });

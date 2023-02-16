@@ -1,6 +1,6 @@
 import { buildQuery } from "../queryBuilder.js";
 import { ODataUriParts, RequestOptions, RequestTools, RootResponseInterceptor } from "./requestTools.js";
-import { EntitySetData } from "./utils.js";
+import { Accept, EntitySetData } from "./utils.js";
 
 export class HttpError extends Error {
     constructor(message: string, public httpResponse: any) {
@@ -34,13 +34,35 @@ const defaultRequestTools: Partial<RequestTools<any, any>> = {
     requestInterceptor: (_: any, x: RequestOptions) => x
 }
 
+type StringParser = (string: string, contentType?: string) => any
+function buildStringParser(accept: Accept, acceptHeader?: string): StringParser {
+    return (string: string, contentType?: string) => {
+        if (/json/i.test(contentType || "")) {
+            if (acceptHeader && !/json/i.test(acceptHeader)) {
+                console.warn(`Inconsistent HTTP response. Requested: ${accept}, Got: ${contentType}`);
+            }
+
+            return string && JSON.parse(string)
+        }
+
+        if (accept === Accept.Json) {
+            return string && JSON.parse(string)
+        }
+
+        if (accept === Accept.Integer) {
+            return (string || null) && parseInt(string)
+        }
+
+        return string;
+    }
+}
+
 export function executeRequest<TFetchResult, TResult>(
     data: EntitySetData<TFetchResult, TResult>,
     relativePath: string,
     overrideRequestTools: Partial<RequestTools<TFetchResult, TResult>> | undefined): TResult {
 
     const tools: RequestTools<TFetchResult, TResult> = {
-        responseInterceptor: data.tools.defaultResponseInterceptor,
         ...defaultRequestTools,
         ...data.tools.requestTools,
         ...(overrideRequestTools || {})
@@ -55,23 +77,32 @@ export function executeRequest<TFetchResult, TResult>(
         query: buildQuery(data.state.query?.query || [], data.state.query?.urlEncode)
     });
 
+    const acceptHeader = !data.state.accept || data.state.accept === Accept.Json
+        ? "application/json"
+        : "text/plain"
+
     let init: RequestOptions = tools.requestInterceptor!(uri, {
         method: "GET",
         headers: [
-            ["Content-Type", "application/json; charset=utf-8"],
-            ["Accept", "application/json"],
-            ["OData-Version", "4"]
+            ["OData-Version", "4"],
+            ["Accept", acceptHeader]
+            // Not required for get request. Will be required if POST/PUT are implemented
+            // ["Content-Type", "application/json; charset=utf-8"],
         ]
     });
 
-    return buildResponseInterceptorChain(data, overrideRequestTools)(tools.request(uri, init), uri, init)
+    const stringParser = buildStringParser(data.state.accept, tools.ignoreWarnings ? acceptHeader : undefined)
+    return buildResponseInterceptorChain(data, stringParser, overrideRequestTools)(tools.request(uri, init), uri, init)
 }
 
 function buildResponseInterceptorChain<TFetchResult, TResult>(
     data: EntitySetData<TFetchResult, TResult>,
+    stringParser: StringParser,
     overrideRequestTools: Partial<RequestTools<TFetchResult, TResult>> | undefined): RootResponseInterceptor<TFetchResult, TResult> {
 
-    const l0 = data.tools.defaultResponseInterceptor
+    function l0(result: TFetchResult, url: string, options: RequestOptions) {
+        return data.tools.defaultResponseInterceptor(result, url, options, stringParser)
+    }
 
     const i1 = data.tools.requestTools.responseInterceptor
     const l1 = i1 && ((input: TFetchResult, uri: string, reqValues: RequestOptions) => i1(input, uri, reqValues, l0))

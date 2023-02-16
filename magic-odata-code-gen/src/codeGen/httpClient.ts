@@ -2,7 +2,7 @@ import { ODataComplexType, ODataEntitySet, ODataServiceConfig } from "magic-odat
 import { CodeGenConfig, SupressWarnings } from "../config.js";
 import { typeNameString, warn } from "../utils.js";
 import { Keywords } from "./keywords.js";
-import { buildFullyQualifiedTsType, buildGetCasterName, buildGetKeyBuilderName, buildGetQueryableName, buildGetSubPathName, buildLookupComplexType, buildLookupType, buildSanitizeNamespace, httpClientType, Tab } from "./utils.js";
+import { buildFullyQualifiedTsType, buildGetCasterName, buildGetKeyBuilderName, buildGetQueryableName, buildGetSubPathName, buildLookupComplexType, buildSanitizeNamespace, buildHttpClientType, Tab } from "./utils.js";
 
 export function httpClient(
     serviceConfig: ODataServiceConfig,
@@ -21,6 +21,7 @@ export function httpClient(
     const getQueryableName = buildGetQueryableName(settings);
     const getCasterName = buildGetCasterName(settings)
     const getSubPathName = buildGetSubPathName(settings)
+    const httpClientType = buildHttpClientType(serviceConfig.types, keywords, tab, settings || null);
 
     const methods = Object
         .keys(serviceConfig.entitySets)
@@ -63,7 +64,7 @@ ${tab("return collection ? { isCollection: true, collectionType } : collectionTy
 
     function parseResponse() {
 
-        return `const ${keywords.responseParser}: ${keywords.RootResponseInterceptor}<${requestToolsGenerics.join(", ")}> = response => {
+        return `const ${keywords.responseParser}: ${keywords.DefaultResponseInterceptor}<${requestToolsGenerics.join(", ")}> = (response, url, options, parseString) => {
 
 ${tab(parseResponseFunctionBody)}
 }`
@@ -114,8 +115,8 @@ ${methods}
             : entitySetGenerics(entitySet, type);
 
         const ths = hasThisContext ? "this." : ""
-        const instanceType = httpClientType(keywords, generics, tab, settings || null, false);
-        const interfaceType = httpClientType(keywords, generics, tab, settings || null);
+        const instanceType = httpClientType(generics, false);
+        const interfaceType = httpClientType(generics, true);
         const constructorArgs = {
             requestTools: `${ths}${keywords._httpClientArgs}`,
             defaultResponseInterceptor: `${keywords.responseParser}`,
@@ -139,45 +140,38 @@ ${tab(`return new ${instanceType}(args) as \n${tab(interfaceType)};`)}
     }
 
     function entitySetGenerics(entitySet: ODataEntitySet, type: ODataComplexType) {
-        const resultType = fullyQualifiedTsType(entitySet.forType);
         const queryableType = fullyQualifiedTsType(entitySet.forType, getQueryableName);
         const casterType = fullyQualifiedTsType(entitySet.forType, getCasterName)
         const subPathType = fullyQualifiedTsType(entitySet.forType, getSubPathName)
         const keyBuilderType = fullyQualifiedTsType(entitySet.forType, getKeyBuilderName)
 
         return {
-            tEntity: resultType,
             tKeyBuilder: keyBuilderType,
             tQueryable: queryableType,
             tCaster: `${casterType}.Collection`,
             tSingleCaster: `${casterType}.Single`,
-            tSubPath: keywords.CollectionsCannotBeTraversed,
+            tSubPath: keywords.CollectionSubPath,
             tSingleSubPath: `${subPathType}`,
             tResult: {
-                collection: true,
-                resultType: `${resultType}[]`
+                isCollection: true as true,
+                collectionType: entitySet.forType
             }
         }
     }
 
     function singletonGenerics(entitySet: ODataEntitySet, type: ODataComplexType) {
-        const resultType = fullyQualifiedTsType(entitySet.forType);
         const queryableType = fullyQualifiedTsType(entitySet.forType, getQueryableName);
         const casterType = fullyQualifiedTsType(entitySet.forType, getCasterName)
         const subPathType = fullyQualifiedTsType(entitySet.forType, getSubPathName)
 
         return {
-            tEntity: resultType,
             tKeyBuilder: keywords.SingleItemsCannotBeQueriedByKey,
             tQueryable: queryableType,
             tCaster: `${casterType}.Single`,
             tSingleCaster: `${casterType}.Single`,
             tSubPath: subPathType,
             tSingleSubPath: subPathType,
-            tResult: {
-                collection: false,
-                resultType: resultType
-            }
+            tResult: entitySet.forType
         }
     }
 }

@@ -1,4 +1,4 @@
-import { ODataComplexType, ODataTypeRef, ODataServiceConfig, ODataSingleTypeRef, ComplexTypeOrEnum } from "magic-odata-shared";
+import { ODataComplexType, ODataTypeRef, ODataServiceConfig, ODataSingleTypeRef, ComplexTypeOrEnum, ODataServiceTypes } from "magic-odata-shared";
 import { AngularHttpResultType, AsyncType, CodeGenConfig } from "../config.js";
 import { typeNameString } from "../utils.js";
 import { Keywords } from "./keywords.js";
@@ -28,6 +28,42 @@ export function buildTab(settings: CodeGenConfig | null | undefined): Tab {
     f.spaces = tabValue.length
 
     return f;
+}
+
+export function primitiveSubPath(types: ODataServiceTypes, keywords: Keywords, tab: Tab, settings: CodeGenConfig | null) {
+
+    const entitySet = buildHttpClientType(types, keywords, tab, settings)({
+        tResult: { isCollection: false, namespace: "Edm", name: "String" },
+        rawResult: true,
+        tKeyBuilder: keywords.ThisItemDoesNotHaveAKey,
+        tQueryable: `${keywords.QueryPrimitive}<string>`,
+        tCaster: keywords.$ValueAnd$CountTypesCanNotBeOperatedOn,
+        tSingleCaster: keywords.$ValueAnd$CountTypesCanNotBeOperatedOn,
+        tSubPath: keywords.$ValueAnd$CountTypesCanNotBeOperatedOn,
+        tSingleSubPath: keywords.$ValueAnd$CountTypesCanNotBeOperatedOn
+    }, true)
+
+    return `export type ${keywords.PrimitiveSubPath} = {
+${tab(`$value: ${keywords.SubPathSelection}<${entitySet}>`)}
+}`
+}
+
+export function collectionSubPath(types: ODataServiceTypes, keywords: Keywords, tab: Tab, settings: CodeGenConfig | null) {
+
+    const entitySet = buildHttpClientType(types, keywords, tab, settings)({
+        tResult: { isCollection: false, namespace: "Edm", name: "Int32" },
+        rawResult: true,
+        tKeyBuilder: keywords.ThisItemDoesNotHaveAKey,
+        tQueryable: `${keywords.QueryPrimitive}<number>`,
+        tCaster: keywords.$ValueAnd$CountTypesCanNotBeOperatedOn,
+        tSingleCaster: keywords.$ValueAnd$CountTypesCanNotBeOperatedOn,
+        tSubPath: keywords.$ValueAnd$CountTypesCanNotBeOperatedOn,
+        tSingleSubPath: keywords.$ValueAnd$CountTypesCanNotBeOperatedOn
+    }, true)
+
+    return `export type ${keywords.CollectionSubPath} = {
+${tab(`$count: ${keywords.SubPathSelection}<${entitySet}>`)}
+}`
 }
 
 export function lintingAndComments() {
@@ -196,17 +232,14 @@ export const buildGetTypeString = (settings: CodeGenConfig | null | undefined) =
 }
 
 export type HttpClientGenerics = {
-    tEntity: string,
+    tResult: ODataTypeRef
+    rawResult?: boolean
     tKeyBuilder: string,
     tQueryable: string,
     tCaster: string,
     tSingleCaster: string,
     tSubPath: string,
-    tSingleSubPath: string,
-    tResult: {
-        resultType: string,
-        collection: boolean
-    }
+    tSingleSubPath: string
 }
 
 export function angularResultType(settings: CodeGenConfig | null): string | null {
@@ -223,41 +256,57 @@ export function angularResultType(settings: CodeGenConfig | null): string | null
         : settings.angularMode.httpResultType
 }
 
-const httpClientGenericNames = ["TEntity", "TDataResult", "TKeyBuilder", "TQueryable", "TCaster", "TSingleCaster", "TSubPath", "TSingleSubPath", "TFetchResult"]
+const httpClientGenericNames = ["TEntity", "TResult", "TKeyBuilder", "TQueryable", "TCaster", "TSingleCaster", "TSubPath", "TSingleSubPath", "TFetchResult"]
 const longest = httpClientGenericNames.map(x => x.length).reduce((s, x) => s > x ? s : x, -1);
 
-export function httpClientType(keywords: Keywords, generics: HttpClientGenerics, tab: Tab, settings: CodeGenConfig | null, asInterface = true) {
+export type HttpClientType = (generics: HttpClientGenerics, asInterface: boolean) => string
+export function buildHttpClientType(types: ODataServiceTypes, keywords: Keywords, tab: Tab, settings: CodeGenConfig | null): HttpClientType {
 
     const angularResult = angularResultType(settings);
-
+    const fullyQualifiedTsType = buildFullyQualifiedTsType(settings);
     const { async, fetchResponse } = settings?.angularMode || settings?.asyncType === AsyncType.RxJs
         ? { async: keywords.Observable, fetchResponse: `${keywords.AngularHttpResponse}<${angularResult}>` }
         : { async: "Promise", fetchResponse: "Response" };
-
-    const gs = [
-        generics.tEntity,
-        generics.tResult.collection
-            ? `${async}<${keywords.ODataCollectionResult}<${generics.tResult.resultType}>>`
-            : `${async}<${keywords.ODataResult}<${generics.tResult.resultType}>>`,
-        generics.tKeyBuilder,
-        generics.tQueryable,
-        generics.tCaster,
-        generics.tSingleCaster,
-        generics.tSubPath,
-        generics.tSingleSubPath,
-        `${async}<${fetchResponse}>`
-    ]
-        .map(addType)
-        .map(tab)
-        .join(",\n");
-
-    return `${asInterface ? keywords.IEntitySet : keywords.EntitySet}<\n${gs}>`
 
     function addType(name: string, i: number) {
         const gType = httpClientGenericNames[i] || ""
         const padded = `/* ${gType} */ ` + [...Array(Math.max(0, longest - gType.length)).keys()].map(_ => " ").join("")
 
         return `${padded}${name}`
+    }
+
+    return (generics: HttpClientGenerics, asInterface: boolean) => {
+
+        const isEnum = !generics.tResult.isCollection
+            && types[generics.tResult.namespace]
+            && types[generics.tResult.namespace][generics.tResult.name]?.containerType === "Enum"
+
+        const tEntity = generics.tResult.isCollection
+            ? fullyQualifiedTsType(generics.tResult.collectionType)
+            : fullyQualifiedTsType(generics.tResult)
+
+        const tResult = fullyQualifiedTsType(generics.tResult);
+
+        const gs = [
+            tEntity,
+            generics.rawResult
+                ? `${async}<${tResult}>`
+                : generics.tResult.isCollection || isEnum || generics.tResult.namespace === "Edm"
+                    ? `${async}<${keywords.ODataCollectionResult}<${tResult}>>`
+                    : `${async}<${keywords.ODataResult}<${tResult}>>`,
+            generics.tKeyBuilder,
+            generics.tQueryable,
+            generics.tCaster,
+            generics.tSingleCaster,
+            generics.tSubPath,
+            generics.tSingleSubPath,
+            `${async}<${fetchResponse}>`
+        ]
+            .map(addType)
+            .map(tab)
+            .join(",\n");
+
+        return `${asInterface ? keywords.IEntitySet : keywords.EntitySet}<\n${gs}>`
     }
 }
 
