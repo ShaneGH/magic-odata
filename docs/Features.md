@@ -124,7 +124,7 @@ const oDataClient = new ODataClient({
 
 # Angular configuration
 
-Angular configutation differs from normal configuration in two ways
+Angular configuration differs from normal configuration in two ways
 
  1. Requests are executed by the angular `HttpClient` rather than the `fetch` api
  2. The `HttpClient` returns `Observable` instead of `Promise`
