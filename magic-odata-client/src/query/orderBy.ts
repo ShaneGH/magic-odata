@@ -5,14 +5,12 @@ export type OrderingUtils = {
 
     /**
      * Add a custom expand string
-     * 
      * @example orderByRaw("property1 asc")
      */
     orderByRaw(orderByString: string): OrderBy
 
     /**
      * Order results. Use an array to group properties with their direction if necessary
-     * 
      * @example expand(my.prop1, [my.prop2, "desc"], my.collection.$count)
      */
     orderBy(...properties: Property[]): OrderBy

@@ -52,11 +52,8 @@ export type Utils = {
 
     /**
      * Add a custom query param
-     * 
      * @param paramName The name. If this param is added at the root query level, it's value will not be url encoded. Otherwise it will
-     * 
      * @param value The value
-     * 
      * @example custom("$filter", "name eq 'John'")
      */
     custom: typeof custom

@@ -5,20 +5,16 @@ export type ExpandUtils = {
 
     /**
      * Add a custom expand string
-     * 
      * @example expandRaw("property1")
      */
     expandRaw(expand: string): Expand
 
     /**
      * Expand an object or array of objects. 
-     * 
      * @param obj An object to expand. 
      * Entities can be deeply expanded by inputting nested properties. 
      * Entities in a collection will need to use the second arg of this method for deep expansion
-     * 
      * @param and A list of further expansions, transforms and filters to apply
-     * 
      * @example expand(my.user)
      * @example expand(my.user.blogPosts)
      * @example expand(my.user.blogPosts, p => [ gt(p.likes, 10), select(p.title), $count() ])
@@ -27,13 +23,10 @@ export type ExpandUtils = {
 
     /**
      * Expand the count of array of objects. Equivelant of $expand=my/blogPosts/$count
-     * 
      * @param obj An object to count. 
      * Entities can be deeply expanded by inputting nested properties. 
      * FIlter before counting by using the second arg of this method
-     * 
      * @param and A list of further expansions, transforms and filters to apply
-     * 
      * @example expandCount(my.blogPosts)
      * @example expandCount(my.blogPosts, p => gt(p.likes, 10))
      */
@@ -41,7 +34,6 @@ export type ExpandUtils = {
 
     /**
      * Combine multiple expanded properties
-     * 
      * @example combine(expand(my.property1), expand(my.property2))
      */
     combine(...expansions: Expand[]): Expand

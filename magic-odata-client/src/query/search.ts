@@ -24,7 +24,6 @@ export type SearchUtils = {
 
     /**
      * Add a custom search term
-     * 
      * @example searchRaw('NOT "bob"')
      */
     searchRaw(searchString: string): Search
