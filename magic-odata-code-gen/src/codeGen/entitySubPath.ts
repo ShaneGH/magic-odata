@@ -1,6 +1,6 @@
 import { ODataComplexType, ODataTypeRef, ODataServiceConfig, ODataServiceTypes, ODataSingleTypeRef, ODataEnum } from "magic-odata-shared";
 import { CodeGenConfig } from "../config.js";
-import { typeNameString } from "../utils.js";
+import { typeNameString, typeRefNameString } from "../utils.js";
 import { Keywords } from "./keywords.js";
 import { buildFullyQualifiedTsType, buildGetCasterName, buildGetKeyBuilderName, buildGetQueryableName, buildGetSubPathName, buildSanitizeNamespace, FullyQualifiedTsType, GetCasterName, GetKeyBuilderName, GetQueryableName, GetSubPathName, buildHttpClientType, Tab, HttpClientType } from "./utils.js"
 
@@ -54,14 +54,15 @@ function buildGetSubPathProps(
                 // TODO: test with arrays of arrays?
 
                 const entityInfo = getEntityTypeInfo(value)
+                const tQueryable = getTQuery(entityInfo)
 
                 const generics = {
                     tKeyBuilder: getTKeyBuilder(entityInfo),
-                    tQueryable: getTQuery(entityInfo),
+                    tQueryable,
                     tCaster: getTCaster(entityInfo),
                     tSingleCaster: getTCaster(entityInfo, true),
-                    tSubPath: getTSubPath(value),
-                    tSingleSubPath: value.isCollection ? getTSubPath(value.collectionType) : "never",
+                    tSubPath: getTSubPath(value, tQueryable),
+                    tSingleSubPath: value.isCollection ? getTSubPath(value.collectionType, tQueryable) : "never",
                     tResult: value
                 }
 
@@ -70,15 +71,15 @@ function buildGetSubPathProps(
             })
     }
 
-    function getTSubPath(typeRef: ODataTypeRef) {
+    function getTSubPath(typeRef: ODataTypeRef, tQueryable: string) {
 
         if (typeRef.isCollection) {
-            return keywords.CollectionSubPath
+            return `${keywords.CollectionSubPath}<${tQueryable}>`;
         }
 
         // https://github.com/ShaneGH/magic-odata/issues/12
         if (typeRef.namespace === "Edm") {
-            return keywords.PrimitiveSubPath;
+            return `${keywords.PrimitiveSubPath}<${tQueryable}>`;
         }
 
         const type = allTypes[typeRef.namespace] && allTypes[typeRef.namespace][typeRef.name]
@@ -88,34 +89,11 @@ function buildGetSubPathProps(
 
         // https://github.com/ShaneGH/magic-odata/issues/12
         if (type.containerType === "Enum") {
-            return keywords.PrimitiveSubPath;
+            return `${keywords.PrimitiveSubPath}<${tQueryable}>`;
         }
 
         return fullyQualifiedTsType(typeRef, getSubPathName)
     }
-
-    // function getTSubPath(info: EntityTypeInfo) {
-
-    //     // https://github.com/ShaneGH/magic-odata/issues/12
-    //     if (info.collectionDepth === 0
-    //         && (info.type.objectType === ObjectType.EnumType || info.type.objectType === ObjectType.PrimitiveType)) {
-    //         return keywords.PrimitiveSubPath;
-    //     }
-
-    //     if (info.collectionDepth) {
-    //         return keywords.CollectionSubPath;
-    //     }
-
-    //     if (info.type.objectType !== ObjectType.ComplexType) {
-    //         return "PrimitiveTypesCannotBeTraversed_B";
-    //     }
-
-    //     return fullyQualifiedTsType({
-    //         isCollection: false,
-    //         namespace: info.type.complexType.namespace,
-    //         name: info.type.complexType.name
-    //     }, getSubPathName)
-    // }
 
     function getTCaster(info: EntityTypeInfo, forceSingle = false) {
 

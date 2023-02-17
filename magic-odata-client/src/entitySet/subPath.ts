@@ -50,14 +50,16 @@ export function recontextDataForSubPath<TFetchResult, TResult, TSubPath, TNewEnt
         throw new Error("You cannot add query components before navigating a sub path");
     }
 
+    let propType: ODataTypeRef | null = null
     const newT = subPath(buildSubPathProperties(data, data.tools.type));
-    const propType = newT === $value
-        ? { isCollection: false as false, namespace: "Edm", name: "String" }
-        : newT === $count
-            ? { isCollection: false as false, namespace: "Edm", name: "Int32" }
-            : data.tools.type.isCollection
-                ? null
-                : tryFindPropertyType(data.tools.type, newT.propertyName, data.tools.root.types);
+    if (newT === $value) {
+        propType = data.tools.type
+    } else if (newT === $count && data.tools.type.isCollection) {
+        propType = data.tools.type.collectionType
+    } else if (!data.tools.type.isCollection) {
+        propType = tryFindPropertyType(data.tools.type, newT.propertyName, data.tools.root.types)
+    }
+
     if (!propType) {
         throw new Error(`Invalid property ${newT.propertyName}`);
     }

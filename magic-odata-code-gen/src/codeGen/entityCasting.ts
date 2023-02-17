@@ -47,13 +47,14 @@ function buildGetComplexCasterProps(
                 const caster = fullyQualifiedTsType(typeRef, getCasterName)
                 const subProps = fullyQualifiedTsType(typeRef, getSubPathName)
                 const keyProp = fullyQualifiedTsType(typeRef, getKeyBuilderName);
+                const tQueryable = fullyQualifiedTsType(typeRef, getQueryableName)
 
                 const generics = {
                     tKeyBuilder: keyProp,
-                    tQueryable: fullyQualifiedTsType(typeRef, getQueryableName),
+                    tQueryable,
                     tCaster: `${caster}.${casterType}`,
                     tSingleCaster: `${caster}.Single`,
-                    tSubPath: singleCasterType ? subProps : keywords.CollectionSubPath,
+                    tSubPath: singleCasterType ? subProps : `${keywords.CollectionSubPath}<${tQueryable}>`,
                     tSingleSubPath: singleCasterType ? "never" : subProps,
                     tResult: collectionResult
                         ? { isCollection: true as true, collectionType: typeRef }

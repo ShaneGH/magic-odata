@@ -150,7 +150,7 @@ ${tab(`return new ${instanceType}(args) as \n${tab(interfaceType)};`)}
             tQueryable: queryableType,
             tCaster: `${casterType}.Collection`,
             tSingleCaster: `${casterType}.Single`,
-            tSubPath: keywords.CollectionSubPath,
+            tSubPath: `${keywords.CollectionSubPath}<${queryableType}>`,
             tSingleSubPath: `${subPathType}`,
             tResult: {
                 isCollection: true as true,

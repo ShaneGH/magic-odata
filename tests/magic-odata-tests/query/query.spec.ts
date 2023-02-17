@@ -1,7 +1,8 @@
 
-import { queryUtils } from "magic-odata-client";
+import { QueryComplexObject, QueryEnum, queryUtils } from "magic-odata-client";
 import { My } from "../generatedCode.js";
-import { oDataClient } from "../utils/odataClient.js";
+import { addUser } from "../utils/client.js";
+import { oDataClient, uriClient } from "../utils/odataClient.js";
 
 function loggingFetcher(input: RequestInfo | URL, init?: RequestInit) {
     console.log(input, init)
@@ -10,7 +11,50 @@ function loggingFetcher(input: RequestInfo | URL, init?: RequestInit) {
 
 describe("Query", function () {
 
+    describe("Query after $value", () => {
+
+        it("Should be able to query after $value", async () => {
+            const userProfileType: string = await uriClient.Users
+                .withKey(x => x.key("123"))
+                .subPath(x => x.UserProfileType)
+                .subPath(x => x.$value)
+                // part of the test here is the type info
+                .withQuery((p: QueryEnum<My.Odata.Entities.UserProfileType>, { $filter: { eq } }) => eq(p, My.Odata.Entities.UserProfileType.Advanced))
+                .get();
+
+            expect(userProfileType).toBe("xxx/Users('123')/UserProfileType/$value?$filter=%24it%20eq%20'Advanced'");
+        });
+    });
+
+    describe("Query after $count", () => {
+
+        it("Should be able to query after $count", async () => {
+            const user = await addUser();
+            const result: number = await oDataClient.Users
+                .subPath(u => u.$count)
+                // part of the test here is the type info
+                .withQuery((u: My.Odata.Entities.QueryableUser, { $filter: { eq } }) => eq(u.Id, user.Id))
+                .get();
+
+            expect(result).toBe(1);
+        });
+
+
+        it("Should be able to query after cast and $count", async () => {
+            const result: string = await uriClient.HasIds
+                .cast(x => x.User())
+                .subPath(u => u.$count)
+                // part of the test here is the type info
+                .withQuery((u: My.Odata.Entities.QueryableUser, { $filter: { eq } }) => eq(u.Id, "1234"))
+                .get<Promise<string>>();
+
+            expect(result).toBe(`xxx/HasIds/My.Odata.Entities.User/$count?$filter=Id%20eq%20'1234'`);
+        });
+
+    });
+
     describe("QueryEnums", () => {
+
         it("Should query string enums correctly", async () => {
             const result = await oDataClient.AppDetails
                 .subPath(x => x.UserProfileTypes)

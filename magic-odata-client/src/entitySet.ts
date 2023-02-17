@@ -23,6 +23,11 @@ export type ODataCollectionResult<T> = ODataResultMetadata & {
 export type ODataResult<T> = ODataResultMetadata & T
 
 /**
+ * A query must be the last part of an OData request
+ */
+export type OperationIsNotPossibleAfterQuery = never
+
+/**
  * Path and query utils on an entity set or sub path
  */
 export interface IEntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSingleCaster, TSubPath, TSingleSubPath, TFetchResult> {
@@ -50,7 +55,7 @@ export interface IEntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, 
      * @param urlEncode Default true
      */
     withQuery(queryBuilder: (entity: TQueryable, utils: Utils) => Query | Query[], urlEncode?: boolean)
-        : IEntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSingleCaster, TSubPath, TSingleSubPath, TFetchResult>;
+        : IEntitySet<TEntity, TResult, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, TFetchResult>;
 
     /**
      * Execute a get request
@@ -115,7 +120,7 @@ export class EntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSing
     withQuery(queryBuilder: (entity: TQueryable, utils: Utils) => Query | Query[], urlEncode?: boolean) {
 
         const { tools, state } = recontextDataForQuery(this.state, queryBuilder, urlEncode)
-        return new EntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSingleCaster, TSubPath, TSingleSubPath, TFetchResult>(
+        return new EntitySet<TEntity, TResult, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, TFetchResult>(
             tools, state);
     }
 

@@ -301,9 +301,18 @@ public class HasIdsController : ODataControllerBase<HasId>
 
     [HttpGet("HasIds/My.Odata.Entities.User")]
     [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
-    public IQueryable<User> GetUsersFromHasIds()
+    public IQueryable<User> GetUserFromHasIds()
     {
         return _inMemoryDb.Users;
+    }
+
+    [HttpGet("HasIds/My.Odata.Entities.User({key})")]
+    [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
+    public SingleResult<User> GetUserFromHasIds([FromRoute] string key)
+    {
+        return _inMemoryDb.Users
+            .Where(x => x.Id == key)
+            .AsSingleResult();
     }
 
     [HttpGet("HasIds({key})/My.Odata.Entities.User/BlogPostComments")]

@@ -361,6 +361,19 @@ describe("SubPath", function () {
             expect(typeof likes).toBe("string");
             expect(likes).toBe(user.blogPost.Likes.toString());
         });
+
+        it("Should query after $value", async () => {
+            const user = await addFullUserChain();
+            const likes: string = await oDataClient.BlogPosts
+                .withKey(x => x.key(user.blogPost.Id!))
+                .subPath(x => x.Likes)
+                .subPath(x => x.$value)
+
+                .get();
+
+            expect(typeof likes).toBe("string");
+            expect(likes).toBe(user.blogPost.Likes.toString());
+        });
     })
 
     describe("$count", () => {

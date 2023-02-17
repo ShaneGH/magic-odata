@@ -36,14 +36,14 @@ export function primitiveSubPath(types: ODataServiceTypes, keywords: Keywords, t
         tResult: { isCollection: false, namespace: "Edm", name: "String" },
         rawResult: true,
         tKeyBuilder: keywords.ThisItemDoesNotHaveAKey,
-        tQueryable: `${keywords.QueryPrimitive}<string>`,
+        tQueryable: "TQueryable",
         tCaster: keywords.$ValueAnd$CountTypesCanNotBeOperatedOn,
         tSingleCaster: keywords.$ValueAnd$CountTypesCanNotBeOperatedOn,
         tSubPath: keywords.$ValueAnd$CountTypesCanNotBeOperatedOn,
         tSingleSubPath: keywords.$ValueAnd$CountTypesCanNotBeOperatedOn
     }, true)
 
-    return `export type ${keywords.PrimitiveSubPath} = {
+    return `export type ${keywords.PrimitiveSubPath}<TQueryable> = {
 ${tab(`$value: ${keywords.SubPathSelection}<${entitySet}>`)}
 }`
 }
@@ -54,14 +54,14 @@ export function collectionSubPath(types: ODataServiceTypes, keywords: Keywords, 
         tResult: { isCollection: false, namespace: "Edm", name: "Int32" },
         rawResult: true,
         tKeyBuilder: keywords.ThisItemDoesNotHaveAKey,
-        tQueryable: `${keywords.QueryPrimitive}<number>`,
+        tQueryable: "TQueryable",
         tCaster: keywords.$ValueAnd$CountTypesCanNotBeOperatedOn,
         tSingleCaster: keywords.$ValueAnd$CountTypesCanNotBeOperatedOn,
         tSubPath: keywords.$ValueAnd$CountTypesCanNotBeOperatedOn,
         tSingleSubPath: keywords.$ValueAnd$CountTypesCanNotBeOperatedOn
     }, true)
 
-    return `export type ${keywords.CollectionSubPath} = {
+    return `export type ${keywords.CollectionSubPath}<TQueryable> = {
 ${tab(`$count: ${keywords.SubPathSelection}<${entitySet}>`)}
 }`
 }
