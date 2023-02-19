@@ -10,7 +10,7 @@ const int32T = resolveOutputType(IntegerTypes.Int32)
 
 export function concat(lhs: Operable<string>, rhs: Operable<string> | string): Filter;
 export function concat(lhs: Operable<string> | string, rhs: Operable<string>): Filter;
-export function concat<T>(lhs: Operable<string> | string, rhs: Operable<string> | string): Filter {
+export function concat(lhs: Operable<string> | string, rhs: Operable<string> | string): Filter {
 
     if (typeof lhs === "string") {
         if (typeof rhs === "string") {

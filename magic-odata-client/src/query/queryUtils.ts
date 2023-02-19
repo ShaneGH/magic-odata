@@ -12,6 +12,7 @@ import { Custom } from "../queryBuilder.js";
 export type Utils = {
     /**
      * Utils for $filter operations
+     * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_BuiltinQueryFunctions
      */
     $filter: FilterUtils
 

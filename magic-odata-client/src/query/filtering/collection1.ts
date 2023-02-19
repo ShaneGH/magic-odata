@@ -89,6 +89,14 @@ export function hassubset<TArrayType>(
     return collectionFunction("hassubset", collection, values, mapper);
 }
 
+export function hassubsequence<TArrayType>(
+    collection: QueryCollection<QueryPrimitive<TArrayType>, TArrayType>,
+    values: TArrayType[],
+    mapper?: (x: TArrayType) => string): Filter {
+
+    return collectionFunction("hassubsequence", collection, values, mapper);
+}
+
 export function concatCollection<T>(lhs: OperableCollection<T>, rhs: OperableCollection<T> | T[], mapper?: (x: T) => string): Filter;
 export function concatCollection<T>(lhs: OperableCollection<T> | T[], rhs: OperableCollection<T>, mapper?: (x: T) => string): Filter;
 export function concatCollection<T>(lhs: OperableCollection<T> | T[], rhs: OperableCollection<T> | T[], mapper?: (x: T) => string): Filter {

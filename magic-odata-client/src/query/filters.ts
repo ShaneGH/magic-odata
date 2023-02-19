@@ -1,6 +1,6 @@
 import { QueryCollection, QueryObject, QueryPrimitive } from "./queryComplexObjectBuilder.js";
 import { add, ceiling, div, divby, floor, mod, mul, round, sub } from "./filtering/arithmetic2.js";
-import { all, any, collectionFilter, collectionFunction, count, hassubset, OperableCollection } from "./filtering/collection1.js";
+import { all, any, collectionFilter, collectionFunction, count, hassubset, hassubsequence, OperableCollection } from "./filtering/collection1.js";
 import {
     concat as concatString, contains as containsString, startsWith as startsWithString,
     endsWith as endsWithString, indexOf as indexOfString, length as lengthString, subString
@@ -208,6 +208,18 @@ export type FilterUtils = {
      * @example hassubset(my.items, [1, 2, 3])
      */
     hassubset<TArrayType>(
+        collection: QueryCollection<QueryPrimitive<TArrayType>, TArrayType>,
+        values: TArrayType[],
+        mapper?: (x: TArrayType) => string): Filter;
+
+    /**
+     * Call the "hassubsequence" function on a collection
+     * @param collection  The collection
+     * @param values  The second arg to pass into the function
+     * @param mapper  A custom mapper to seialize individual values
+     * @example hassubsequence(my.items, [1, 2, 3])
+     */
+    hassubsequence<TArrayType>(
         collection: QueryCollection<QueryPrimitive<TArrayType>, TArrayType>,
         values: TArrayType[],
         mapper?: (x: TArrayType) => string): Filter;
@@ -555,6 +567,7 @@ export function newUtils(): FilterUtils {
         all,
         count,
         hassubset,
+        hassubsequence,
         add,
         sub,
         mul,

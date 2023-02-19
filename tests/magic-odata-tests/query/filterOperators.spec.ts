@@ -1176,6 +1176,17 @@ describe("Query.Filter Operators", function () {
         });
     });
 
+    testCase("hassubsequence", function () {
+
+        it("Should build filter (server can't process)", () => {
+            const { $filter: { hassubsequence } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableBlogPost>("My.Odata.Entities.BlogPost", bp =>
+                hassubsequence(bp.Words, ["something"]));
+
+            expect(q["$filter"]).toBe("hassubsequence(Words,['something'])");
+        });
+    });
+
     testCase("collectionFunction", function () {
 
         it("Should build filter (server can't process)", () => {
@@ -1208,24 +1219,6 @@ describe("Query.Filter Operators", function () {
                 expect(q["$filter"]).toBe("Likes eq (2.1 divby Likes)");
             });
         });
-
-        // async function execute(success: boolean) {
-
-        //     const ctxt = await addFullUserChain();
-        //     const likes = success ? 1 : 2.1;
-
-        //     const result = await client.BlogPosts
-        //         .withQuery((q, { filter: { eq, and, divby, group } }) => q
-        //             .filter(u => and(eq(u.Id, ctxt.blogPost.Id), eq(u.Likes, divby(u.Likes, likes)))))
-        //         .get();
-
-        //     if (success) {
-        //         expect(result.value.length).toBe(1);
-        //         expect(result.value[0].Content).toBe(ctxt.blogPost.Content);
-        //     } else {
-        //         expect(result.value.length).toBe(0);
-        //     }
-        // }
     });
 
     testCase("mulTime", function () {
