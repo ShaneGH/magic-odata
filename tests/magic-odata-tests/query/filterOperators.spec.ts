@@ -1330,6 +1330,147 @@ describe("Query.Filter Operators", function () {
         });
     });
 
+    testCase("concatCollection", function () {
+
+        it("Should build filter (server can't process)", () => {
+            const { $filter: { concatCollection } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableBlogPost>("My.Odata.Entities.BlogPost", bp =>
+                concatCollection(bp.Words, ["something"]));
+
+            expect(q["$filter"]).toBe("concat(Words,['something'])");
+        });
+    });
+
+    testCase("containsCollection", function () {
+
+        it("Should build filter (server can't process) (1)", () => {
+            const { $filter: { containsCollection } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableBlogPost>("My.Odata.Entities.BlogPost", bp =>
+                containsCollection(bp.Words, "something"));
+
+            expect(q["$filter"]).toBe("contains(Words,'something')");
+        });
+
+        it("Should build filter (server can't process) (2)", () => {
+            const { $filter: { containsCollection } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableBlogPost>("My.Odata.Entities.BlogPost", bp =>
+                containsCollection(bp.Words, bp.Content));
+
+            expect(q["$filter"]).toBe("contains(Words,Content)");
+        });
+
+        it("Should build filter (server can't process) (3)", () => {
+            const { $filter: { containsCollection } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableBlogPost>("My.Odata.Entities.BlogPost", bp =>
+                containsCollection(["1", "2"], bp.Content));
+
+            expect(q["$filter"]).toBe("contains(['1','2'],Content)");
+        });
+    });
+
+    testCase("indexOfCollection", function () {
+
+        it("Should build filter (server can't process) (1)", () => {
+            const { $filter: { indexOfCollection } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableBlogPost>("My.Odata.Entities.BlogPost", bp =>
+                indexOfCollection(bp.Words, "something"));
+
+            expect(q["$filter"]).toBe("indexof(Words,'something')");
+        });
+
+        it("Should build filter (server can't process) (2)", () => {
+            const { $filter: { indexOfCollection } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableBlogPost>("My.Odata.Entities.BlogPost", bp =>
+                indexOfCollection(bp.Words, bp.Content));
+
+            expect(q["$filter"]).toBe("indexof(Words,Content)");
+        });
+
+        it("Should build filter (server can't process) (3)", () => {
+            const { $filter: { containsCollection } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableBlogPost>("My.Odata.Entities.BlogPost", bp =>
+                containsCollection(["1", "2"], bp.Content));
+
+            expect(q["$filter"]).toBe("contains(['1','2'],Content)");
+        });
+    });
+
+    testCase("lengthCollection", function () {
+
+        it("Should build filter (server can't process) (1)", () => {
+            const { $filter: { lengthCollection } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableBlogPost>("My.Odata.Entities.BlogPost", bp =>
+                lengthCollection(bp.Words));
+
+            expect(q["$filter"]).toBe("length(Words)");
+        });
+    });
+
+    testCase("subStringCollection", function () {
+
+        it("Should build filter (server can't process) (1)", () => {
+            const { $filter: { subStringCollection } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableBlogPost>("My.Odata.Entities.BlogPost", bp =>
+                subStringCollection(bp.Words, 1, 2));
+
+            expect(q["$filter"]).toBe("substring(Words,1,2)");
+        });
+    });
+
+    testCase("startsWithCollection", function () {
+
+        it("Should build filter (server can't process) (1)", () => {
+            const { $filter: { startsWithCollection } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableBlogPost>("My.Odata.Entities.BlogPost", bp =>
+                startsWithCollection(bp.Words, ["something"]));
+
+            expect(q["$filter"]).toBe("startswith(Words,['something'])");
+        });
+
+        it("Should build filter (server can't process) (2)", () => {
+            const { $filter: { startsWithCollection } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableBlogPost>("My.Odata.Entities.BlogPost", bp =>
+                startsWithCollection(bp.Words, bp.Words));
+
+            expect(q["$filter"]).toBe("startswith(Words,Words)");
+        });
+
+        it("Should build filter (server can't process) (3)", () => {
+            const { $filter: { startsWithCollection } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableBlogPost>("My.Odata.Entities.BlogPost", bp =>
+                startsWithCollection(["1", "2"], bp.Words));
+
+            expect(q["$filter"]).toBe("startswith(['1','2'],Words)");
+        });
+    });
+
+    testCase("endsWithCollection", function () {
+
+        it("Should build filter (server can't process) (1)", () => {
+            const { $filter: { endsWithCollection } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableBlogPost>("My.Odata.Entities.BlogPost", bp =>
+                endsWithCollection(bp.Words, ["something"]));
+
+            expect(q["$filter"]).toBe("endswith(Words,['something'])");
+        });
+
+        it("Should build filter (server can't process) (2)", () => {
+            const { $filter: { endsWithCollection } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableBlogPost>("My.Odata.Entities.BlogPost", bp =>
+                endsWithCollection(bp.Words, bp.Words));
+
+            expect(q["$filter"]).toBe("endswith(Words,Words)");
+        });
+
+        it("Should build filter (server can't process) (3)", () => {
+            const { $filter: { endsWithCollection } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableBlogPost>("My.Odata.Entities.BlogPost", bp =>
+                endsWithCollection(["1", "2"], bp.Words));
+
+            expect(q["$filter"]).toBe("endswith(['1','2'],Words)");
+        });
+    });
+
     testCase("divby", function () {
 
         describe("forwards", () => {

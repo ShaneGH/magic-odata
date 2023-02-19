@@ -1,6 +1,9 @@
 import { QueryCollection, QueryObject, QueryPrimitive } from "./queryComplexObjectBuilder.js";
 import { add, ceiling, div, divby, floor, mod, mul, round, sub } from "./filtering/arithmetic2.js";
-import { all, any, collectionFilter, collectionFunction, count, hassubset, hassubsequence, OperableCollection } from "./filtering/collection1.js";
+import {
+    all, any, collectionFilter, collectionFunction, count, hassubset, hassubsequence, OperableCollection, concat as concatCollection, contains as containsCollection,
+    startsWith as startsWithCollection, endsWith as endsWithCollection, indexOf as indexOfCollection, length as lengthCollection, subString as subStringCollection
+} from "./filtering/collection1.js";
 import {
     concat as concatString, contains as containsString, startsWith as startsWithString,
     endsWith as endsWithString, indexOf as indexOfString, length as lengthString, subString, matchesPattern, toLower, toUpper, trim
@@ -199,6 +202,107 @@ export type FilterUtils = {
      * @example count(my.items)
      */
     count(collection: QueryCollection<any, any>, countUnit?: IntegerTypes): QueryPrimitive<Number>;
+
+    /**
+     * An OData "concat" operation
+     * @param lhs  The first value to concatenate
+     * @param rhs  The second value to concatenate
+     * @param mapper  An optional mapper to map any primitives to a string. The mapper should return values unencoded
+     * @example concatCollection(my.property, [1, 2, 3])
+     */
+    concatCollection<T>(lhs: OperableCollection<T>, rhs: OperableCollection<T> | T[], mapper?: (x: T) => string): Filter;
+
+    /**
+     * An OData "concat" operation
+     * @param lhs  The first value to concatenate
+     * @param rhs  The second value to concatenate
+     * @param mapper  An optional mapper to map any primitives to a string. The mapper should return values unencoded
+     * @example concatCollection([1, 2, 3], my.property)
+     */
+    concatCollection<T>(lhs: OperableCollection<T> | T[], rhs: OperableCollection<T>, mapper?: (x: T) => string): Filter;
+
+    /**
+     * An OData "contains" operation
+     * @param lhs  The value to test for the existence of rhs
+     * @param rhs  The value to test lhs for the existence of
+     * @example containsCollection(my.values, 1)
+     */
+    containsCollection<T>(lhs: OperableCollection<T>, rhs: Operable<T> | T, mapper?: (x: T) => string): Filter;
+
+    /**
+     * An OData "contains" operation
+     * @param lhs  The value to test rhs for the existence of
+     * @param rhs  The value to test for the existence of lhs
+     * @example containsCollection([1, 2, 3], my.value)
+     */
+    containsCollection<T>(lhs: OperableCollection<T> | T[], rhs: Operable<T>, mapper?: (x: T) => string): Filter;
+
+    /**
+     * An OData "indexof" operation
+     * @param lhs  The value to test for the index of rhs
+     * @param rhs  The value to get the index of
+     * @example indexof(my.values, 1)
+     */
+    indexOfCollection<T>(lhs: OperableCollection<T>, rhs: Operable<T> | T, mapper?: (x: T) => string): Filter;
+
+    /**
+     * An OData "indexof" operation
+     * @param lhs  The value to test for the index of rhs
+     * @param rhs  The value to get the index of
+     * @example indexof([1, 2, 3], my.value)
+     */
+    indexOfCollection<T>(lhs: OperableCollection<T> | T[], rhs: Operable<T>, mapper?: (x: T) => string): Filter;
+
+    /**
+     * An OData "length" operation
+     * @example lengthCollection(my.values)
+     */
+    lengthCollection<T>(collection: OperableCollection<T> | T[]): Filter;
+
+    /**
+     * An OData "startswith" operation
+     * @param lhs  The collection to test the start of
+     * @param rhs  The values to test for the existence of
+     * @param mapper  An optional mapper to map any primitives to a string. The mapper should return values unencoded
+     * @example startsWithCollection(my.property, [1, 2, 3])
+     */
+    startsWithCollection<T>(lhs: OperableCollection<T>, rhs: OperableCollection<T> | T[], mapper?: (x: T) => string): Filter;
+
+    /**
+     * An OData "startswith" operation
+     * @param lhs  The collection to test the start of
+     * @param rhs  The values to test for the existence of
+     * @param mapper  An optional mapper to map any primitives to a string. The mapper should return values unencoded
+     * @example startsWithCollection([1, 2, 3], my.property)
+     */
+    startsWithCollection<T>(lhs: OperableCollection<T> | T[], rhs: OperableCollection<T>, mapper?: (x: T) => string): Filter;
+
+    /**
+     * An OData "endswith" operation
+     * @param lhs  The collection to test the end of
+     * @param rhs  The values to test for the existence of
+     * @param mapper  An optional mapper to map any primitives to a string. The mapper should return values unencoded
+     * @example endsWithCollection(my.property, [1, 2, 3])
+     */
+    endsWithCollection<T>(lhs: OperableCollection<T>, rhs: OperableCollection<T> | T[], mapper?: (x: T) => string): Filter;
+
+    /**
+     * An OData "endswith" operation
+     * @param lhs  The collection to test the end of
+     * @param rhs  The values to test for the existence of
+     * @param mapper  An optional mapper to map any primitives to a string. The mapper should return values unencoded
+     * @example endsWithCollection([1, 2, 3], my.property)
+     */
+    endsWithCollection<T>(lhs: OperableCollection<T> | T[], rhs: OperableCollection<T>, mapper?: (x: T) => string): Filter;
+
+    /**
+     * An OData "substring" operation on a collection
+     * @param lhs The collection property to divide
+     * @param start The position to start the division
+     * @param length The length of the substring
+     * @example subStringCollection(my.firstName, 5, 6)
+     */
+    subStringCollection<T>(lhs: OperableCollection<T>, start: number, length?: number): Filter;
 
     /**
      * Call the "hassubset" function on a collection
@@ -548,55 +652,6 @@ export type FilterUtils = {
      * @example divByTime(my.appointmentLength, 1.5)
      */
     divByTime(lhs: Operable<EdmDuration>, rhs: Operable<number> | number): Filter;
-
-    // https://github.com/ShaneGH/magic-odata/issues/9
-    // /**
-    //  * An OData "concat" operation
-    //  *
-    //  * @param lhs  The first value to concatenate
-    //  * 
-    //  * @param rhs  The second value to concatenate
-    //  * 
-    //  * @param mapper  An optional mapper to map any primitives to a string. The mapper should return values unencoded
-    //  * 
-    //  * @example concatCollection(my.property, [1, 2, 3])
-    //  */
-    // concatCollection<T>(lhs: OperableCollection<T>, rhs: OperableCollection<T> | T[], mapper?: (x: T) => string): Filter;
-
-    // /**
-    //  * An OData "concat" operation
-    //  *
-    //  * @param lhs  The first value to concatenate
-    //  * 
-    //  * @param rhs  The second value to concatenate
-    //  * 
-    //  * @param mapper  An optional mapper to map any primitives to a string. The mapper should return values unencoded
-    //  * 
-    //  * @example concatCollection([1, 2, 3], my.property)
-    //  */
-    // concatCollection<T>(lhs: OperableCollection<T> | T[], rhs: OperableCollection<T>, mapper?: (x: T) => string): Filter;
-
-    // /**
-    //  * An OData "contains" operation
-    //  *
-    //  * @param lhs  The value to test for the existence of rhs
-    //  * 
-    //  * @param rhs  The value to test lhs for the existence of
-    //  * 
-    //  * @example containsCollection(my.values, 1)
-    //  */
-    // containsCollection<T>(lhs: OperableCollection<T>, rhs: OperableCollection<T> | T, mapper?: (x: T) => string): Filter;
-
-    // /**
-    //  * An OData "contains" operation
-    //  * 
-    //  * @param lhs  The value to test rhs for the existence of
-    //  *
-    //  * @param rhs  The value to test for the existence of lhs
-    //  * 
-    //  * @example containsCollection([1, 2, 3], my.value)
-    //  */
-    // containsCollection<T>(lhs: OperableCollection<T> | T, rhs: OperableCollection<T>, mapper?: (x: T) => string): Filter;
 }
 
 export function newUtils(): FilterUtils {
@@ -616,6 +671,13 @@ export function newUtils(): FilterUtils {
         or,
         collectionFilter,
         collectionFunction,
+        concatCollection,
+        containsCollection,
+        startsWithCollection,
+        endsWithCollection,
+        indexOfCollection,
+        lengthCollection,
+        subStringCollection,
         any,
         all,
         count,
