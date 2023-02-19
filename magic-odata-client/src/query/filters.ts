@@ -13,8 +13,8 @@ import { FilterablePaths, FilterableProps, filterRaw } from "./filtering/op1.js"
 import { Operable } from "./filtering/operable0.js";
 import { IntegerTypes, OutputTypes, RealNumberTypes } from "./filtering/queryPrimitiveTypes0.js";
 import { Filter } from "../queryBuilder.js";
-import { EdmDateTimeOffset, EdmDuration } from "../edmTypes.js";
-import { addTime, divByTime, divTime, mulTime, subTime } from "./filtering/time2.js";
+import { EdmDate, EdmDateTimeOffset, EdmDuration, EdmTimeOfDay } from "../edmTypes.js";
+import { addTime, date, day, divByTime, divTime, fractionalSeconds, hour, maxDateTime, minDateTime, minute, month, mulTime, now, second, subTime, time, totalOffsetMinutes, totalSeconds, year } from "./filtering/time2.js";
 
 export type FilterUtils = {
     /**
@@ -652,6 +652,49 @@ export type FilterUtils = {
      * @example divByTime(my.appointmentLength, 1.5)
      */
     divByTime(lhs: Operable<EdmDuration>, rhs: Operable<number> | number): Filter;
+
+    /** An OData "now" operation */
+    now(): Filter
+
+    /** An OData "maxdatetime" operation */
+    maxDateTime(): Filter
+
+    /** An OData "mindatetime" operation */
+    minDateTime(): Filter
+
+    /** An OData "date" operation */
+    date(date: Operable<EdmDateTimeOffset>): Filter
+
+    /** An OData "time" operation */
+    time(date: Operable<EdmDateTimeOffset>): Filter
+
+    /** An OData "totaloffsetminutes" operation */
+    totalOffsetMinutes(date: Operable<EdmDateTimeOffset>): Filter
+
+    /** An OData "totalseconds" operation */
+    totalSeconds(date: Operable<EdmDuration>): Filter
+
+    /** An OData "month" operation */
+    month(date: Operable<EdmDateTimeOffset | EdmDate>): Filter
+
+    /** An OData "day" operation */
+    day(date: Operable<EdmDateTimeOffset | EdmDate>): Filter
+
+    /** An OData "year" operation */
+    year(date: Operable<EdmDateTimeOffset | EdmDate>): Filter
+
+    /** An OData "fractionalSeconds" operation */
+    fractionalSeconds(date: Operable<EdmDateTimeOffset | EdmTimeOfDay>): Filter
+
+    /** An OData "minute" operation */
+    minute(date: Operable<EdmDateTimeOffset | EdmTimeOfDay>): Filter
+
+    /** An OData "hour" operation */
+    hour(date: Operable<EdmDateTimeOffset | EdmTimeOfDay>): Filter
+
+    /** An OData "second" operation */
+    second(date: Operable<EdmDateTimeOffset | EdmTimeOfDay>): Filter
+
 }
 
 export function newUtils(): FilterUtils {
@@ -707,6 +750,20 @@ export function newUtils(): FilterUtils {
         subTime,
         mulTime,
         divTime,
-        divByTime
+        divByTime,
+        day,
+        date,
+        fractionalSeconds,
+        hour,
+        maxDateTime,
+        minDateTime,
+        minute,
+        month,
+        now,
+        second,
+        time,
+        totalOffsetMinutes,
+        totalSeconds,
+        year
     }
 }

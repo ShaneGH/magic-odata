@@ -1739,7 +1739,202 @@ describe("Query.Filter Operators", function () {
 
             expect(q["$filter"]).toBe("Duration sub duration'P0DT0H0M88.000S'");
         });
+    });
 
+    testCase("now", function () {
+        it("Should work", () => {
+            const { $filter: { now } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                now());
+
+            expect(q["$filter"]).toBe("now()");
+        });
+    });
+
+    testCase("maxDateTime", function () {
+        it("Should work", () => {
+            const { $filter: { maxDateTime } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                maxDateTime());
+
+            expect(q["$filter"]).toBe("maxdatetime()");
+        });
+    });
+
+    testCase("minDateTime", function () {
+        it("Should work", () => {
+            const { $filter: { minDateTime } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                minDateTime());
+
+            expect(q["$filter"]).toBe("mindatetime()");
+        });
+    });
+
+    testCase("date", function () {
+        it("Should work", () => {
+            const { $filter: { date } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                date(e.DateTimeOffset));
+
+            expect(q["$filter"]).toBe("date(DateTimeOffset)");
+        });
+    });
+
+    testCase("time", function () {
+        it("Should work", () => {
+            const { $filter: { time } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                time(e.DateTimeOffset));
+
+            expect(q["$filter"]).toBe("time(DateTimeOffset)");
+        });
+    });
+
+    testCase("totalOffsetMinutes", function () {
+        it("Should work", () => {
+            const { $filter: { totalOffsetMinutes } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                totalOffsetMinutes(e.DateTimeOffset));
+
+            expect(q["$filter"]).toBe("totaloffsetminutes(DateTimeOffset)");
+        });
+    });
+
+    testCase("totalSeconds", function () {
+        it("Should work", () => {
+            const { $filter: { totalSeconds } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                totalSeconds(e.Duration));
+
+            expect(q["$filter"]).toBe("totalseconds(Duration)");
+        });
+    });
+
+    testCase("month", function () {
+        it("Should work (1)", () => {
+            const { $filter: { month } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                month(e.DateTimeOffset));
+
+            expect(q["$filter"]).toBe("month(DateTimeOffset)");
+        });
+
+        it("Should work (2)", () => {
+            const { $filter: { month } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                month(e.Date));
+
+            expect(q["$filter"]).toBe("month(Date)");
+        });
+    });
+
+    testCase("day", function () {
+        it("Should work (1)", () => {
+            const { $filter: { day } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                day(e.DateTimeOffset));
+
+            expect(q["$filter"]).toBe("day(DateTimeOffset)");
+        });
+
+        it("Should work (2)", () => {
+            const { $filter: { day } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                day(e.Date));
+
+            expect(q["$filter"]).toBe("day(Date)");
+        });
+    });
+
+    testCase("year", function () {
+        it("Should work (1)", () => {
+            const { $filter: { year } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                year(e.DateTimeOffset));
+
+            expect(q["$filter"]).toBe("year(DateTimeOffset)");
+        });
+
+        it("Should work (2)", () => {
+            const { $filter: { year } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                year(e.Date));
+
+            expect(q["$filter"]).toBe("year(Date)");
+        });
+    });
+
+    testCase("fractionalSeconds", function () {
+        it("Should work (1)", () => {
+            const { $filter: { fractionalSeconds } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                fractionalSeconds(e.DateTimeOffset));
+
+            expect(q["$filter"]).toBe("fractionalseconds(DateTimeOffset)");
+        });
+
+        it("Should work (2)", () => {
+            const { $filter: { fractionalSeconds } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                fractionalSeconds(e.TimeOfDay));
+
+            expect(q["$filter"]).toBe("fractionalseconds(TimeOfDay)");
+        });
+    });
+
+    testCase("minute", function () {
+        it("Should work (1)", () => {
+            const { $filter: { minute } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                minute(e.DateTimeOffset));
+
+            expect(q["$filter"]).toBe("minute(DateTimeOffset)");
+        });
+
+        it("Should work (2)", () => {
+            const { $filter: { minute } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                minute(e.TimeOfDay));
+
+            expect(q["$filter"]).toBe("minute(TimeOfDay)");
+        });
+    });
+
+    testCase("hour", function () {
+        it("Should work (1)", () => {
+            const { $filter: { hour } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                hour(e.DateTimeOffset));
+
+            expect(q["$filter"]).toBe("hour(DateTimeOffset)");
+        });
+
+        it("Should work (2)", () => {
+            const { $filter: { hour } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                hour(e.TimeOfDay));
+
+            expect(q["$filter"]).toBe("hour(TimeOfDay)");
+        });
+    });
+
+    testCase("second", function () {
+        it("Should work (1)", () => {
+            const { $filter: { second } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                second(e.DateTimeOffset));
+
+            expect(q["$filter"]).toBe("second(DateTimeOffset)");
+        });
+
+        it("Should work (2)", () => {
+            const { $filter: { second } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                second(e.TimeOfDay));
+
+            expect(q["$filter"]).toBe("second(TimeOfDay)");
+        });
     });
 });
 
