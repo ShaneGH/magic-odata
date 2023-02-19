@@ -5,6 +5,7 @@ import { buildQuery, NonNumericTypes, ODataDateTimeOffset, ODataDuration, Query,
 import { uniqueString } from "../utils/utils.js";
 import { buildComplexTypeRef } from "magic-odata-client";
 import { queryBuilder } from "../utils/odataClient.js";
+import { filterRaw } from "magic-odata-client/dist/src/query/filtering/op1.js";
 
 const rootConfig = rootConfigExporter();
 
@@ -1934,6 +1935,21 @@ describe("Query.Filter Operators", function () {
                 second(e.TimeOfDay));
 
             expect(q["$filter"]).toBe("second(TimeOfDay)");
+        });
+    });
+
+    testCase("caseExpression", function () {
+
+        it("Should work correctly (success)", function () {
+            const { $filter: { caseExpression, eq, filterRaw } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableUser>("My.Odata.Entities.User", u =>
+                caseExpression(
+                    [eq(u.Id, "111"), filterRaw("true", NonNumericTypes.Boolean)],
+                    [eq(u.Id, "222"), filterRaw("false", NonNumericTypes.Boolean)],
+                    [true, filterRaw("false", NonNumericTypes.Boolean)]
+                ));
+
+            expect(q["$filter"]).toBe("case(Id eq '111':true,Id eq '222':false,true:false)");
         });
     });
 });

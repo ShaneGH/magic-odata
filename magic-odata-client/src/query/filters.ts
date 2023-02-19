@@ -15,6 +15,7 @@ import { IntegerTypes, OutputTypes, RealNumberTypes } from "./filtering/queryPri
 import { Filter } from "../queryBuilder.js";
 import { EdmDate, EdmDateTimeOffset, EdmDuration, EdmTimeOfDay } from "../edmTypes.js";
 import { addTime, date, day, divByTime, divTime, fractionalSeconds, hour, maxDateTime, minDateTime, minute, month, mulTime, now, second, subTime, time, totalOffsetMinutes, totalSeconds, year } from "./filtering/time2.js";
+import { caseExpression } from "./filtering/case2.js";
 
 export type FilterUtils = {
     /**
@@ -695,6 +696,16 @@ export type FilterUtils = {
     /** An OData "second" operation */
     second(date: Operable<EdmDateTimeOffset | EdmTimeOfDay>): Filter
 
+    /**
+     * An OData "case" operation
+     *
+     * @example caseExpression(
+     *  [gt(x, 0), filterRaw("1", IntegerTypes.Int32)],
+     *  [lt(x, 0), filterRaw("-1", IntegerTypes.Int32)],
+     *  [true, filterRaw("0", IntegerTypes.Int32)])
+     */
+    caseExpression(...cases: [Filter | true, Filter][]): Filter
+
 }
 
 export function newUtils(): FilterUtils {
@@ -764,6 +775,7 @@ export function newUtils(): FilterUtils {
         time,
         totalOffsetMinutes,
         totalSeconds,
-        year
+        year,
+        caseExpression
     }
 }
