@@ -1,5 +1,5 @@
 import { ODataEnum, ODataServiceTypes, ODataTypeRef } from "magic-odata-shared";
-import { DateStruct, DurationStruct, OffsetStruct, TimeStruct } from "./edmTypes.js";
+import { ODataDate, ODataDuration, ODataOffset, ODataTimeOfDay, ODataDateTimeOffset } from "./edmTypes.js";
 import { typeRefString } from "./utils.js";
 
 export function enumMemberName(enumDef: ODataEnum, value: number): string {
@@ -43,19 +43,27 @@ function pad4(x: number) {
     return p3.length < 4 ? `0${p3}` : p3
 }
 
+function toDateInputs(date: Date) {
+    return {
+        y: date.getFullYear(),
+        M: date.getMonth() + 1,
+        d: date.getDate()
+    }
+}
+
 function serializeDate(value: any): string {
     if (typeof value === "string") {
         return value;
     }
 
     if (value instanceof Date) {
-        const d: DateStruct = {
-            y: value.getFullYear(),
-            M: value.getMonth() + 1,
-            d: value.getDate()
-        };
 
-        return serializeDate(d)
+        return serializeDate(new ODataDate(toDateInputs(value)))
+    }
+
+    if (!(value instanceof ODataDate) && !(value instanceof ODataDateTimeOffset)) {
+        console.warn("Unknown Edm.Date type in serialization");
+        return value?.toString() || ""
     }
 
     return `${pad4(value.y)}-${pad2(value.M)}-${pad2(value.d)}`
@@ -67,7 +75,7 @@ function factor(value: number, factor: number) {
         return { result: 0, remainder: value }
     }
 
-    const result = parseInt((value / factor).toFixed())
+    const result = Math.floor(value / factor)
     const remainder = value % factor
     return { result, remainder }
 }
@@ -87,20 +95,18 @@ function serializeDuration(value: any): string {
         const minutes = factor(hours.remainder, 60000)
         const seconds = factor(minutes.remainder, 1000)
 
-        const duration: DurationStruct = {
+        return serializeDuration(new ODataDuration({
             d: days.result * sign,
             h: hours.result * sign,
             m: minutes.result * sign,
             s: seconds.result * sign,
             ms: seconds.remainder * sign
-        }
-
-        return serializeDuration(duration)
+        }))
     }
 
-    if (!checkSigns(value)) {
-
-        throw new Error(`Duration values must be the same sign - ${JSON.stringify(value)}`);
+    if (!(value instanceof ODataDuration)) {
+        console.warn("Unknown Edm.Duration type in serialization");
+        return value?.toString() || ""
     }
 
     const sign = value.d < 0 || value.h < 0 || value.m < 0 || value.s < 0 || value.ms < 0
@@ -114,15 +120,13 @@ function serializeDuration(value: any): string {
     return `duration'${sign}P${day}DT${hour}H${minute}M${second}.${ms}S'`
 }
 
-/** Check that all numeric properties have the same sign */
-function checkSigns(data: { [k: string]: any }) {
-    const results = Object
-        .keys(data)
-        .map(k => data[k]!)
-        .filter(x => x && !isNaN(x));    // filter out 0 and null
-
-    const nonNegative = results.filter(x => x > 0).length
-    return nonNegative === 0 || nonNegative === results.length
+function toTimeInputs(date: Date) {
+    return {
+        h: date.getHours(),
+        m: date.getMinutes(),
+        s: date.getSeconds(),
+        ms: date.getMilliseconds()
+    }
 }
 
 function serializeTime(value: any): string {
@@ -131,14 +135,12 @@ function serializeTime(value: any): string {
     }
 
     if (value instanceof Date) {
-        const d: TimeStruct = {
-            h: value.getHours(),
-            m: value.getMinutes(),
-            s: value.getSeconds(),
-            ms: value.getMilliseconds()
-        };
+        return serializeTime(new ODataTimeOfDay(toTimeInputs(value)));
+    }
 
-        return serializeTime(d)
+    if (!(value instanceof ODataTimeOfDay) && !(value instanceof ODataDateTimeOffset)) {
+        console.warn("Unknown Edm.Time type in serialization");
+        return value?.toString() || ""
     }
 
     const hour = pad2(value.h || 0);
@@ -154,26 +156,31 @@ function serializeDateTimeOffset(value: any): string {
         return value;
     }
 
+    if (value instanceof Date) {
+
+        const offsetMin = value.getTimezoneOffset()
+        const sign = offsetMin < 0 ? -1 : 1;
+        const { result, remainder } = factor(Math.abs(offsetMin), 60)
+
+        return serializeDateTimeOffset(
+            new ODataDateTimeOffset({
+                ...toDateInputs(value),
+                ...toTimeInputs(value),
+                offsetH: result * sign,
+                offsetM: remainder * sign
+            }))
+    }
+
     const date = serializeDate(value)
     const time = serializeTime(value)
     let offset = value
 
-    if (offset instanceof Date) {
-
-        let offsetMin = value.getTimezoneOffset()
-        const sign = offsetMin < 0 ? -1 : 1;
-        offsetMin = Math.abs(offsetMin)
-
-        const { result, remainder } = factor(offsetMin, 60)
-        offset = { offsetH: result * sign, offsetM: remainder * sign }
+    if (!(value instanceof ODataDateTimeOffset)) {
+        console.warn("Unknown Edm.DateTimeOffset type in serialization");
+        return value?.toString() || ""
     }
 
-    if (!checkSigns(offset)) {
-
-        throw new Error(`Offset hour and minute values must be the same sign - h: ${offset.h}, m: ${offset.m}`);
-    }
-
-    const sign = offset.h < 0 || offset.m < 0 ? "-" : "+";
+    const sign = offset.offsetH < 0 || offset.offsetM < 0 ? "-" : "+";
     return `${date}T${time}${sign}${pad2(Math.abs(offset.offsetH || 0))}:${pad2(Math.abs(offset.offsetM || 0))}`
 }
 

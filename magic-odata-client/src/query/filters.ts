@@ -10,6 +10,8 @@ import { FilterablePaths, FilterableProps, filterRaw } from "./filtering/op1.js"
 import { Operable } from "./filtering/operable0.js";
 import { IntegerTypes, OutputTypes, RealNumberTypes } from "./filtering/queryPrimitiveTypes0.js";
 import { Filter } from "../queryBuilder.js";
+import { EdmDateTimeOffset, EdmDuration } from "../edmTypes.js";
+import { addTime, divByTime, divTime, mulTime, subTime } from "./filtering/time2.js";
 
 export type FilterUtils = {
     /**
@@ -420,6 +422,68 @@ export type FilterUtils = {
      */
     round(lhs: Operable<number>, result?: IntegerTypes | undefined): Filter;
 
+    /**
+     * An OData "add" operation on a DateTimeOffset
+     * @param lhs The date to add to
+     * @param rhs The time to add
+     * @example addTime(my.appointmentTime, new ODataDuration({h: 1, m: 30}))
+     */
+    addTime(lhs: Operable<EdmDateTimeOffset>, rhs: Operable<EdmDuration> | EdmDuration): Filter;
+
+    /**
+     * An OData "add" operation on a Duration
+     * @example addTime(my.appointmentLength, new ODataDuration({h: 1, m: 30}))
+     */
+    addTime(lhs: Operable<EdmDuration>, rhs: Operable<EdmDateTimeOffset> | EdmDateTimeOffset): Filter;
+
+    /**
+     * An OData "add" operation on a DateTimeOffset
+     * @param lhs The time to add
+     * @param rhs The date to add to
+     * @example addTime(my.appointmentLength, new ODataDateTimeOffset({y: 2001, M: 2, d: 10}))
+     */
+    addTime(lhs: Operable<EdmDuration>, rhs: Operable<EdmDuration> | EdmDuration): Filter;
+
+    /**
+     * An OData "sub" operation on a DateTimeOffset
+     * @param lhs The date to add to
+     * @param rhs The time to add
+     * @example subTime(my.appointmentTime, new ODataDuration({h: 1, m: 30}))
+     */
+    subTime(lhs: Operable<EdmDateTimeOffset>, rhs: Operable<EdmDuration> | EdmDuration): Filter;
+
+    /**
+     * An OData "sub" operation on a Duration
+     * @example subTime(my.appointmentLength, new ODataDuration({h: 1, m: 30}))
+     */
+    subTime(lhs: EdmDateTimeOffset, rhs: Operable<EdmDuration>): Filter;
+
+    /**
+     * An OData "add" operation on a DateTimeOffset
+     * @param lhs The time to add
+     * @param rhs The date to add to
+     * @example subTime(my.appointmentLength, new ODataDateTimeOffset({y: 2001, M: 2, d: 10}))
+     */
+    subTime(lhs: Operable<EdmDuration>, rhs: Operable<EdmDuration> | EdmDuration): Filter;
+
+    /**
+     * An OData "mul" operation on a Duration
+     * @example mulTime(my.appointmentLength, 1.5)
+     */
+    mulTime(lhs: Operable<EdmDuration>, rhs: Operable<number> | number): Filter;
+
+    /**
+     * An OData "div" operation on a Duration
+     * @example divTime(my.appointmentLength, 1.5)
+     */
+    divTime(lhs: Operable<EdmDuration>, rhs: Operable<number> | number): Filter;
+
+    /**
+     * An OData "divby" operation on a Duration
+     * @example divByTime(my.appointmentLength, 1.5)
+     */
+    divByTime(lhs: Operable<EdmDuration>, rhs: Operable<number> | number): Filter;
+
     // https://github.com/ShaneGH/magic-odata/issues/9
     // /**
     //  * An OData "concat" operation
@@ -506,6 +570,11 @@ export function newUtils(): FilterUtils {
         subString,
         ceiling,
         floor,
-        round
+        round,
+        addTime,
+        subTime,
+        mulTime,
+        divTime,
+        divByTime
     }
 }

@@ -1,7 +1,7 @@
 
 import { addFullUserChain } from "../utils/client.js";
 import { My, ODataClient, rootConfigExporter } from "../generatedCode.js";
-import { buildQuery, NonNumericTypes, Query, QueryComplexObject, queryUtils } from "magic-odata-client";
+import { buildQuery, NonNumericTypes, ODataDateTimeOffset, ODataDuration, Query, QueryComplexObject, queryUtils } from "magic-odata-client";
 import { uniqueString } from "../utils/utils.js";
 import { buildComplexTypeRef } from "magic-odata-client";
 import { queryBuilder } from "../utils/odataClient.js";
@@ -1226,6 +1226,254 @@ describe("Query.Filter Operators", function () {
         //         expect(result.value.length).toBe(0);
         //     }
         // }
+    });
+
+    testCase("mulTime", function () {
+
+        it("Should build filter (1)", () => {
+            const { $filter: { mulTime } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                mulTime(e.Duration, e.Int16));
+
+            expect(q["$filter"]).toBe("Duration mul Int16");
+        });
+
+        it("Should build filter (2)", () => {
+            const { $filter: { mulTime } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                mulTime(e.Duration, 1234));
+
+            expect(q["$filter"]).toBe("Duration mul 1234");
+        });
+    });
+
+    testCase("divTime", function () {
+
+        it("Should build filter (1)", () => {
+            const { $filter: { divTime } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                divTime(e.Duration, e.Int16));
+
+            expect(q["$filter"]).toBe("Duration div Int16");
+        });
+
+        it("Should build filter (2)", () => {
+            const { $filter: { divTime } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                divTime(e.Duration, -1.2));
+
+            expect(q["$filter"]).toBe("Duration div -1.2");
+        });
+    });
+
+    testCase("divByTime", function () {
+
+        it("Should build filter (1)", () => {
+            const { $filter: { divByTime } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                divByTime(e.Duration, e.Int16));
+
+            expect(q["$filter"]).toBe("Duration divby Int16");
+        });
+
+        it("Should build filter (2)", () => {
+            const { $filter: { divByTime } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                divByTime(e.Duration, -1.2));
+
+            expect(q["$filter"]).toBe("Duration divby -1.2");
+        });
+    });
+
+    testCase("addTime", function () {
+
+        it("Should work: addTime(lhs: Operable<EdmDateTimeOffset>, rhs: Operable<EdmDuration>): Filter;", () => {
+            const { $filter: { addTime } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                addTime(e.DateTimeOffset, e.Duration));
+
+            expect(q["$filter"]).toBe("DateTimeOffset add Duration");
+        });
+
+        it("Should work: addTime(lhs: Operable<EdmDateTimeOffset>, rhs: EdmDuration1): Filter;", () => {
+            const { $filter: { addTime } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                addTime(e.DateTimeOffset, 12345));
+
+            expect(q["$filter"]).toBe("DateTimeOffset add duration'P0DT0H0M12.345S'");
+        });
+
+        it("Should work: addTime(lhs: Operable<EdmDateTimeOffset>, rhs: EdmDuration2): Filter;", () => {
+            const { $filter: { addTime } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                addTime(e.DateTimeOffset, "asdasd"));
+
+            expect(q["$filter"]).toBe("DateTimeOffset add asdasd");
+        });
+
+        it("Should work: addTime(lhs: Operable<EdmDateTimeOffset>, rhs: EdmDuration3): Filter;", () => {
+            const { $filter: { addTime } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                addTime(e.DateTimeOffset, new ODataDuration({ ms: 22 })));
+
+            expect(q["$filter"]).toBe("DateTimeOffset add duration'P0DT0H0M0.022S'");
+        });
+
+        it("Should work: addTime(lhs: Operable<EdmDuration>, rhs: Operable<EdmDateTimeOffset>): Filter;", () => {
+            const { $filter: { addTime } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                addTime(e.Duration, e.DateTimeOffset));
+
+            expect(q["$filter"]).toBe("Duration add DateTimeOffset");
+        });
+
+        it("Should work: addTime(lhs: Operable<EdmDuration>, rhs: EdmDateTimeOffset1): Filter;", () => {
+            const { $filter: { addTime } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                addTime(e.Duration, new Date(2001, 2, 3)));
+
+            // TODO: assumes specific timezone
+            expect(q["$filter"]).toBe("Duration add 2001-03-03T00:00:00.000+00:00");
+        });
+
+        it("Should work: addTime(lhs: Operable<EdmDuration>, rhs: EdmDateTimeOffset2): Filter;", () => {
+            const { $filter: { addTime } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                addTime(e.Duration, "dtofs"));
+
+            expect(q["$filter"]).toBe("Duration add dtofs");
+        });
+
+        it("Should work: addTime(lhs: Operable<EdmDuration>, rhs: EdmDateTimeOffset3): Filter;", () => {
+            const { $filter: { addTime } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                addTime(e.Duration, new ODataDateTimeOffset({ y: 2001, M: 1, d: 1, h: 10, offsetM: -9 })));
+
+            expect(q["$filter"]).toBe("Duration add 2001-01-01T10:00:00.000-00:09");
+        });
+
+        it("Should work: addTime(lhs: Operable<EdmDuration>, rhs: EdmDuration1): Filter;", () => {
+            const { $filter: { addTime } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                addTime(e.Duration, "dur1"));
+
+            expect(q["$filter"]).toBe("Duration add dur1");
+        });
+
+        it("Should work: addTime(lhs: Operable<EdmDuration>, rhs: EdmDuration2): Filter;", () => {
+            const { $filter: { addTime } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                addTime(e.Duration, -12345));
+
+            expect(q["$filter"]).toBe("Duration add duration'-P0DT0H0M12.345S'");
+        });
+
+        it("Should work: addTime(lhs: Operable<EdmDuration>, rhs: EdmDuration3): Filter;", () => {
+            const { $filter: { addTime } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                addTime(e.Duration, new ODataDuration({ h: -7 })));
+
+            expect(q["$filter"]).toBe("Duration add duration'-P0DT7H0M0.000S'");
+        });
+
+        it("Should work: addTime(lhs: Operable<EdmDuration>, rhs: Operable<EdmDuration>): Filter;", () => {
+            const { $filter: { addTime } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                addTime(e.Duration, e.Duration));
+
+            expect(q["$filter"]).toBe("Duration add Duration");
+        });
+    });
+
+    testCase("subTime", function () {
+        it("Should work: subTime(lhs: Operable<EdmDateTimeOffset>, rhs: Operable<EdmDuration>);", () => {
+            const { $filter: { subTime } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                subTime(e.DateTimeOffset, e.Duration));
+
+            expect(q["$filter"]).toBe("DateTimeOffset sub Duration");
+        });
+
+        it("Should work: subTime(lhs: Operable<EdmDateTimeOffset>, rhs: EdmDuration1);", () => {
+            const { $filter: { subTime } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                subTime(e.DateTimeOffset, "durr"));
+
+            expect(q["$filter"]).toBe("DateTimeOffset sub durr");
+        });
+
+        it("Should work: subTime(lhs: Operable<EdmDateTimeOffset>, rhs: EdmDuration2);", () => {
+            const { $filter: { subTime } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                subTime(e.DateTimeOffset, 12345));
+
+            expect(q["$filter"]).toBe("DateTimeOffset sub duration'P0DT0H0M12.345S'");
+        });
+
+        it("Should work: subTime(lhs: Operable<EdmDateTimeOffset>, rhs: EdmDuration3);", () => {
+            const { $filter: { subTime } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                subTime(e.DateTimeOffset, new ODataDuration({ d: -8 })));
+
+            expect(q["$filter"]).toBe("DateTimeOffset sub duration'-P8DT0H0M0.000S'");
+        });
+
+        it("Should work: subTime(lhs: EdmDateTimeOffset1, rhs: Operable<EdmDuration>): Filter;", () => {
+            const { $filter: { subTime } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                subTime(e.Duration, new ODataDuration({ m: -8 })));
+
+            expect(q["$filter"]).toBe("Duration sub duration'-P0DT0H8M0.000S'");
+        });
+
+        it("Should work: subTime(lhs: EdmDateTimeOffset2, rhs: Operable<EdmDuration>): Filter;", () => {
+            const { $filter: { subTime } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                subTime("dtofs", e.Duration));
+
+            expect(q["$filter"]).toBe("dtofs sub Duration");
+        });
+
+        it("Should work: subTime(lhs: EdmDateTimeOffset3, rhs: Operable<EdmDuration>): Filter;", () => {
+            const { $filter: { subTime } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                subTime(new Date(2011, 1, 1), e.Duration));
+
+            expect(q["$filter"]).toBe("2011-02-01T00:00:00.000+00:00 sub Duration");
+        });
+
+        it("Should work: subTime(lhs: Operable<EdmDuration>, rhs: Operable<EdmDuration>): Filter;", () => {
+            const { $filter: { subTime } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                subTime(e.Duration, e.Duration));
+
+            expect(q["$filter"]).toBe("Duration sub Duration");
+        });
+
+        it("Should work: subTime(lhs: Operable<EdmDuration>, rhs: EdmDuration1): Filter;", () => {
+            const { $filter: { subTime } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                subTime(e.Duration, 5555));
+
+            expect(q["$filter"]).toBe("Duration sub duration'P0DT0H0M5.555S'");
+        });
+
+        it("Should work: subTime(lhs: Operable<EdmDuration>, rhs: EdmDuration2): Filter;", () => {
+            const { $filter: { subTime } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                subTime(e.Duration, "'durdur'"));
+
+            expect(q["$filter"]).toBe("Duration sub 'durdur'");
+        });
+
+        it("Should work: subTime(lhs: Operable<EdmDuration>, rhs: EdmDuration3): Filter;", () => {
+            const { $filter: { subTime } } = queryUtils();
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                subTime(e.Duration, new ODataDuration({ s: 88 })));
+
+            expect(q["$filter"]).toBe("Duration sub duration'P0DT0H0M88.000S'");
+        });
+
     });
 });
 

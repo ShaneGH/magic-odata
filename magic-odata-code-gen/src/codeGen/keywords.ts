@@ -5,10 +5,6 @@ export type Keywords = {
     mergeMap: string
     map: string
     RequestOptions: string
-    DateStruct: string
-    DurationStruct: string
-    TimeStruct: string
-    OffsetStruct: string
     ODataServiceConfig: string
     QueryPrimitive: string
     QueryCollection: string
@@ -19,7 +15,6 @@ export type Keywords = {
     rootConfig: string
     rootConfigExporter: string
     CastSelection: string
-    DateAlias: string
     KeySelection: string
     SubPathSelection: string
     RequestTools: string,
@@ -44,6 +39,10 @@ export type Keywords = {
     $ValueAnd$CountTypesCanNotBeOperatedOn: string
     PrimitiveSubPath: string
     CollectionSubPath: string
+    EdmDate: string
+    EdmTimeOfDay: string
+    EdmDuration: string
+    EdmDateTimeOffset: string
 };
 
 export function generateKeywords(allNamespaces: string[], rootLevelTypes: string[]): Keywords {
@@ -61,14 +60,13 @@ export function generateKeywords(allNamespaces: string[], rootLevelTypes: string
     const keys = Object.keys(lookup)
 
     return {
+        EdmDate: getKeyword("EdmDate"),
+        EdmTimeOfDay: getKeyword("EdmTimeOfDay"),
+        EdmDuration: getKeyword("EdmDuration"),
+        EdmDateTimeOffset: getKeyword("EdmDateTimeOffset"),
         CollectionSubPath: getKeyword("CollectionSubPath"),
         RequestOptions: getKeyword("RequestOptions"),
         $ValueAnd$CountTypesCanNotBeOperatedOn: getKeyword("$ValueAnd$CountTypesCanNotBeOperatedOn"),
-        DurationStruct: getKeyword("DurationStruct"),
-        DateStruct: getKeyword("DateStruct"),
-        TimeStruct: getKeyword("TimeStruct"),
-        OffsetStruct: getKeyword("OffsetStruct"),
-        DateAlias: getKeyword("DateAlias"),
         mergeMap: getKeyword("mergeMap"),
         map: getKeyword("map"),
         AngularHttpResponse: getKeyword("HttpResponse"),
@@ -128,12 +126,12 @@ export function imports(keywords: Keywords, tab: Tab, config: CodeGenConfig | nu
 } from 'rxjs'`
 
     const odataTsClient = `import {
+${tab(importWithAlias("EdmDate"))},
+${tab(importWithAlias("EdmTimeOfDay"))},
+${tab(importWithAlias("EdmDuration"))},
+${tab(importWithAlias("EdmDateTimeOffset"))},
 ${tab(importWithAlias("RequestOptions"))},
 ${tab(importWithAlias("$ValueAnd$CountTypesCanNotBeOperatedOn"))},
-${tab(importWithAlias("DateStruct"))},
-${tab(importWithAlias("TimeStruct"))},
-${tab(importWithAlias("DurationStruct"))},
-${tab(importWithAlias("OffsetStruct"))},
 ${tab(importWithAlias("HttpError"))},
 ${tab(importWithAlias("DefaultResponseInterceptor"))},
 ${tab(importWithAlias("KeySelection"))},

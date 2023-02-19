@@ -72,10 +72,15 @@ export {
 } from "./src/query/queryComplexObjectBuilder.js"
 
 export {
-    DateStruct,
-    TimeStruct,
-    DurationStruct,
-    OffsetStruct
+    ODataDate,
+    ODataTimeOfDay,
+    ODataDuration,
+    ODataOffset,
+    ODataDateTimeOffset,
+    EdmDate,
+    EdmTimeOfDay,
+    EdmDuration,
+    EdmDateTimeOffset
 } from "./src/edmTypes.js"
 
 /*

@@ -1,7 +1,7 @@
 
 import { addFullUserChain } from "../utils/client.js";
 import { My, ODataClient, rootConfigExporter } from "../generatedCode.js";
-import { queryUtils, WithKeyType } from "magic-odata-client";
+import { ODataDate, ODataDateTimeOffset, ODataDuration, ODataTimeOfDay, WithKeyType } from "magic-odata-client";
 import { oDataClient, uriClient } from "../utils/odataClient.js";
 
 const rootConfig = rootConfigExporter();
@@ -263,7 +263,7 @@ describe("Query.Select", function () {
             it("Should work", async () => {
 
                 const result = await oDataClient.OneOfEverythings
-                    .withQuery((u, { $filter: { eq } }) => eq(u.Date, { y: 1999, M: 2, d: 1 }))
+                    .withQuery((u, { $filter: { eq } }) => eq(u.Date, new ODataDate({ y: 1999, M: 2, d: 1 })))
                     .get();
 
                 expect(result.value.length).toEqual(1);
@@ -272,7 +272,7 @@ describe("Query.Select", function () {
             it("Should work with different padding", async () => {
 
                 const result = await oDataClient.OneOfEverythings
-                    .withQuery((u, { $filter: { eq } }) => eq(u.Date, { y: 1, M: 12, d: 11 }))
+                    .withQuery((u, { $filter: { eq } }) => eq(u.Date, new ODataDate({ y: 1, M: 12, d: 11 })))
                     .get();
 
                 expect(result.value.length).toEqual(0);
@@ -349,7 +349,7 @@ describe("Query.Select", function () {
             it("Should work", async () => {
 
                 const result = await oDataClient.OneOfEverythings
-                    .withQuery((u, { $filter: { eq } }) => eq(u.DateTimeOffset, { y: 1999, M: 1, d: 1, h: 11, m: 30, s: 30, ms: 123, offsetH: 1, offsetM: 30 }))
+                    .withQuery((u, { $filter: { eq } }) => eq(u.DateTimeOffset, new ODataDateTimeOffset({ y: 1999, M: 1, d: 1, h: 11, m: 30, s: 30, ms: 123, offsetH: 1, offsetM: 30 })))
                     .get();
 
                 expect(result.value.length).toEqual(1);
@@ -358,7 +358,7 @@ describe("Query.Select", function () {
             it("Should serialize correctly (1)", async () => {
 
                 const result: string = await uriClient.OneOfEverythings
-                    .withQuery((u, { $filter: { lt } }) => lt(u.DateTimeOffset, { y: 2000, M: 1, d: 1 }))
+                    .withQuery((u, { $filter: { lt } }) => lt(u.DateTimeOffset, new ODataDateTimeOffset({ y: 2000, M: 1, d: 1 })))
                     .get() as any;
 
                 const q = decodeURIComponent(/\$filter=(.+)/.exec(result)![1])
@@ -369,12 +369,22 @@ describe("Query.Select", function () {
             it("Should serialize correctly (2)", async () => {
 
                 const result: string = await uriClient.OneOfEverythings//1999, 1, 1, 11, 30, 30, 123
-                    .withQuery((u, { $filter: { lt } }) => lt(u.DateTimeOffset, { y: 1999, M: 1, d: 2, h: 3, m: 4, s: 5, ms: 666, offsetH: 7, offsetM: 8 }))
+                    .withQuery((u, { $filter: { lt } }) => lt(u.DateTimeOffset, new ODataDateTimeOffset({ y: 1999, M: 1, d: 2, h: 3, m: 4, s: 5, ms: 666, offsetH: 7, offsetM: 8 })))
                     .get() as any;
 
                 const q = decodeURIComponent(/\$filter=(.+)/.exec(result)![1])
 
                 expect(q).toEqual("DateTimeOffset lt 1999-01-02T03:04:05.666+07:08");
+            });
+
+            it("Should serialize correctly (3)", async () => {
+
+                const result = await uriClient.OneOfEverythings
+                    .withQuery((u, { $filter: { eq } }) => eq(u.DateTimeOffset, new ODataDateTimeOffset({ y: 1999, M: 1, d: 1, h: 11, m: 30, s: 30, ms: 123, offsetH: -1, offsetM: -30 })))
+                    .get() as any;
+
+                const q = decodeURIComponent(/\$filter=(.+)/.exec(result)![1])
+                expect(q).toEqual("DateTimeOffset eq 1999-01-01T11:30:30.123-01:30");
             });
         });
 
@@ -432,7 +442,7 @@ describe("Query.Select", function () {
             it("Should work", async () => {
 
                 const result = await oDataClient.OneOfEverythings
-                    .withQuery((u, { $filter: { eq } }) => eq(u.TimeOfDay, { h: 12, m: 1, s: 1, ms: 1 }))
+                    .withQuery((u, { $filter: { eq } }) => eq(u.TimeOfDay, new ODataTimeOfDay({ h: 12, m: 1, s: 1, ms: 1 })))
                     .get();
 
                 expect(result.value.length).toEqual(1);
@@ -458,7 +468,7 @@ describe("Query.Select", function () {
         it("Should work with struct", async () => {
 
             const result = await oDataClient.OneOfEverythings
-                .withQuery((u, { $filter: { eq } }) => eq(u.Duration, { d: 2, h: 3, m: 4, s: 5, ms: 6 }))
+                .withQuery((u, { $filter: { eq } }) => eq(u.Duration, new ODataDuration({ d: 2, h: 3, m: 4, s: 5, ms: 6 })))
                 .get();
 
             expect(result.value.length).toEqual(1);
@@ -474,6 +484,7 @@ describe("Query.Select", function () {
         });
 
         it("Should work with number", withNumber.bind(null, 1.728e+8 + 1.08e+7 + 240000 + 5000 + 6, true));
+        it("Should work with number", withNumber.bind(null, -1.728e+8 - 1.08e+7 - 240000 - 5000 - 6, false));
         it("Should work with number (1)", withNumber.bind(null, 1, false));
         it("Should work with number (2)", withNumber.bind(null, 1234, false));
         it("Should work with number (3)", withNumber.bind(null, 71234, false));
@@ -488,7 +499,8 @@ describe("Query.Select", function () {
         async function withNumber(number: number, ok: boolean) {
 
             const result = await oDataClient.OneOfEverythings
-                .withQuery((u, { $filter: { eq, not } }) => ok ? eq(u.Duration, number) : not(eq(u.Duration, number)))
+                .withQuery((u, { $filter: { eq, not } }) =>
+                    ok ? eq(u.Duration, number) : not(eq(u.Duration, number)))
                 .get();
 
             expect(result.value.length).toEqual(1);
