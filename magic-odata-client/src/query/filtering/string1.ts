@@ -70,6 +70,13 @@ function stringFunction(name: string, lhs: Operable<string> | string, rhs: Opera
     return combineFilterStrings("", result, metadata.root, `${name}(${lhsS},${rhsS})`);
 }
 
+export function matchesPattern(string: Operable<string>, rhs: Operable<string> | string): Filter;
+export function matchesPattern(string: Operable<string> | string, pattern: Operable<string>): Filter;
+export function matchesPattern(string: Operable<string> | string, pattern: Operable<string> | string): Filter {
+
+    return stringFunction("matchesPattern", string, pattern, boolT);
+}
+
 export function contains(lhs: Operable<string>, rhs: Operable<string> | string): Filter;
 export function contains(lhs: Operable<string> | string, rhs: Operable<string>): Filter;
 export function contains(lhs: Operable<string> | string, rhs: Operable<string> | string): Filter {
@@ -96,6 +103,30 @@ export function indexOf(lhs: Operable<string> | string, rhs: Operable<string>): 
 export function indexOf(lhs: Operable<string> | string, rhs: Operable<string> | string): Filter {
 
     return stringFunction("indexof", lhs, rhs, int32T);
+}
+
+export function toLower(lhs: Operable<string>): Filter {
+
+    const metadata = getOperableTypeInfo(lhs)
+    let lhsS = getOperableFilterString(lhs)
+
+    return combineFilterStrings("", stringT, metadata.root, `tolower(${lhsS})`);
+}
+
+export function toUpper(lhs: Operable<string>): Filter {
+
+    const metadata = getOperableTypeInfo(lhs)
+    let lhsS = getOperableFilterString(lhs)
+
+    return combineFilterStrings("", stringT, metadata.root, `toupper(${lhsS})`);
+}
+
+export function trim(lhs: Operable<string>): Filter {
+
+    const metadata = getOperableTypeInfo(lhs)
+    let lhsS = getOperableFilterString(lhs)
+
+    return combineFilterStrings("", stringT, metadata.root, `trim(${lhsS})`);
 }
 
 export function length(lhs: Operable<string>): Filter {

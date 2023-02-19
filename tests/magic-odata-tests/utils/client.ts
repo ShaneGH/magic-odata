@@ -16,6 +16,7 @@ export type AddFullUserChainArgs = Partial<{
     userProfileType: My.Odata.Entities.UserProfileType
     commentMood: My.Odata.Entities.Mood
     blogPostContent: string
+    blogPostName: string
     blogPostLikes: number
     commentTags: CommentTag[]
     addFullChainToCommentUser: AddFullUserChainArgs
@@ -46,7 +47,7 @@ export async function addFullUserChain(settings?: AddFullUserChainArgs): Promise
 
     const blogUser = await addUser({ UserType: settings?.userType, UserProfileType: settings?.userProfileType, Score: settings?.userScore });
     const blog = await addBlog(blogUser.Id!);
-    const blogPost = await addBlogPost(blog.Id!, settings?.blogPostContent, settings?.blogPostLikes);
+    const blogPost = await addBlogPost(blog.Id!, settings?.blogPostContent, settings?.blogPostLikes, settings?.blogPostName);
 
     const commentUser = await commentUserP;
     const mood: Partial<My.Odata.Entities.CommentMood> | undefined = settings.commentMood == null
@@ -97,10 +98,10 @@ export function postBlogPost(val: Partial<BlogPost>) {
     return post("BlogPosts", val) as Promise<BlogPost>;
 }
 
-export async function addBlogPost(blogId: string, content?: string, likes?: number) {
+export async function addBlogPost(blogId: string, content?: string, likes?: number, name?: string) {
 
     const blogPost: Partial<BlogPost> = {
-        Name: uniqueString("Blog Post Name "),
+        Name: name || uniqueString("Blog Post Name "),
         BlogId: blogId, Content: content || uniqueString("Blog Content"),
         Likes: likes != null ? likes : uniqueNumber(),
         AgeRestriction: uniqueNumber(),

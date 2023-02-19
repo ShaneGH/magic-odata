@@ -3,7 +3,7 @@ import { add, ceiling, div, divby, floor, mod, mul, round, sub } from "./filteri
 import { all, any, collectionFilter, collectionFunction, count, hassubset, hassubsequence, OperableCollection } from "./filtering/collection1.js";
 import {
     concat as concatString, contains as containsString, startsWith as startsWithString,
-    endsWith as endsWithString, indexOf as indexOfString, length as lengthString, subString
+    endsWith as endsWithString, indexOf as indexOfString, length as lengthString, subString, matchesPattern, toLower, toUpper, trim
 } from "./filtering/string1.js";
 import { and, eq, ge, group, gt, isIn, le, logicalInfixOp, lt, ne, not, or } from "./filtering/logical2.js";
 import { FilterablePaths, FilterableProps, filterRaw } from "./filtering/op1.js";
@@ -347,6 +347,59 @@ export type FilterUtils = {
     containsString(lhs: Operable<string> | string, rhs: Operable<string>): Filter;
 
     /**
+     * An OData "contains" operation
+     * @param lhs  The value to test for the existence of rhs
+     * @param rhs  The value to test lhs for the existence of
+     * @example containsString(my.fullName, "Bob")
+     */
+    containsString(lhs: Operable<string>, rhs: Operable<string> | string): Filter;
+
+    /**
+     * An OData "contains" operation
+     * @param lhs  The value to test rhs for the existence of
+     * @param rhs  The value to test for the existence of lhs
+     * @example containsString("Bob Jones", my.firstName)
+     */
+    containsString(lhs: Operable<string> | string, rhs: Operable<string>): Filter;
+
+    /**
+     * An OData "matchesPattern" operation
+     * @param string  The value to test for the existence of rhs
+     * @param pattern  The pattern to test lhs for the existence of
+     * @example matchesPattern(my.fullName, "^Bob*")
+     */
+    matchesPattern(string: Operable<string>, pattern: Operable<string> | string): Filter;
+
+    /**
+     * An OData "matchesPattern" operation
+     * @param string  The pattern to test rhs for the existence of
+     * @param pattern  The value to test for the existence of lhs
+     * @example matchesPattern("Bob Jones", my.namePattern)
+     */
+    matchesPattern(string: Operable<string> | string, pattern: Operable<string>): Filter;
+
+    /**
+     * An OData "tolower" operation
+     * @param string  The pattern to test rhs for the existence of
+     * @example toLower(my.name)
+     */
+    toLower(string: Operable<string>): Filter;
+
+    /**
+     * An OData "toupper" operation
+     * @param string  The pattern to test rhs for the existence of
+     * @example toUpper(my.name)
+     */
+    toUpper(string: Operable<string>): Filter;
+
+    /**
+     * An OData "trim" operation
+     * @param string  The pattern to test rhs for the existence of
+     * @example trim(my.name)
+     */
+    trim(string: Operable<string>): Filter;
+
+    /**
      * An OData "startswith" operation
      * @param lhs  The value to test for the existence of rhs
      * @param rhs  The value to test lhs for the existence of
@@ -576,6 +629,10 @@ export function newUtils(): FilterUtils {
         mod,
         concatString,
         containsString,
+        matchesPattern,
+        toLower,
+        toUpper,
+        trim,
         startsWithString,
         endsWithString,
         indexOfString,

@@ -873,6 +873,61 @@ describe("Query.Filter Operators", function () {
         });
     });
 
+    testCase("matchesPattern", function () {
+
+        describe("string", () => {
+            it("Should work correctly (success)", execute.bind(null, true));
+            it("Should work correctly (failure)", execute.bind(null, false))
+
+            async function execute(success: boolean) {
+
+                const ctxt = await addFullUserChain();
+                const searchString = success ? ctxt.blogPost.Name.substring(5) : "invalid"
+
+                const result = await client.BlogPosts
+                    .withQuery((bp, { $filter: { eq, and, matchesPattern } }) =>
+                        and(
+                            eq(bp.Id, ctxt.blogPost.Id),
+                            matchesPattern(bp.Name, searchString)))
+                    .get();
+
+                if (success) {
+                    expect(result.value.length).toBe(1);
+                    expect(result.value[0].Content).toBe(ctxt.blogPost.Content);
+                } else {
+                    expect(result.value.length).toBe(0);
+                }
+            }
+
+            describe("reversed args", () => {
+                it("Should work correctly (success)", execute.bind(null, true));
+                it("Should work correctly (failure)", execute.bind(null, false))
+
+                async function execute(success: boolean) {
+
+                    const ctxt = await addFullUserChain();
+                    const searchString = success
+                        ? ctxt.blogPost.Name + "aa"
+                        : "invalid"
+
+                    const result = await client.BlogPosts
+                        .withQuery((bp, { $filter: { eq, and, matchesPattern } }) =>
+                            and(
+                                eq(bp.Id, ctxt.blogPost.Id),
+                                matchesPattern(searchString, bp.Name)))
+                        .get();
+
+                    if (success) {
+                        expect(result.value.length).toBe(1);
+                        expect(result.value[0].Content).toBe(ctxt.blogPost.Content);
+                    } else {
+                        expect(result.value.length).toBe(0);
+                    }
+                }
+            });
+        });
+    });
+
     testCase("startsWithString", function () {
 
         it("Should work correctly (success)", execute.bind(null, true));
@@ -1048,6 +1103,83 @@ describe("Query.Filter Operators", function () {
                     and(
                         eq(bp.Id, ctxt.blogPost.Id),
                         eq(lengthString(bp.Name), length)))
+                .get();
+
+            if (success) {
+                expect(result.value.length).toBe(1);
+                expect(result.value[0].Content).toBe(ctxt.blogPost.Content);
+            } else {
+                expect(result.value.length).toBe(0);
+            }
+        }
+    });
+
+    testCase("toLower", function () {
+
+        it("Should work correctly (success)", execute.bind(null, true));
+        it("Should work correctly (failure)", execute.bind(null, false))
+
+        async function execute(success: boolean) {
+
+            const ctxt = await addFullUserChain({ blogPostName: uniqueString("BLOGPOST") });
+            let name = success ? ctxt.blogPost.Name.toLowerCase() : ctxt.blogPost.Name
+
+            const result = await client.BlogPosts
+                .withQuery((bp, { $filter: { eq, and, toLower } }) =>
+                    and(
+                        eq(bp.Id, ctxt.blogPost.Id),
+                        eq(toLower(bp.Name), name)))
+                .get();
+
+            if (success) {
+                expect(result.value.length).toBe(1);
+                expect(result.value[0].Content).toBe(ctxt.blogPost.Content);
+            } else {
+                expect(result.value.length).toBe(0);
+            }
+        }
+    });
+
+    testCase("toUpper", function () {
+
+        it("Should work correctly (success)", execute.bind(null, true));
+        it("Should work correctly (failure)", execute.bind(null, false))
+
+        async function execute(success: boolean) {
+
+            const ctxt = await addFullUserChain({ blogPostName: uniqueString("blogpost") });
+            let name = success ? ctxt.blogPost.Name.toUpperCase() : ctxt.blogPost.Name
+
+            const result = await client.BlogPosts
+                .withQuery((bp, { $filter: { eq, and, toUpper } }) =>
+                    and(
+                        eq(bp.Id, ctxt.blogPost.Id),
+                        eq(toUpper(bp.Name), name)))
+                .get();
+
+            if (success) {
+                expect(result.value.length).toBe(1);
+                expect(result.value[0].Content).toBe(ctxt.blogPost.Content);
+            } else {
+                expect(result.value.length).toBe(0);
+            }
+        }
+    });
+
+    testCase("trim", function () {
+
+        it("Should work correctly (success)", execute.bind(null, true));
+        it("Should work correctly (failure)", execute.bind(null, false))
+
+        async function execute(success: boolean) {
+
+            const ctxt = await addFullUserChain({ blogPostName: uniqueString("     blogpost") });
+
+            const result = await client.BlogPosts
+                .withQuery((bp, { $filter: { eq, and, trim } }) =>
+                    and(
+                        eq(bp.Id, ctxt.blogPost.Id),
+                        eq(success ? trim(bp.Name) : bp.Name, ctxt.blogPost.Name.trimStart())))
                 .get();
 
             if (success) {
