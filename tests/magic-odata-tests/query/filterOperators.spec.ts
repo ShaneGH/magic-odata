@@ -1301,11 +1301,12 @@ describe("Query.Filter Operators", function () {
     testCase("hassubset", function () {
 
         it("Should build filter (server can't process)", () => {
-            const { $filter: { hassubset } } = queryUtils();
-            const q = queryBuilder<My.Odata.Entities.QueryableBlogPost>("My.Odata.Entities.BlogPost", bp =>
-                hassubset(bp.Words, ["something"]));
 
-            expect(q["$filter"]).toBe("hassubset(Words,['something'])");
+            const q = client.BlogPosts
+                .withQuery((bp, { $filter: { hassubset } }) => hassubset(bp.Words, ["something"]))
+                .uri(false);
+
+            expect(q.query["$filter"]).toBe("hassubset(Words,['something'])");
         });
     });
 

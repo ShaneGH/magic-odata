@@ -1,12 +1,12 @@
 import { EntityQueryState, EntitySetData, EntitySetTools } from "./entitySet/utils.js";
 import { Utils } from "./query/queryUtils.js";
 import { Query } from "./queryBuilder.js";
-import { RequestTools } from "./entitySet/requestTools.js";
+import { ODataUriParts, RequestTools } from "./entitySet/requestTools.js";
 import { KeySelection, recontextDataForKey } from "./entitySet/selectByKey.js";
 import { recontextDataForQuery } from "./entitySet/addQuery.js";
 import { CastSelection, recontextDataForCasting } from "./entitySet/cast.js";
 import { recontextDataForSubPath, SubPathSelection } from "./entitySet/subPath.js";
-import { executeRequest } from "./entitySet/executeRequest.js";
+import { buildUri, executeRequest } from "./entitySet/executeRequest.js";
 import { Accept } from "./entitySet/utils.js";
 
 export type ODataResultMetadata = Partial<{
@@ -74,6 +74,12 @@ export interface IEntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, 
      * @param overrideRequestTools Override any request tools needed
      */
     get<TOverrideFetchResult, TOverrideResultType>(overrideRequestTools?: Partial<RequestTools<TOverrideFetchResult, TOverrideResultType>>): TOverrideResultType;
+
+    /**
+     * Return the inner workings of an OData query
+     * @param encodeUri Specify whether to encode the query parts. Default: the value specifed in withQuery(...)
+     */
+    uri(encodeQueryParts?: boolean): ODataUriParts
 }
 
 export class EntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSingleCaster, TSubPath, TSingleSubPath, TFetchResult>
@@ -129,6 +135,24 @@ export class EntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSing
     get<TOverrideFetchResult, TOverrideResultType>(overrideRequestTools?: Partial<RequestTools<TOverrideFetchResult, TOverrideResultType>>): TOverrideResultType;
     get(overrideRequestTools?: Partial<RequestTools<TFetchResult, TResult>>): TResult {
         return executeRequest(this.state, this.path(), overrideRequestTools)
+    }
+
+    uri(encodeQueryParts?: boolean): ODataUriParts {
+
+        const state = typeof encodeQueryParts !== "boolean" || !this.state.state.query
+            ? this.state
+            : {
+                ...this.state,
+                state: {
+                    ...this.state.state,
+                    query: {
+                        ...this.state.state.query,
+                        urlEncode: encodeQueryParts
+                    }
+                }
+            }
+
+        return buildUri(state, this.path())
     }
 
     private path(append?: string[] | string | undefined) {

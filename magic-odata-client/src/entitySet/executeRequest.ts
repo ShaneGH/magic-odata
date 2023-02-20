@@ -57,25 +57,49 @@ function buildStringParser(accept: Accept, acceptHeader?: string): StringParser 
     }
 }
 
-export function executeRequest<TFetchResult, TResult>(
+function combineTools<TFetchResult, TResult>(
     data: EntitySetData<TFetchResult, TResult>,
-    relativePath: string,
-    overrideRequestTools: Partial<RequestTools<TFetchResult, TResult>> | undefined): TResult {
+    overrideRequestTools: Partial<RequestTools<TFetchResult, TResult>> | undefined): RequestTools<TFetchResult, TResult> {
 
-    const tools: RequestTools<TFetchResult, TResult> = {
+    return {
         ...defaultRequestTools,
         ...data.tools.requestTools,
         ...(overrideRequestTools || {})
     };
+}
 
-    const uri = tools.uriInterceptor!({
+function _buildUri<TFetchResult, TResult>(
+    data: EntitySetData<TFetchResult, TResult>,
+    relativePath: string,
+    tools: RequestTools<TFetchResult, TResult>): ODataUriParts {
+
+    return {
         uriRoot: tools.uriRoot,
         // if namespace === "", give null instead
         entitySetContainerName: data.tools.entitySet.namespace || null,
         entitySetName: data.tools.entitySet.name,
         relativePath: relativePath,
         query: buildQuery(data.state.query?.query || [], data.state.query?.urlEncode)
-    });
+    }
+}
+
+export function buildUri<TFetchResult, TResult>(
+    data: EntitySetData<TFetchResult, TResult>,
+    relativePath: string): ODataUriParts {
+
+    const tools = combineTools(data, undefined)
+    return _buildUri(data, relativePath, tools);
+}
+
+export function executeRequest<TFetchResult, TResult>(
+    data: EntitySetData<TFetchResult, TResult>,
+    relativePath: string,
+    overrideRequestTools: Partial<RequestTools<TFetchResult, TResult>> | undefined): TResult {
+
+    const tools = combineTools(data, overrideRequestTools)
+
+    const uri = tools.uriInterceptor!(
+        _buildUri(data, relativePath, tools));
 
     const acceptHeader = !data.state.accept || data.state.accept === Accept.Json
         ? "application/json"
