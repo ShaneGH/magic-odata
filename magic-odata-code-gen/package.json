@@ -18,6 +18,7 @@
   },
   "keywords": [
     "odata",
+    "query",
     "client",
     "odata-client",
     "typescript",

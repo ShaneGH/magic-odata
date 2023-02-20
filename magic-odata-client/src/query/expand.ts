@@ -1,3 +1,4 @@
+import { ODataServiceTypes } from "magic-odata-shared";
 import { buildQuery, Expand, Query } from "../queryBuilder.js"
 import { PathSegment, QueryCollection, QueryComplexObject, QueryObjectType, reContext } from "./queryComplexObjectBuilder.js"
 
@@ -55,21 +56,21 @@ function expandRaw(expand: string): Expand {
 
     return {
         $$oDataQueryObjectType: "Expand",
-        $$expand: expand
+        $$expand: _ => expand
     }
 }
 
 function expandAll(): Expand {
     return {
         $$oDataQueryObjectType: "Expand",
-        $$expand: "*"
+        $$expand: _ => "*"
     }
 }
 
 function expandRef(): Expand {
     return {
         $$oDataQueryObjectType: "Expand",
-        $$expand: "*/$ref"
+        $$expand: _ => "*/$ref"
     }
 }
 
@@ -88,32 +89,35 @@ function _expand<T>(
     addPath: string | null,
     and: ((x: QueryComplexObject<T>) => Query | Query[]) | undefined): Expand {
 
-    const innerExpand = and && addPath
-        ? `${addPath}(${innerBit(obj, and)})`
-        : and
-            ? `(${innerBit(obj, and)})`
-            : addPath;
-
-    const $$expand = expandString(obj.$$oDataQueryMetadata.path, innerExpand);
-    if (!$$expand) {
-        throw new Error("Object cannot be expanded");
-    }
-
     return {
         $$oDataQueryObjectType: "Expand",
-        $$expand
+        $$expand: ({ $$root }) => {
+            const innerExpand = and && addPath
+                ? `${addPath}(${innerBit(obj, $$root, and)})`
+                : and
+                    ? `(${innerBit(obj, $$root, and)})`
+                    : addPath;
+
+            const $$expand = expandString(obj.$$oDataQueryMetadata.path, innerExpand);
+            if (!$$expand) {
+                throw new Error("Object cannot be expanded");
+            }
+
+            return $$expand
+        }
     }
 }
 
 function innerBit<T>(
     obj: QueryComplexObject<T> | QueryCollection<QueryComplexObject<T>, T>,
+    root: ODataServiceTypes,
     and: ((x: QueryComplexObject<T>) => Query | Query[])) {
 
     const reContexted = obj.$$oDataQueryObjectType === QueryObjectType.QueryCollection
         ? reContext(obj.childObjConfig)
         : reContext(obj);
 
-    const innerQ = buildQuery(and(reContexted), false);
+    const innerQ = buildQuery(and(reContexted), root, false);
     const inner = Object
         .keys(innerQ)
         .map(k => `${k}=${innerQ[k]}`)
@@ -140,7 +144,7 @@ function expandString(pathSegment: PathSegment[], addPath: string | null): strin
 function combine(...expansions: Expand[]): Expand {
     return {
         $$oDataQueryObjectType: "Expand",
-        $$expand: expansions.map(x => x.$$expand).join(",")
+        $$expand: env => expansions.map(x => x.$$expand(env)).join(",")
     }
 }
 

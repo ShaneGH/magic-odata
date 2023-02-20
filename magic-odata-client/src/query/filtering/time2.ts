@@ -1,9 +1,10 @@
-import { ODataTypeRef, ODataServiceTypes } from "magic-odata-shared";
-import { EdmDate, EdmDateTimeOffset, EdmDuration, EdmTimeOfDay, ODataDateTimeOffset, ODataDuration } from "../../edmTypes.js";
-import { Filter } from "../../queryBuilder.js";
+import { ODataTypeRef } from "magic-odata-shared";
+import { EdmDate, EdmDateTimeOffset, EdmDuration, EdmTimeOfDay } from "../../edmTypes.js";
+import { Filter, FilterEnv, FilterResult } from "../../queryBuilder.js";
+import { Reader } from "../../utils.js";
 import { serialize } from "../../valueSerializer.js";
-import { QueryObjectType } from "../queryComplexObjectBuilder.js";
-import { combineFilterStrings, getOperableFilterString, Operable } from "./operable0.js";
+import { functionCall, infixOp } from "./op1.js";
+import { asOperable, Operable, operableToFilter } from "./operable0.js";
 import { DecimalNumberTypes, IntegerTypes, NonNumericTypes, resolveOutputType } from "./queryPrimitiveTypes0.js";
 
 const int32T = resolveOutputType(IntegerTypes.Int32)
@@ -13,163 +14,95 @@ const dateTimeOffsetT = resolveOutputType(NonNumericTypes.DateTimeOffset)
 const dateT = resolveOutputType(NonNumericTypes.Date)
 const timeT = resolveOutputType(NonNumericTypes.TimeOfDay)
 
-type OperableOrvalue =
-    | { type: "Op", op: Operable<any> }
-    | { type: "Value", value: any, typeRef?: ODataTypeRef, root?: ODataServiceTypes }
+function filterize<T>(
+    toFilterize: Operable<T> | T,
+    expected: ODataTypeRef,
+    mapper: ((x: T) => string) | undefined) {
 
-function tryRoot(x: OperableOrvalue) {
-    return (x.type === "Op" && x.op.$$oDataQueryObjectType === "Filter" && x.op.$$root)
-        || (x.type === "Op" && x.op.$$oDataQueryObjectType === QueryObjectType.QueryPrimitive && x.op.$$oDataQueryMetadata.root)
-        || (x.type === "Op" && x.op.$$oDataQueryObjectType === QueryObjectType.QueryEnum && x.op.$$oDataQueryMetadata.root)
-        || (x.type === "Value" && x.root)
-        || null
-}
-
-function arithmeticInfixOp(
-    lhs: OperableOrvalue,
-    operator: string,
-    rhs: OperableOrvalue,
-    output: ODataTypeRef | undefined): Filter {
-
-    const lhsV = lhs.type === "Op"
-        ? getOperableFilterString(lhs.op)
-        : serialize(lhs.value, lhs.typeRef, lhs.root)
-
-    const rhsV = rhs.type === "Op"
-        ? getOperableFilterString(rhs.op)
-        : serialize(rhs.value, rhs.typeRef, rhs.root)
-
-    const root = tryRoot(lhs) || tryRoot(rhs) || undefined;
-    return combineFilterStrings(` ${operator} `, output, root, lhsV, rhsV);
-}
-
-function isOpDuration(x: any) {
-    if (!x) return false;
-
-    if (x.$$oDataQueryObjectType === QueryObjectType.QueryPrimitive
-        && x.$$oDataQueryMetadata?.typeRef
-        && !x.$$oDataQueryMetadata.typeRef.isCollection
-        && x.$$oDataQueryMetadata.typeRef.namespace === "Edm"
-        && x.$$oDataQueryMetadata.typeRef.name === NonNumericTypes.Duration) {
-
-        return true
+    const toFilterizeO = asOperable(toFilterize)
+    if (toFilterizeO) {
+        return operableToFilter(toFilterizeO)
     }
 
-    if (typeof x === "number") return true
-    if (typeof x === "string") return true
-    if (x instanceof ODataDuration) return true
-
-    return false;
+    return Reader.create<FilterEnv, FilterResult>(({ $$root }) => ({
+        $$output: expected,
+        $$filter: mapper
+            ? mapper(toFilterize as T)
+            : serialize(toFilterize, expected, $$root)
+    }))
 }
 
-function isOpDateTimeOffset(x: any) {
-    if (!x) return false;
+export function addDateTimeOffset(lhs: Operable<EdmDateTimeOffset> | EdmDateTimeOffset, rhs: Operable<EdmDuration> | EdmDuration): Filter {
 
-    if (x.$$oDataQueryObjectType === QueryObjectType.QueryPrimitive
-        && x.$$oDataQueryMetadata?.typeRef
-        && !x.$$oDataQueryMetadata.typeRef.isCollection
-        && x.$$oDataQueryMetadata.typeRef.namespace === "Edm"
-        && x.$$oDataQueryMetadata.typeRef.name === NonNumericTypes.DateTimeOffset) {
-
-        return true
-    }
-
-    if (typeof x === "string") return true
-    if (x instanceof Date) return true
-    if (x instanceof ODataDateTimeOffset) return true
-
-    return false;
+    return infixOp(
+        filterize(lhs, dateTimeOffsetT, undefined),
+        " add ",
+        filterize(rhs, durationT, undefined),
+        dateTimeOffsetT)
 }
 
-function toOperableOrValue(x: any, fallbackType: ODataTypeRef | undefined, fallbackRoot: ODataServiceTypes | undefined): OperableOrvalue {
-    return typeof x?.$$oDataQueryObjectType === "string"
-        ? { type: "Op", op: x }
-        : { type: "Value", value: x, typeRef: fallbackType, root: fallbackRoot }
+export function subDateTimeOffset(lhs: Operable<EdmDateTimeOffset> | EdmDateTimeOffset, rhs: Operable<EdmDuration> | EdmDuration): Filter {
+
+    return infixOp(
+        filterize(lhs, dateTimeOffsetT, undefined),
+        " sub ",
+        filterize(rhs, durationT, undefined),
+        dateTimeOffsetT)
 }
 
-function root(x: Operable<EdmDateTimeOffset>) {
-    return x.$$oDataQueryObjectType === "Filter"
-        ? x.$$root
-        : x.$$oDataQueryMetadata?.root
+export function addDate(lhs: Operable<EdmDate> | EdmDate, rhs: Operable<EdmDuration> | EdmDuration): Filter {
+    return infixOp(
+        filterize(lhs, dateT, undefined),
+        " add ",
+        filterize(rhs, durationT, undefined),
+        dateT)
 }
 
-export function addTime(lhs: Operable<EdmDateTimeOffset>, rhs: Operable<EdmDuration> | EdmDuration): Filter;
-export function addTime(lhs: Operable<EdmDuration>, rhs: Operable<EdmDateTimeOffset> | EdmDateTimeOffset): Filter;
-export function addTime(lhs: Operable<EdmDuration>, rhs: Operable<EdmDuration> | EdmDuration): Filter;
-export function addTime(lhs: Operable<any>, rhs: any): Filter {
-
-    if (isOpDateTimeOffset(lhs) && isOpDuration(rhs)) {
-        return arithmeticInfixOp(
-            { type: "Op", op: lhs },
-            "add",
-            toOperableOrValue(rhs, durationT, root(lhs)),
-            dateTimeOffsetT)
-    }
-
-    if (isOpDuration(lhs) && isOpDuration(rhs)) {
-        return arithmeticInfixOp(
-            { type: "Op", op: lhs },
-            "add",
-            toOperableOrValue(rhs, durationT, root(lhs)),
-            durationT)
-    }
-
-    if (isOpDuration(lhs) && isOpDateTimeOffset(rhs)) {
-        return arithmeticInfixOp(
-            { type: "Op", op: lhs },
-            "add",
-            toOperableOrValue(rhs, dateTimeOffsetT, root(lhs)),
-            dateTimeOffsetT)
-    }
-
-    throw new Error("Invalid method overload");
+export function subDate(lhs: Operable<EdmDate> | EdmDate, rhs: Operable<EdmDuration> | EdmDuration): Filter {
+    return infixOp(
+        filterize(lhs, dateT, undefined),
+        " sub ",
+        filterize(rhs, durationT, undefined),
+        dateT)
 }
 
-export function subTime(lhs: Operable<EdmDateTimeOffset>, rhs: Operable<EdmDuration> | EdmDuration): Filter;
-export function subTime(lhs: EdmDateTimeOffset, rhs: Operable<EdmDuration>): Filter;
-export function subTime(lhs: Operable<EdmDuration>, rhs: Operable<EdmDuration> | EdmDuration): Filter;
-export function subTime(lhs: any, rhs: any): Filter {
-
-    if (isOpDateTimeOffset(lhs) && isOpDuration(rhs)) {
-        return arithmeticInfixOp(
-            toOperableOrValue(lhs, dateTimeOffsetT, root(rhs)),
-            "sub",
-            toOperableOrValue(rhs, durationT, root(lhs)),
-            dateTimeOffsetT)
-    }
-
-    if (isOpDuration(lhs) && isOpDuration(rhs)) {
-        return arithmeticInfixOp(
-            toOperableOrValue(lhs, durationT, root(rhs)),
-            "sub",
-            toOperableOrValue(rhs, durationT, root(lhs)),
-            durationT)
-    }
-
-    throw new Error("Invalid method overload");
-}
-
-export function mulTime(lhs: Operable<EdmDuration>, rhs: Operable<number> | number): Filter {
-    return arithmeticInfixOp(
-        toOperableOrValue(lhs, durationT, root(lhs)),
-        "mul",
-        toOperableOrValue(rhs, doubleT, root(lhs)),
+export function addDuration(lhs: Operable<EdmDuration> | EdmDuration, rhs: Operable<EdmDuration> | EdmDuration): Filter {
+    return infixOp(
+        filterize(lhs, durationT, undefined),
+        " add ",
+        filterize(rhs, durationT, undefined),
         durationT)
 }
 
-export function divTime(lhs: Operable<EdmDuration>, rhs: Operable<number> | number): Filter {
-    return arithmeticInfixOp(
-        toOperableOrValue(lhs, durationT, root(lhs)),
-        "div",
-        toOperableOrValue(rhs, doubleT, root(lhs)),
+export function subDuration(lhs: Operable<EdmDuration> | EdmDuration, rhs: Operable<EdmDuration> | EdmDuration): Filter {
+    return infixOp(
+        filterize(lhs, durationT, undefined),
+        " sub ",
+        filterize(rhs, durationT, undefined),
         durationT)
 }
 
-export function divByTime(lhs: Operable<EdmDuration>, rhs: Operable<number> | number): Filter {
-    return arithmeticInfixOp(
-        toOperableOrValue(lhs, durationT, root(lhs)),
-        "divby",
-        toOperableOrValue(rhs, doubleT, root(lhs)),
+export function mulDuration(lhs: Operable<EdmDuration> | EdmDuration, rhs: Operable<number> | number): Filter {
+    return infixOp(
+        filterize(lhs, durationT, undefined),
+        " mul ",
+        filterize(rhs, doubleT, undefined),
+        durationT)
+}
+
+export function divDuration(lhs: Operable<EdmDuration> | EdmDuration, rhs: Operable<number> | number): Filter {
+    return infixOp(
+        filterize(lhs, durationT, undefined),
+        " div ",
+        filterize(rhs, doubleT, undefined),
+        durationT)
+}
+
+export function divByDuration(lhs: Operable<EdmDuration> | EdmDuration, rhs: Operable<number> | number): Filter {
+    return infixOp(
+        filterize(lhs, durationT, undefined),
+        " divby ",
+        filterize(rhs, doubleT, undefined),
         durationT)
 }
 
@@ -178,23 +111,22 @@ function accessorFunction<T>(
     operand: Operable<T>,
     outputType: ODataTypeRef): Filter {
 
-    const root = operand.$$oDataQueryObjectType === "Filter" ? operand.$$root : operand.$$oDataQueryMetadata.root
-    return combineFilterStrings("", outputType, root, `${name}(${getOperableFilterString(operand)})`);
+    return functionCall(name, [operableToFilter(operand)], outputType)
 }
 
+const _now: Filter = Reader.retn<FilterEnv, FilterResult>({ $$output: dateTimeOffsetT, $$filter: "now()" })
 export function now() {
-    // TODO: root is undefined
-    return combineFilterStrings("", dateTimeOffsetT, undefined, "now()");
+    return _now;
 }
 
+const _maxdatetime: Filter = Reader.retn<FilterEnv, FilterResult>({ $$output: dateTimeOffsetT, $$filter: "maxdatetime()" })
 export function maxDateTime() {
-    // TODO: root is undefined
-    return combineFilterStrings("", dateTimeOffsetT, undefined, "maxdatetime()");
+    return _maxdatetime
 }
 
+const _mindatetime: Filter = Reader.retn<FilterEnv, FilterResult>({ $$output: dateTimeOffsetT, $$filter: "mindatetime()" })
 export function minDateTime() {
-    // TODO: root is undefined
-    return combineFilterStrings("", dateTimeOffsetT, undefined, "mindatetime()");
+    return _mindatetime
 }
 
 export function date(date: Operable<EdmDateTimeOffset>) {

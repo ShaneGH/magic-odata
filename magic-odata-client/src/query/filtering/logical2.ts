@@ -1,11 +1,32 @@
-import { Filter } from "../../queryBuilder.js";
+import { Filter, FilterEnv, FilterResult } from "../../queryBuilder.js";
+import { Reader } from "../../utils.js";
 import { serialize } from "../../valueSerializer.js";
 import { OperableCollection } from "./collection1.js";
-import { infixOp, MappableType } from "./op1.js";
-import { combineFilterStrings, getFilterString, getOperableFilterString, getOperableTypeInfo, HasFilterMetadata, Operable, TypeLookup } from "./operable0.js";
+import { infixOp } from "./op1.js";
+import { asOperable, combineFilterStrings, Operable, operableToFilter } from "./operable0.js";
 import { NonNumericTypes, resolveOutputType } from "./queryPrimitiveTypes0.js";
 
 const bool = resolveOutputType(NonNumericTypes.Boolean)
+
+function filterize<T>(
+    toFilterize: Operable<T> | T,
+    supplimentary: Operable<T>,
+    mapper: ((x: T) => string) | undefined) {
+
+    const toFilterizeO = asOperable(toFilterize)
+    if (toFilterizeO) {
+        return operableToFilter(toFilterizeO)
+    }
+
+    return operableToFilter(supplimentary)
+        .map(({ $$output }) => $$output)
+        .bind($$output => Reader.create<FilterEnv, FilterResult>(({ $$root }) => ({
+            $$output,
+            $$filter: mapper
+                ? mapper(toFilterize as T)
+                : serialize(toFilterize, $$output, $$root)
+        })))
+}
 
 /** 
  * an operation with 2 inputs of the same type
@@ -17,14 +38,7 @@ export function logicalInfixOp<T>(
     rhs: T | Operable<T>,
     mapper: ((x: T) => string) | undefined): Filter {
 
-    const metadata = getOperableTypeInfo(lhs);
-    const mappableRhs = typeof (rhs as any)?.$$oDataQueryObjectType === "string"
-        ? rhs as HasFilterMetadata
-        : new MappableType<T>(
-            rhs as T,
-            mapper || ((x: T) => serialize(x, metadata.typeRef, metadata.root)));
-
-    return infixOp(lhs, operator, mappableRhs, bool)
+    return infixOp(operableToFilter(lhs), ` ${operator} `, filterize(rhs, lhs, mapper), bool)
 }
 
 export function eq<T>(lhs: Operable<T>, rhs: T | Operable<T>, mapper?: (x: T) => string): Filter {
@@ -53,18 +67,20 @@ export function ge<T>(lhs: Operable<T>, rhs: T | Operable<T>, mapper?: (x: T) =>
 
 export function not(condition: Filter, group = true): Filter {
 
-    return {
-        ...condition,
-        $$filter: `not${group ? `(${condition.$$filter})` : ` ${condition.$$filter}`}`
-    }
+    return condition
+        .map(x => ({
+            ...x,
+            $$filter: `not${group ? `(${x.$$filter})` : ` ${x.$$filter}`}`
+        }))
 }
 
 export function group(condition: Filter): Filter {
 
-    return {
-        ...condition,
-        $$filter: `(${condition.$$filter})`
-    }
+    return condition
+        .map(x => ({
+            ...x,
+            $$filter: `(${x.$$filter})`
+        }))
 }
 
 export function and(...conditions: Filter[]): Filter {
@@ -72,7 +88,7 @@ export function and(...conditions: Filter[]): Filter {
         throw new Error("You must include at least 1 condition");
     }
 
-    return combineFilterStrings(" and ", bool, conditions[0]?.$$root, ...conditions.map(x => x.$$filter))
+    return combineFilterStrings(" and ", bool, ...conditions)
 }
 
 export function or(...conditions: Filter[]): Filter {
@@ -80,24 +96,24 @@ export function or(...conditions: Filter[]): Filter {
         throw new Error("You must include at least 1 condition");
     }
 
-    return combineFilterStrings(" or ", bool, conditions[0]?.$$root, ...conditions.map(x => x.$$filter))
-}
-
-function makeCollectionMapper<T>(mapper: ((x: T) => string) | undefined, metadata: TypeLookup) {
-    if (mapper) {
-        return (xs: T[]) => `(${xs?.map(mapper!).join(",")})`
-    }
-
-    return (xs: T[]) => `(${xs?.map(x => serialize(x, metadata.typeRef, metadata.root)) || ""})`
+    return combineFilterStrings(" or ", bool, ...conditions)
 }
 
 export function isIn<T>(lhs: Operable<T>, rhs: T[] | OperableCollection<T>, mapper?: (x: T) => string): Filter {
 
-    const metadata = getOperableTypeInfo(lhs)
-    const lhsS = getOperableFilterString(lhs);
-    const rhsS = Array.isArray(rhs)
-        ? getFilterString(rhs, makeCollectionMapper(mapper, metadata), null)
-        : getOperableFilterString(rhs);
+    lhs = operableToFilter(lhs)
+    if (Array.isArray(rhs)) {
+        const rhsA = rhs;
+        rhs = lhs.bind(({ $$output }) => Reader.create<FilterEnv, FilterResult>(env => ({
+            $$output: { isCollection: true, collectionType: $$output },
+            $$filter: `[${mapper
+                ? rhsA.map(mapper).join(",")
+                : rhsA.map(x => serialize(x, $$output, env.$$root)).join(",")}]`
+        })))
+    }
 
-    return combineFilterStrings(" in ", bool, metadata.root, lhsS, rhsS)
+    lhs = operableToFilter(lhs)
+    rhs = operableToFilter(rhs)
+
+    return combineFilterStrings(" in ", bool, lhs, rhs)
 }

@@ -1,30 +1,49 @@
-import { Filter } from "../../queryBuilder.js";
-import { infixOp, MappableType } from "./op1.js";
-import { combineFilterStrings, getOperableFilterString, getOperableTypeInfo, Operable } from "./operable0.js";
+import { Filter, FilterEnv } from "../../queryBuilder.js";
+import { Reader } from "../../utils.js";
+import { functionCall, infixOp } from "./op1.js";
+import { Operable, operableToFilter } from "./operable0.js";
 import { DecimalNumberTypes, IntegerTypes, RealNumberTypes, resolveOutputType } from "./queryPrimitiveTypes0.js";
 
 const int32T = resolveOutputType(IntegerTypes.Int32)
+const int64T = resolveOutputType(IntegerTypes.Int64)
+const doubleT = resolveOutputType(IntegerTypes.Int32)
 
 const integerTypes = Object.keys(IntegerTypes);
 function isInteger(item: Operable<number> | number) {
 
     if (typeof item === "number") {
-        return Number.isInteger(item);
+        return Reader.retn<boolean>(Number.isInteger(item));
     }
 
-    const metadata = getOperableTypeInfo(item)
-    return metadata.typeRef
-        && !metadata.typeRef.isCollection
-        && metadata.typeRef.namespace === "Edm"
-        && integerTypes.indexOf(metadata.typeRef.name) !== -1
+    return operableToFilter(item)
+        .map(f => f?.$$output
+            && !f.$$output.isCollection
+            && f.$$output.namespace === "Edm"
+            && integerTypes.indexOf(f.$$output.name) !== -1)
 }
 
 function guessAritmeticOutputType(
-    lhs: Operable<number>, operator: string, rhs: Operable<number> | number): RealNumberTypes {
+    lhs: Operable<number> | number, operator: string, rhs: Operable<number> | number): Reader<FilterEnv, RealNumberTypes> {
 
-    return operator === "div" || operator === "divby" || !isInteger(lhs) || !isInteger(rhs)
-        ? DecimalNumberTypes.Double
-        : IntegerTypes.Int64;
+    if (operator === "div" || operator === "divby") {
+        return Reader.retn(DecimalNumberTypes.Double)
+    }
+
+    return isInteger(lhs)
+        .bind(l => isInteger(rhs)
+            .map(r => ({ l, r })))
+        .map(({ l, r }) => l && r ? IntegerTypes.Int64 : DecimalNumberTypes.Double)
+}
+
+function toFilter(lhs: Operable<number> | number): Filter {
+    if (typeof lhs !== "number") {
+        return operableToFilter(lhs)
+    }
+
+    return Reader.retn({
+        $$filter: lhs == null ? "null" : lhs.toString(),
+        $$output: Number.isInteger(lhs) ? int64T : doubleT
+    })
 }
 
 /** 
@@ -36,22 +55,10 @@ function arithmeticInfixOp(
     rhs: Operable<number> | number,
     result: RealNumberTypes | undefined): Filter {
 
-    let reverse = false
-    if (typeof lhs === "number") {
-        if (typeof rhs === "number") {
-            throw new Error("Invalid method overload");
-        }
+    const r = (result && Reader.retn(result)) || guessAritmeticOutputType(lhs, operator, rhs)
 
-        reverse = true;
-        [lhs, rhs] = [rhs, lhs]
-    }
-
-    const mappableRhs = typeof rhs === "number"
-        ? new MappableType<number>(rhs, x => x.toString())
-        : rhs;
-
-    const outputT = resolveOutputType(result || guessAritmeticOutputType(lhs, operator, rhs))
-    return infixOp(lhs, operator, mappableRhs, outputT, reverse)
+    return r
+        .bind(r => infixOp(toFilter(lhs), ` ${operator} `, toFilter(rhs), r))
 }
 
 export function add(lhs: Operable<number>, rhs: Operable<number> | number, result: RealNumberTypes | undefined): Filter {
@@ -89,26 +96,14 @@ export function mod(lhs: Operable<number> | number, rhs: Operable<number> | numb
     return arithmeticInfixOp(lhs, "mod", rhs, result);
 }
 
-function roundingFunctionCall(
-    functionName: string,
-    lhs: Operable<number>,
-    result: IntegerTypes | undefined): Filter {
-
-    const metadata = getOperableTypeInfo(lhs);
-    const lhsS = getOperableFilterString(lhs)
-    const resultT = (result && resolveOutputType(result)) || int32T
-
-    return combineFilterStrings("", resultT, metadata.root, `${functionName}(${lhsS})`);
-}
-
 export function ceiling(lhs: Operable<number>, result?: IntegerTypes | undefined): Filter {
-    return roundingFunctionCall("ceiling", lhs, result);
+    return functionCall("ceiling", [operableToFilter(lhs)], result || int32T)
 }
 
 export function floor(lhs: Operable<number>, result?: IntegerTypes | undefined): Filter {
-    return roundingFunctionCall("floor", lhs, result);
+    return functionCall("floor", [operableToFilter(lhs)], result || int32T)
 }
 
 export function round(lhs: Operable<number>, result?: IntegerTypes | undefined): Filter {
-    return roundingFunctionCall("round", lhs, result);
+    return functionCall("round", [operableToFilter(lhs)], result || int32T)
 }

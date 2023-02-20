@@ -1,26 +1,31 @@
-import { Filter } from "../../queryBuilder.js";
+import { Filter, FilterEnv, FilterResult } from "../../queryBuilder.js";
+import { Reader } from "../../utils.js";
+import { NonNumericTypes, resolveOutputType } from "./queryPrimitiveTypes0.js";
+
+const trueT = resolveOutputType(NonNumericTypes.Boolean)
 
 export function caseExpression(...cases: [Filter | true, Filter][]): Filter {
     if (!cases.length) {
         throw new Error("A caseExpression must include at least 1 case");
     }
 
-    const $$root = cases
-        .filter(x => x[0] !== true && x[0].$$root || x[1].$$root)
-        .map(x => (x[0] as Filter).$$root || x[1].$$root)[0]
+    let casesF = Reader.traverse(...cases
+        .map(c => Reader.create<FilterEnv, [FilterResult, FilterResult]>(env =>
+            [c[0] === true ? { $$output: trueT, $$filter: "true" } : c[0].apply(env), c[1].apply(env)])))
 
-    const $$output = cases
-        .filter(x => x[1].$$output)
-        .map(x => x[1].$$output)[0]
+    return casesF
+        .map(cases => {
+            const $$output = cases
+                .map(x => x[1].$$output)
+                .filter(x => !!x)[0]
 
-    const caseStrings = cases
-        .map(x => `${x[0] === true ? "true" : x[0].$$filter}:${x[1].$$filter}`)
-        .join(",");
+            const caseStrings = cases
+                .map(x => `${x[0].$$filter}:${x[1].$$filter}`)
+                .join(",");
 
-    return {
-        $$oDataQueryObjectType: "Filter",
-        $$filter: `case(${caseStrings})`,
-        $$output,
-        $$root,
-    }
+            return {
+                $$output,
+                $$filter: `case(${caseStrings})`
+            }
+        })
 }

@@ -1,4 +1,5 @@
 import { ODataServiceTypes, ODataTypeRef } from "magic-odata-shared";
+import { Reader } from "./utils.js";
 
 type Dict<T> = { [key: string]: T }
 
@@ -28,7 +29,7 @@ export type Count = {
 
 export type Expand = {
     $$oDataQueryObjectType: "Expand"
-    $$expand: string
+    $$expand: (env: FilterEnv) => string
 }
 
 export type OrderBy = {
@@ -52,12 +53,17 @@ export type Search = {
     $$search: string
 }
 
-export type Filter = {
-    $$oDataQueryObjectType: "Filter"
+export type FilterResult = {
     $$filter: string
-    $$output?: ODataTypeRef
-    $$root?: ODataServiceTypes
+    // TODO: make non nullable
+    $$output: ODataTypeRef
 }
+
+export type FilterEnv = {
+    $$root: ODataServiceTypes
+}
+
+export type Filter = Reader<FilterEnv, FilterResult>
 
 export type Query = Top | Skip | Count | Expand | OrderBy | Select | Filter | Custom | Search
 
@@ -82,22 +88,24 @@ function maybeAdd(encode: boolean, s: Dict<string>, stateProp: string, inputProp
 
 }
 
-export function buildQuery(q: Query | Query[], encode = true): Dict<string> {
+export function buildQuery(q: Query | Query[], root: ODataServiceTypes, encode = true): Dict<string> {
     if (!Array.isArray(q)) {
-        return buildQuery([q], encode)
+        return buildQuery([q], root, encode)
     }
+
+    const filterEnv = { $$root: root }
 
     return q
         .reduce((s, x) => {
 
-            if (x.$$oDataQueryObjectType === "Expand") {
-                return maybeAdd(encode, s, "$expand", x.$$expand,
-                    "Multiple expansions detected. Combine multipe expansions with the expand.combine util");
+            if (x instanceof Reader) {
+                return maybeAdd(encode, s, "$filter", x.apply(filterEnv).$$filter,
+                    "Multiple expansions detected. Combine multipe expansions with the $filter.and or $filter.or utils");
             }
 
-            if (x.$$oDataQueryObjectType === "Filter") {
-                return maybeAdd(encode, s, "$filter", x.$$filter,
-                    "Multiple filters detected. Combine multipe expansions with the filter.and or filter.or utils");
+            if (x.$$oDataQueryObjectType === "Expand") {
+                return maybeAdd(encode, s, "$expand", x.$$expand(filterEnv),
+                    "Multiple expansions detected. Combine multipe expansions with the $expand.combine util");
             }
 
             if (x.$$oDataQueryObjectType === "OrderBy") {

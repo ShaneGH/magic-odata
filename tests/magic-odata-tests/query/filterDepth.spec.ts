@@ -431,17 +431,17 @@ describe("Query.Filter Depth", function () {
         }
 
         const typeRef: QueryComplexObject<T> = buildComplexTypeRef(type.type, rootConfig.types);
-        return buildQuery(q(typeRef), false)
+        return buildQuery(q(typeRef), rootConfig.types, false)
     }
 
-    const { $filter: { hassubset, any, eq, and } } = queryUtils();
+    const { $filter: { hasSubset, any, eq, and } } = queryUtils();
 
     // BlogPost, Words, HasSubset
     testCase("Complex -> Array<Simple> -> HasSubset", function () {
 
         it("Should build filter (server can't process)", () => {
             const q = qb<My.Odata.Entities.QueryableBlogPost>("My.Odata.Entities.BlogPost", bp =>
-                hassubset(bp.Words, ["something"]))
+                hasSubset(bp.Words, ["something"]))
 
             expect(q["$filter"]).toBe("hassubset(Words,['something'])");
         });
@@ -508,7 +508,7 @@ describe("Query.Filter Depth", function () {
 
         it("Should build filter (server can't process)", () => {
             const q = qb<My.Odata.Entities.QueryableComment>("My.Odata.Entities.Comment", c =>
-                hassubset(c.BlogPost.Words, ["something"]))
+                hasSubset(c.BlogPost.Words, ["something"]))
 
             expect(q["$filter"]).toBe("hassubset(BlogPost/Words,['something'])");
         });
@@ -519,7 +519,7 @@ describe("Query.Filter Depth", function () {
 
         it("Should build filter (server can't process)", () => {
             const q = qb<My.Odata.Entities.QueryableUser>("My.Odata.Entities.User", u =>
-                any(u.BlogPostComments, c => hassubset(c.BlogPost.Words, ["something"])))
+                any(u.BlogPostComments, c => hasSubset(c.BlogPost.Words, ["something"])))
 
             expect(q["$filter"]).toBe("BlogPostComments/any(bpc:hassubset(bpc/BlogPost/Words,['something']))");
         });
@@ -541,7 +541,7 @@ describe("Query.Filter Depth", function () {
 
         it("Should build filter (server can't process)", () => {
             const q = qb<My.Odata.Entities.QueryableComment>("My.Odata.Entities.Comment", c =>
-                hassubset(c.BlogPost.Words, ["something"]))
+                hasSubset(c.BlogPost.Words, ["something"]))
 
             expect(q["$filter"]).toBe("hassubset(BlogPost/Words,['something'])");
         });

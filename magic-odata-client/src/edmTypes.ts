@@ -136,6 +136,40 @@ export class ODataDuration {
             throw new Error("Max miliseconds: 999");
         }
     }
+
+    static fromSeconds(s: number) {
+        return ODataDuration.fromMilliseconds(s * 1000)
+    }
+
+    static fromMinutes(m: number) {
+        return ODataDuration.fromSeconds(m * 60)
+    }
+
+    static fromHours(h: number) {
+        return ODataDuration.fromMinutes(h * 60)
+    }
+
+    static fromDays(d: number) {
+        return ODataDuration.fromHours(d * 24)
+    }
+
+    static fromMilliseconds(ms: number) {
+        const sign = ms < 0 ? -1 : 1;
+        ms = Math.round(Math.abs(ms))
+
+        const days = factor(ms, 8.64e+7)
+        const hours = factor(days.remainder, 3.6e+6)
+        const minutes = factor(hours.remainder, 60000)
+        const seconds = factor(minutes.remainder, 1000)
+
+        return new ODataDuration({
+            d: days.result * sign,
+            h: hours.result * sign,
+            m: minutes.result * sign,
+            s: seconds.result * sign,
+            ms: seconds.remainder * sign
+        })
+    }
 }
 
 export type ODataOffsetInputs = {
@@ -166,6 +200,17 @@ export class ODataOffset {
 
         checkSigns(this)
     }
+}
+
+function factor(value: number, factor: number) {
+
+    if (value < factor) {
+        return { result: 0, remainder: value }
+    }
+
+    const result = Math.floor(value / factor)
+    const remainder = value % factor
+    return { result, remainder }
 }
 
 export class ODataDateTimeOffset {

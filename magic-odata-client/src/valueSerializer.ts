@@ -1,4 +1,4 @@
-import { ODataEnum, ODataServiceTypes, ODataTypeRef } from "magic-odata-shared";
+import { ODataEnum, ODataServiceTypes, ODataSingleTypeRef, ODataTypeRef } from "magic-odata-shared";
 import { ODataDate, ODataDuration, ODataOffset, ODataTimeOfDay, ODataDateTimeOffset } from "./edmTypes.js";
 import { typeRefString } from "./utils.js";
 
@@ -87,21 +87,7 @@ function serializeDuration(value: any): string {
 
     if (typeof value === "number") {
 
-        const sign = value < 0 ? -1 : 1;
-        value = Math.abs(value)
-
-        const days = factor(value, 8.64e+7)
-        const hours = factor(days.remainder, 3.6e+6)
-        const minutes = factor(hours.remainder, 60000)
-        const seconds = factor(minutes.remainder, 1000)
-
-        return serializeDuration(new ODataDuration({
-            d: days.result * sign,
-            h: hours.result * sign,
-            m: minutes.result * sign,
-            s: seconds.result * sign,
-            ms: seconds.remainder * sign
-        }))
+        return serializeDuration(ODataDuration.fromMilliseconds(value))
     }
 
     if (!(value instanceof ODataDuration)) {
@@ -186,6 +172,7 @@ function serializeDateTimeOffset(value: any): string {
 
 const warnedCollectionTypes = {} as { [k: string]: boolean }
 const warnedEnumTypes = {} as { [k: string]: boolean }
+export const rawType: ODataSingleTypeRef = { isCollection: false, namespace: "magic-odata", name: "Raw" }
 
 export function serialize(value: any, type?: ODataTypeRef, serviceConfig?: ODataServiceTypes): string {
     if (value == null) {
@@ -210,6 +197,12 @@ export function serialize(value: any, type?: ODataTypeRef, serviceConfig?: OData
 
     if (!type) {
         return basicSerialize(value);
+    }
+
+    if (type.namespace === rawType.namespace && type.name === rawType.name) {
+        if (typeof value.toString === "function") {
+            return value.toString();
+        }
     }
 
     if (type.namespace === "Edm") {

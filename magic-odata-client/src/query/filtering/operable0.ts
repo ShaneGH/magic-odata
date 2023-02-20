@@ -1,72 +1,51 @@
-import { ODataServiceTypes, ODataTypeRef } from "magic-odata-shared";
-import { Filter } from "../../queryBuilder.js";
-import { QueryEnum, QueryObjectMetadata, QueryObjectType, QueryPrimitive } from "../queryComplexObjectBuilder.js";
+import { ODataTypeRef } from "magic-odata-shared";
+import { Filter, FilterEnv, FilterResult } from "../../queryBuilder.js";
+import { QueryCollection, QueryEnum, QueryObject, QueryPrimitive } from "../queryComplexObjectBuilder.js";
 import { serialize } from "../../valueSerializer.js";
+import { Reader } from "../../utils.js";
 
 export type Operable<T> = QueryPrimitive<T> | QueryEnum<T> | Filter
 
-export type HasFilterMetadata = Filter
-    | {
-        $$oDataQueryObjectType: QueryObjectType.QueryCollection
-        $$oDataQueryMetadata: QueryObjectMetadata
-    }
-    | {
-        $$oDataQueryObjectType: QueryObjectType.QueryPrimitive
-        $$oDataQueryMetadata: QueryObjectMetadata
-    }
-    | {
-        $$oDataQueryObjectType: QueryObjectType.QueryEnum
-        $$oDataQueryMetadata: QueryObjectMetadata
-    }
+export function operableToFilter<T>(op: Operable<T> | QueryCollection<QueryObject<T>, T>) {
+    if (op instanceof Reader) return op;
 
-export type TypeLookup = { typeRef?: ODataTypeRef, root?: ODataServiceTypes }
-
-export function getOperableTypeInfo<T>(operable: HasFilterMetadata): TypeLookup {
-    return operable.$$oDataQueryObjectType === "Filter"
-        ? {
-            typeRef: operable.$$output,
-            root: operable.$$root
-        }
-        : {
-            typeRef: operable.$$oDataQueryMetadata.typeRef,
-            root: operable.$$oDataQueryMetadata.root
-        };
+    return Reader.retn<FilterEnv, FilterResult>({
+        $$filter: op.$$oDataQueryMetadata.path.map(x => x.path).join("/"),
+        $$output: op.$$oDataQueryMetadata.typeRef
+    })
 }
 
-export function getFilterString<T>(
-    operable: HasFilterMetadata | T,
-    mapper: ((x: T) => string) | undefined,
-    otherMetadata: Partial<TypeLookup> | null) {
+export function valueToFilter<T>(val: Filter | T, typeRef: ODataTypeRef, mapper: ((x: T) => string)) {
+    if (val instanceof Reader) return val;
 
-    if (typeof (operable as any)?.$$oDataQueryObjectType === "string") {
-        return getOperableFilterString(operable as Operable<T>);
-    }
-
-    return mapper
-        ? mapper(operable as T)
-        : serialize(operable as T, otherMetadata?.typeRef, otherMetadata?.root)
+    return Reader.create<FilterEnv, FilterResult>(env => ({
+        $$filter: mapper
+            ? mapper(val)
+            : serialize(val, typeRef, env.$$root),
+        $$output: typeRef
+    }))
 }
 
-export function getOperableFilterString(operable: HasFilterMetadata) {
+export function asOperable<T>(x: Operable<T> | T): Filter | null {
+    if (x instanceof Reader) return x
 
-    return operable.$$oDataQueryObjectType === "Filter"
-        ? operable.$$filter
-        : operable.$$oDataQueryMetadata.path.map(x => x.path).join("/")
+    const asAny = x as any
+    if (typeof asAny?.$$oDataQueryObjectType === "string") {
+        return operableToFilter(asAny)
+    }
+
+    return null
 }
 
 export function combineFilterStrings(
     operator: string,
-    output: ODataTypeRef | undefined,
-    root: ODataServiceTypes | undefined,
-    ...filters: string[]): Filter {
+    output: ODataTypeRef,
+    ...filters: Filter[]): Filter {
 
-    const result = filters
-        .join(operator);
-
-    return {
-        $$oDataQueryObjectType: "Filter",
-        $$output: output,
-        $$root: root,
-        $$filter: result
-    }
+    return Reader
+        .traverse(...filters)
+        .map(r => ({
+            $$output: output,
+            $$filter: r.map(f => f.$$filter).join(operator)
+        }))
 }

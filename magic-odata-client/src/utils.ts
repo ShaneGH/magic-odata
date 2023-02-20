@@ -10,3 +10,33 @@ export function typeRefString(type: ODataTypeRef, delimiter = "/"): string {
         ? typeRefString(type.collectionType, delimiter)
         : typeNameString(type, delimiter)
 }
+
+export class Reader<TEnv, T> {
+    private constructor(private _func: (env: TEnv) => T) { }
+
+    map<T1>(f: (env: T) => T1) {
+        return new Reader<TEnv, T1>(env => f(this._func(env)))
+    }
+
+    bind<T1>(f: (env: T) => Reader<TEnv, T1>) {
+        return new Reader<TEnv, T1>(env => f(this._func(env)).apply(env))
+    }
+
+    apply(env: TEnv) {
+        return this._func(env);
+    }
+
+    static create<TEnv, T>(f: (env: TEnv) => T) {
+        return new Reader<TEnv, T>(f);
+    }
+
+    static retn<T>(x: T): Reader<any, T>;
+    static retn<TEnv, T>(x: T): Reader<TEnv, T>;
+    static retn<T>(x: T): Reader<any, T> {
+        return new Reader<any, T>(_ => x)
+    }
+
+    static traverse<TEnv, T>(...readers: Reader<TEnv, T>[]) {
+        return new Reader<TEnv, T[]>(env => readers.map(r => r.apply(env)))
+    }
+}

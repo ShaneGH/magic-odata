@@ -1,20 +1,12 @@
-import { ODataTypeRef } from "magic-odata-shared";
-import { Filter } from "../../queryBuilder.js";
-import { HasODataQueryMetadata } from "../queryComplexObjectBuilder.js";
-import { combineFilterStrings, getOperableFilterString, getOperableTypeInfo, HasFilterMetadata } from "./operable0.js";
+import { ODataTypeRef } from "../../../index.js";
+import { Filter, FilterEnv, FilterResult } from "../../queryBuilder.js";
+import { Reader } from "../../utils.js";
+import { rawType } from "../../valueSerializer.js";
+import { Operable, operableToFilter } from "./operable0.js";
 import { OutputTypes, resolveOutputType } from "./queryPrimitiveTypes0.js";
 
-// using a class here because they play ywell with type deconstruction
-export class MappableType<T> {
-    constructor(public val: T, public mapper: (x: T) => string) { }
-
-    resolve() {
-        return this.mapper(this.val);
-    }
-}
-
 export type FilterableProps = {
-    [key: string]: HasODataQueryMetadata
+    [key: string]: Operable<any>
 }
 
 export type FilterablePaths = {
@@ -24,62 +16,57 @@ export type FilterablePaths = {
 export function filterRaw(filter: string, outputType?: OutputTypes | undefined): Filter;
 export function filterRaw(obj: FilterableProps, filter: (path: FilterablePaths) => string, outputType?: OutputTypes | undefined): Filter;
 export function filterRaw(arg1: string | FilterableProps, arg2?: ((path: FilterablePaths) => string) | OutputTypes, arg3?: OutputTypes | undefined): Filter {
-
     if (typeof arg1 === "string") {
-        if (typeof arg2 === "function" || arg3) {
-            throw new Error("Invalid overload args");
+        if (typeof arg2 === "function") {
+            throw new Error("Invalid method overload");
         }
 
-        return {
-            $$oDataQueryObjectType: "Filter",
-            $$output: arg2 && resolveOutputType(arg2),
-            $$root: undefined,
-            $$filter: arg1
-        }
+        return Reader.create<FilterEnv, FilterResult>(_ => ({
+            $$filter: arg1,
+            $$output: (arg2 && resolveOutputType(arg2)) || rawType
+        }))
     }
 
     if (typeof arg2 !== "function") {
-        throw new Error("Invalid overload args");
+        throw new Error("Invalid method overload");
     }
 
-    const paths = Object
+    const paths = Reader.create<FilterEnv, FilterablePaths>(env => Object
         .keys(arg1)
         .reduce((s, x) => ({
             ...s,
-            [x]: arg1[x].$$oDataQueryMetadata.path.map(x => x.path).join("/") || "$it"
-        }), {} as FilterablePaths);
+            [x]: operableToFilter(arg1[x]).apply(env).$$filter || "$it"
+        }), {} as FilterablePaths));
 
-    return {
-        $$oDataQueryObjectType: "Filter",
-        $$output: arg3 && resolveOutputType(arg3),
-        $$root: undefined,
-        $$filter: arg2(paths)
-    }
+    return paths
+        .map(arg2)
+        .map(paths => ({
+            $$filter: paths,
+            $$output: (arg3 && resolveOutputType(arg3)) || rawType
+        }))
 }
 
-/** 
- * an operation with 2 inputs
- */
-export function infixOp<T>(
-    lhs: HasFilterMetadata,
-    operator: string,
-    rhs: MappableType<T> | HasFilterMetadata,
-    output: ODataTypeRef,
-    reverseArgs = false): Filter {
+function toTypeRef(outputType: ODataTypeRef | OutputTypes): ODataTypeRef {
+    return typeof outputType === "string"
+        ? resolveOutputType(outputType)
+        : outputType;
+}
 
-    try {
-        const root = getOperableTypeInfo(lhs).root;
-        let lhsS = getOperableFilterString(lhs);
-        let rhsS = rhs instanceof MappableType<T>
-            ? rhs.resolve()
-            : getOperableFilterString(rhs);
+export function infixOp(lhs: Filter, op: string, rhs: Filter, outputType: ODataTypeRef | OutputTypes): Filter {
 
-        if (reverseArgs) {
-            [lhsS, rhsS] = [rhsS, lhsS]
-        }
+    return lhs
+        .bind(l => rhs
+            .map(r => ({
+                $$output: toTypeRef(outputType),
+                $$filter: `${l.$$filter}${op}${r.$$filter}`
+            })))
+}
 
-        return combineFilterStrings(" ", output, root, lhsS, operator, rhsS)
-    } catch (e) {
-        throw new Error(`Error executing operation:\n  lhs: ${lhs}\n  operator: ${operator}\n  reverseArgs: ${reverseArgs}\n  rhs: ${rhs}\n${e}`);
-    }
+export function functionCall(functionName: string, args: Filter[], outputType: ODataTypeRef | OutputTypes): Filter {
+    return Reader
+        .traverse(...args)
+        .map(r => ({
+            $$output: toTypeRef(outputType),
+            $$filter: `${functionName}(${r.map(x => x.$$filter).join(",")})`
+        }))
 }
