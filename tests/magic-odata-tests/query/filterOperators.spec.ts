@@ -594,6 +594,28 @@ describe("Query.Filter Operators", function () {
         }
     });
 
+    testCase("negate", function () {
+
+        it("Should work correctly (success)", execute.bind(null, true));
+        it("Should work correctly (failure)", execute.bind(null, false))
+
+        async function execute(success: boolean) {
+
+            const ctxt = await addFullUserChain({ blogPostLikes: 10 });
+            const result = await client.BlogPosts
+                .withQuery((u, { $filter: { eq, and, negate } }) =>
+                    and(eq(u.Id, ctxt.blogPost.Id), eq(negate(u.Likes), success ? -10 : 10)))
+                .get();
+
+            if (success) {
+                expect(result.value.length).toBe(1);
+                expect(result.value[0].Content).toBe(ctxt.blogPost.Content);
+            } else {
+                expect(result.value.length).toBe(0);
+            }
+        }
+    });
+
     testCase("sub", function () {
 
         describe("forwards", () => {

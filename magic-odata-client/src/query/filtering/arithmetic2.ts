@@ -1,3 +1,4 @@
+import { EdmDuration } from "../../edmTypes.js";
 import { Filter, FilterEnv } from "../../queryBuilder.js";
 import { Reader } from "../../utils.js";
 import { functionCall, infixOp } from "./op1.js";
@@ -33,6 +34,14 @@ function guessAritmeticOutputType(
         .bind(l => isInteger(rhs)
             .map(r => ({ l, r })))
         .map(({ l, r }) => l && r ? IntegerTypes.Int64 : DecimalNumberTypes.Double)
+}
+
+export function negate(op: Operable<number | EdmDuration>, group?: boolean): Filter {
+    return operableToFilter(op)
+        .map(x => ({
+            ...x,
+            $$filter: group ? `-(${x.$$filter})` : `-${x.$$filter}`
+        }))
 }
 
 function toFilter(lhs: Operable<number> | number): Filter {

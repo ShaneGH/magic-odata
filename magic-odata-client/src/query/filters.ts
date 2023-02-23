@@ -1,5 +1,5 @@
 import { QueryCollection, QueryObject, QueryPrimitive } from "./queryComplexObjectBuilder.js";
-import { add, ceiling, div, divby, floor, mod, mul, round, sub } from "./filtering/arithmetic2.js";
+import { add, ceiling, div, divby, floor, mod, mul, negate, round, sub } from "./filtering/arithmetic2.js";
 import {
     all, any, collectionFilter, collectionFunction, count, hasSubset, hasSubSequence, OperableCollection, concat as concatCollection, contains as containsCollection,
     startsWith as startsWithCollection, endsWith as endsWithCollection, indexOf as indexOfCollection, length as lengthCollection, subString as subStringCollection
@@ -353,6 +353,13 @@ export type FilterUtils = {
     round(lhs: Operable<number>, result?: IntegerTypes | undefined): Filter;
 
     /**
+     * An OData "-" operation. Add a "-" to the beginning of a property
+     * @param group If true will surroud the property with ( ) before negating
+     * @example negate(x.bandMembersCount)
+     */
+    negate(op: Operable<number | EdmDuration>, group?: boolean): Filter;
+
+    /**
      * An OData "concat" operation
      * @example concatString(x.bandMember, " Starr")
      */
@@ -665,6 +672,7 @@ export function newUtils(): FilterUtils {
         ceiling,
         floor,
         round,
+        negate,
         addDuration,
         addDateTimeOffset,
         subDateTimeOffset,
