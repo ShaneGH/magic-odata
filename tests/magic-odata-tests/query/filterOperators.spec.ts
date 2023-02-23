@@ -596,24 +596,53 @@ describe("Query.Filter Operators", function () {
 
     testCase("negate", function () {
 
-        it("Should work correctly (success)", execute.bind(null, true));
-        it("Should work correctly (failure)", execute.bind(null, false))
+        testCase("with number", function () {
+            it("Should work correctly (success)", execute.bind(null, true));
+            it("Should work correctly (failure)", execute.bind(null, false))
 
-        async function execute(success: boolean) {
+            async function execute(success: boolean) {
 
-            const ctxt = await addFullUserChain({ blogPostLikes: 10 });
-            const result = await client.BlogPosts
-                .withQuery((u, { $filter: { eq, and, negate } }) =>
-                    and(eq(u.Id, ctxt.blogPost.Id), eq(negate(u.Likes), success ? -10 : 10)))
-                .get();
+                const ctxt = await addFullUserChain({ blogPostLikes: 10 });
+                const result = await client.BlogPosts
+                    .withQuery((u, { $filter: { eq, and, negate } }) =>
+                        and(eq(u.Id, ctxt.blogPost.Id), eq(negate(u.Likes), success ? -10 : 10)))
+                    .get();
 
-            if (success) {
-                expect(result.value.length).toBe(1);
-                expect(result.value[0].Content).toBe(ctxt.blogPost.Content);
-            } else {
-                expect(result.value.length).toBe(0);
+                if (success) {
+                    expect(result.value.length).toBe(1);
+                    expect(result.value[0].Content).toBe(ctxt.blogPost.Content);
+                } else {
+                    expect(result.value.length).toBe(0);
+                }
             }
-        }
+        })
+
+        testCase("with duration", function () {
+            it("Should work correctly (success)", execute.bind(null, true));
+            it("Should work correctly (failure)", execute.bind(null, false))
+
+            async function execute(success: boolean) {
+
+                const successDuration = new ODataDuration({
+                    d: -2,
+                    h: -3,
+                    m: -4,
+                    s: -5,
+                    ms: -6
+                })
+
+                const result = await client.OneOfEverythings
+                    .withQuery((u, { $filter: { eq, negate } }) =>
+                        eq(negate(u.Duration), success ? successDuration : ODataDuration.fromDays(1)))
+                    .get();
+
+                if (success) {
+                    expect(result.value.length).toBe(1);
+                } else {
+                    expect(result.value.length).toBe(0);
+                }
+            }
+        })
     });
 
     testCase("sub", function () {
