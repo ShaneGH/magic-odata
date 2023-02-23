@@ -27,7 +27,7 @@
 
 # Code generation
 
-Generate code using the `magic-odata-code-gen/dist/index.js` tool
+Generate code using the `magic-odata-code-gen/dist/index.js` tool. For help, run `node node_modules/magic-odata-code-gen/dist/index.js --help`
 
 ## Quick no config generation
 
@@ -70,7 +70,7 @@ For this case you do not need any extra configuration. When the request to the $
 
 ### Authenticating client generation on a CI server
 
-For this case you must specify the required headers in a config file. In order to prevent prompts you must also specify the `--ciMode` arg or the `"ciMode": true` property in config
+For this case you must specify the required headers in a config file or using the `--httpHeaders` arg. In order to prevent prompts you must also specify the `--ciMode` arg or the `"ciMode": true` property in config
 
 # Client configuration
 

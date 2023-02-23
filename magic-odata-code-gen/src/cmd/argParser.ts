@@ -130,7 +130,7 @@ function err(error: boolean) {
 
     log("magic-odata-code-gen")
     log("Generate a quick and dirty client:")
-    log("  node node_modules/magic-odata-code-gen/dist/index.js --metadataUrl 'http://my.odata.server/odata/$metadata'")
+    log("  node node_modules/magic-odata-code-gen/dist/index.js --metadataUrl 'https://raw.githubusercontent.com/ShaneGH/magic-odata/main/docs/sampleOdataMetadata.xml'")
     log("")
     log("Generate a detailed client:")
     log("  node node_modules/magic-odata-code-gen/dist/index.js --config ./my-config.json")
