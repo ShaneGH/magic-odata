@@ -4,7 +4,7 @@ import { My, ODataClient, rootConfigExporter } from "../generatedCode.js";
 import { buildQuery, Query, QueryComplexObject, queryUtils, RequestOptions } from "magic-odata-client";
 import { uniqueString } from "../utils/utils.js";
 import { describeEntityRelationship as testCase, verifyEntityRelationships } from "../correctness/entityRelationships.js";
-import { buildComplexTypeRef } from "magic-odata-client";
+import { buildComplexTypeRef } from "magic-odata-client/dist/src/query/queryComplexObjectBuilder.js";
 
 const rootConfig = rootConfigExporter();
 

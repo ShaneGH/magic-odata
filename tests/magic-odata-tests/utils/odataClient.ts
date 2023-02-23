@@ -1,4 +1,5 @@
-import { buildComplexTypeRef, buildQuery, Query, QueryComplexObject } from "magic-odata-client";
+import { buildQuery, Query, QueryComplexObject } from "magic-odata-client";
+import { buildComplexTypeRef } from "magic-odata-client/dist/src/query/queryComplexObjectBuilder.js";
 import { ODataClient, rootConfigExporter } from "../generatedCode.js";
 
 export const oDataClient = new ODataClient({

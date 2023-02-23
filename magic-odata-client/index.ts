@@ -67,8 +67,7 @@ export {
     QueryEnum,
     QueryCollection,
     QueryComplexObject,
-    QueryObject,
-    buildComplexTypeRef // https://github.com/ShaneGH/magic-odata/issues/6
+    QueryObject
 } from "./src/query/queryComplexObjectBuilder.js"
 
 export {

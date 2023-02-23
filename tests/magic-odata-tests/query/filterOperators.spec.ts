@@ -1,11 +1,9 @@
 
 import { addFullUserChain } from "../utils/client.js";
 import { My, ODataClient, rootConfigExporter } from "../generatedCode.js";
-import { buildQuery, NonNumericTypes, ODataDate, ODataDateTimeOffset, ODataDuration, Query, QueryComplexObject, queryUtils } from "magic-odata-client";
+import { NonNumericTypes, ODataDate, ODataDateTimeOffset, ODataDuration, queryUtils } from "magic-odata-client";
 import { uniqueString } from "../utils/utils.js";
-import { buildComplexTypeRef } from "magic-odata-client";
 import { queryBuilder } from "../utils/odataClient.js";
-import { filterRaw } from "magic-odata-client/dist/src/query/filtering/op1.js";
 
 const rootConfig = rootConfigExporter();
 
