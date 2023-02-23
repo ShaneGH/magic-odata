@@ -63,15 +63,15 @@ ${tab(`$count: ${keywords.SubPathSelection}<${entitySet}>`)}
 }
 
 export function lintingAndComments() {
-    return `// ReSharper disable InconsistentNaming
+    return `/* eslint-disable */
 /* tslint:disable */
-/* eslint-disable */
+// ReSharper disable InconsistentNaming
 
 /********************************************************/
 /********************************************************/
 /****************                        ****************/
 /***************   🎉 Auto generated 🎉  ***************/
-/**************    by magic-odata-client    *************/
+/**************    by magic-odata-client   **************/
 /***************   ⚠️ Do not modify ⚠️   ***************/
 /****************                        ****************/
 /********************************************************/
