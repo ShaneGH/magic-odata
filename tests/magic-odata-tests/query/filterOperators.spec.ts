@@ -2157,5 +2157,16 @@ describe("Query.Filter Operators", function () {
             expect(q["$filter"]).toBe("case(Id eq '111':true,Id eq '222':false,true:false)");
         });
     });
+
+    describe("infinity", function () {
+        const { $filter: { add } } = queryUtils();
+
+        it.only("Should work", () => {
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                add(e.Int16, Infinity));
+
+            expect(q["$filter"]).toBe("Int16 add INF");
+        })
+    })
 });
 

@@ -1,6 +1,7 @@
 import { EdmDuration } from "../../edmTypes.js";
 import { Filter, FilterEnv } from "../../queryBuilder.js";
 import { Reader } from "../../utils.js";
+import { serialize } from "../../valueSerializer.js";
 import { functionCall, infixOp } from "./op1.js";
 import { Operable, operableToFilter } from "./operable0.js";
 import { DecimalNumberTypes, IntegerTypes, RealNumberTypes, resolveOutputType } from "./queryPrimitiveTypes0.js";
@@ -50,7 +51,7 @@ function toFilter(lhs: Operable<number> | number): Filter {
     }
 
     return Reader.retn({
-        $$filter: lhs == null ? "null" : lhs.toString(),
+        $$filter: lhs == null ? "null" : serialize(lhs),
         $$output: Number.isInteger(lhs) ? int64T : doubleT
     })
 }

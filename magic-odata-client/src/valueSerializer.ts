@@ -21,9 +21,16 @@ export function stringSerialize(value: string): string {
 }
 
 export function basicSerialize(value: any): string {
-    return typeof value === "string"
-        ? stringSerialize(value)
-        : value.toString();
+    if (value == null)
+        return "null"
+
+    if (typeof value === "string")
+        return stringSerialize(value);
+
+    if (value === Infinity)
+        return "INF"
+
+    return value.toString();
 }
 
 function pad2(x: number) {
@@ -175,6 +182,7 @@ const warnedEnumTypes = {} as { [k: string]: boolean }
 export const rawType: ODataSingleTypeRef = { isCollection: false, namespace: "magic-odata", name: "Raw" }
 
 export function serialize(value: any, type?: ODataTypeRef, serviceConfig?: ODataServiceTypes): string {
+
     if (value == null) {
         return "null"
     }
