@@ -35,9 +35,7 @@ keyRaw(key: string): ${getResultType(type)}`)}
             tKeyBuilder: keywords.SingleItemsCannotBeQueriedByKey,
             tQueryable: fullyQualifiedTsType(typeRef, getQueryableName),
             tCaster: `${caster}.Single`,
-            tSingleCaster: `${caster}.Single`,
             tSubPath: subProps,
-            tSingleSubPath: subProps,
             tResult: typeRef
         }
 

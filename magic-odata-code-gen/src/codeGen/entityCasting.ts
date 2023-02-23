@@ -53,9 +53,7 @@ function buildGetComplexCasterProps(
                     tKeyBuilder: keyProp,
                     tQueryable,
                     tCaster: `${caster}.${casterType}`,
-                    tSingleCaster: `${caster}.Single`,
                     tSubPath: singleCasterType ? subProps : `${keywords.CollectionSubPath}<${tQueryable}>`,
-                    tSingleSubPath: singleCasterType ? "never" : subProps,
                     tResult: collectionResult
                         ? { isCollection: true as true, collectionType: typeRef }
                         : typeRef

@@ -2161,7 +2161,7 @@ describe("Query.Filter Operators", function () {
     describe("infinity", function () {
         const { $filter: { add } } = queryUtils();
 
-        it.only("Should work", () => {
+        it("Should work", () => {
             const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
                 add(e.Int16, Infinity));
 

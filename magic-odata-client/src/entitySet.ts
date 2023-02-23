@@ -30,7 +30,7 @@ export type OperationIsNotPossibleAfterQuery = never
 /**
  * Path and query utils on an entity set or sub path
  */
-export interface IEntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSingleCaster, TSubPath, TSingleSubPath, TFetchResult> {
+export interface IEntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSubPath, TFetchResult> {
 
     /**
      * Create a new EntitySet scoped to a single entity
@@ -55,7 +55,7 @@ export interface IEntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, 
      * @param urlEncode Default true
      */
     withQuery(queryBuilder: (entity: TQueryable, utils: Utils) => Query | Query[], urlEncode?: boolean)
-        : IEntitySet<TEntity, TResult, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, TFetchResult>;
+        : IEntitySet<TEntity, TResult, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, TFetchResult>;
 
     /**
      * Execute a get request
@@ -82,8 +82,8 @@ export interface IEntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, 
     uri(encodeQueryParts?: boolean): ODataUriParts
 }
 
-export class EntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSingleCaster, TSubPath, TSingleSubPath, TFetchResult>
-    implements IEntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSingleCaster, TSubPath, TSingleSubPath, TFetchResult> {
+export class EntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSubPath, TFetchResult>
+    implements IEntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSubPath, TFetchResult> {
     // ^^NOTE^^: these generic type names are copy pasted into code gen project \src\codeGen\utils.ts
     // ^^NOTE^^: make sure that they stay in sync
 
@@ -105,28 +105,28 @@ export class EntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSing
     withKey<TNewEntityQuery>(key: (builder: TKeyBuilder) => KeySelection<TNewEntityQuery>): TNewEntityQuery {
 
         const { state, tools } = recontextDataForKey(this.state, key)
-        return new EntitySet<any, any, any, any, any, any, any, any, any>(tools, state) as TNewEntityQuery;
+        return new EntitySet<any, any, any, any, any, any, any>(tools, state) as TNewEntityQuery;
     }
 
     cast<TNewEntityQuery>(
         cast: (caster: TCaster) => CastSelection<TNewEntityQuery>): TNewEntityQuery {
 
         const { tools, state } = recontextDataForCasting(this.state, cast)
-        return new EntitySet<any, any, any, any, any, any, any, any, any>(tools, state) as TNewEntityQuery;
+        return new EntitySet<any, any, any, any, any, any, any>(tools, state) as TNewEntityQuery;
     }
 
     subPath<TNewEntityQuery>(
         selector: (entity: TSubPath) => SubPathSelection<TNewEntityQuery>): TNewEntityQuery {
 
         const { state, tools } = recontextDataForSubPath(this.state, selector)
-        return new EntitySet<any, any, any, any, any, any, any, any, any>(tools, state) as TNewEntityQuery;
+        return new EntitySet<any, any, any, any, any, any, any>(tools, state) as TNewEntityQuery;
     }
 
     // https://github.com/ShaneGH/magic-odata/issues/2
     withQuery(queryBuilder: (entity: TQueryable, utils: Utils) => Query | Query[], urlEncode?: boolean) {
 
         const { tools, state } = recontextDataForQuery(this.state, queryBuilder, urlEncode)
-        return new EntitySet<TEntity, TResult, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, TFetchResult>(
+        return new EntitySet<TEntity, TResult, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, TFetchResult>(
             tools, state);
     }
 

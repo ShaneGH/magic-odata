@@ -60,9 +60,7 @@ function buildGetSubPathProps(
                     tKeyBuilder: getTKeyBuilder(entityInfo),
                     tQueryable,
                     tCaster: getTCaster(entityInfo),
-                    tSingleCaster: getTCaster(entityInfo, true),
                     tSubPath: getTSubPath(value, tQueryable),
-                    tSingleSubPath: value.isCollection ? getTSubPath(value.collectionType, tQueryable) : "never",
                     tResult: value
                 }
 

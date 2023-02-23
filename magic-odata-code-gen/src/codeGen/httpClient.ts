@@ -149,9 +149,7 @@ ${tab(`return new ${instanceType}(args) as \n${tab(interfaceType)};`)}
             tKeyBuilder: keyBuilderType,
             tQueryable: queryableType,
             tCaster: `${casterType}.Collection`,
-            tSingleCaster: `${casterType}.Single`,
             tSubPath: `${keywords.CollectionSubPath}<${queryableType}>`,
-            tSingleSubPath: `${subPathType}`,
             tResult: {
                 isCollection: true as true,
                 collectionType: entitySet.forType
@@ -168,9 +166,7 @@ ${tab(`return new ${instanceType}(args) as \n${tab(interfaceType)};`)}
             tKeyBuilder: keywords.SingleItemsCannotBeQueriedByKey,
             tQueryable: queryableType,
             tCaster: `${casterType}.Single`,
-            tSingleCaster: `${casterType}.Single`,
             tSubPath: subPathType,
-            tSingleSubPath: subPathType,
             tResult: entitySet.forType
         }
     }

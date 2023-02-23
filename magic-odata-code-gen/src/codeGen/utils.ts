@@ -38,9 +38,7 @@ export function primitiveSubPath(types: ODataServiceTypes, keywords: Keywords, t
         tKeyBuilder: keywords.ThisItemDoesNotHaveAKey,
         tQueryable: "TQueryable",
         tCaster: keywords.$ValueAnd$CountTypesCanNotBeOperatedOn,
-        tSingleCaster: keywords.$ValueAnd$CountTypesCanNotBeOperatedOn,
-        tSubPath: keywords.$ValueAnd$CountTypesCanNotBeOperatedOn,
-        tSingleSubPath: keywords.$ValueAnd$CountTypesCanNotBeOperatedOn
+        tSubPath: keywords.$ValueAnd$CountTypesCanNotBeOperatedOn
     }, true)
 
     return `export type ${keywords.PrimitiveSubPath}<TQueryable> = {
@@ -56,9 +54,7 @@ export function collectionSubPath(types: ODataServiceTypes, keywords: Keywords, 
         tKeyBuilder: keywords.ThisItemDoesNotHaveAKey,
         tQueryable: "TQueryable",
         tCaster: keywords.$ValueAnd$CountTypesCanNotBeOperatedOn,
-        tSingleCaster: keywords.$ValueAnd$CountTypesCanNotBeOperatedOn,
-        tSubPath: keywords.$ValueAnd$CountTypesCanNotBeOperatedOn,
-        tSingleSubPath: keywords.$ValueAnd$CountTypesCanNotBeOperatedOn
+        tSubPath: keywords.$ValueAnd$CountTypesCanNotBeOperatedOn
     }, true)
 
     return `export type ${keywords.CollectionSubPath}<TQueryable> = {
@@ -237,9 +233,7 @@ export type HttpClientGenerics = {
     tKeyBuilder: string,
     tQueryable: string,
     tCaster: string,
-    tSingleCaster: string,
-    tSubPath: string,
-    tSingleSubPath: string
+    tSubPath: string
 }
 
 export function angularResultType(settings: CodeGenConfig | null): string | null {
@@ -256,7 +250,7 @@ export function angularResultType(settings: CodeGenConfig | null): string | null
         : settings.angularMode.httpResultType
 }
 
-const httpClientGenericNames = ["TEntity", "TResult", "TKeyBuilder", "TQueryable", "TCaster", "TSingleCaster", "TSubPath", "TSingleSubPath", "TFetchResult"]
+const httpClientGenericNames = ["TEntity", "TResult", "TKeyBuilder", "TQueryable", "TCaster", "TSubPath", "TFetchResult"]
 const longest = httpClientGenericNames.map(x => x.length).reduce((s, x) => s > x ? s : x, -1);
 
 export type HttpClientType = (generics: HttpClientGenerics, asInterface: boolean) => string
@@ -297,9 +291,7 @@ export function buildHttpClientType(types: ODataServiceTypes, keywords: Keywords
             generics.tKeyBuilder,
             generics.tQueryable,
             generics.tCaster,
-            generics.tSingleCaster,
             generics.tSubPath,
-            generics.tSingleSubPath,
             `${async}<${fetchResponse}>`
         ]
             .map(addType)
