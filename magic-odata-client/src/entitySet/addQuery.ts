@@ -1,17 +1,17 @@
-import { ODataComplexType, ODataEnum, ODataServiceConfig, ODataTypeName } from "magic-odata-shared";
+import { ODataComplexType, ODataEnum, ODataServiceTypes, ODataTypeName } from "magic-odata-shared";
 import { Utils, utils as queryUtils } from "../query/queryUtils.js";
 import { Query } from "../queryBuilder.js";
 import { buildComplexTypeRef, QueryComplexObject, QueryEnum, QueryObjectType, QueryPrimitive } from "../query/queryComplexObjectBuilder.js";
 import { EntitySetData, getDeepTypeRef, lookup } from "./utils.js";
 
-type ComplexQueryBuilder<TEntity> = (entity: QueryComplexObject<TEntity>, utils: Utils) => Query | Query[]
-type PrimitiveQueryBuilder<TEntity> = (entity: QueryPrimitive<TEntity>, utils: Utils) => Query | Query[]
-type EnumQueryBuilder<TEntity> = (entity: QueryEnum<TEntity>, utils: Utils) => Query | Query[]
+type ComplexQueryBuilder<TEntity, TQuery> = (entity: QueryComplexObject<TEntity>, utils: Utils) => TQuery
+type PrimitiveQueryBuilder<TEntity, TQuery> = (entity: QueryPrimitive<TEntity>, utils: Utils) => TQuery
+type EnumQueryBuilder<TEntity, TQuery> = (entity: QueryEnum<TEntity>, utils: Utils) => TQuery
 
-function executePrimitiveQueryBuilder<TEntity>(
+function executePrimitiveQueryBuilder<TEntity, TQuery>(
     type: ODataTypeName,
-    root: ODataServiceConfig,
-    queryBuilder: PrimitiveQueryBuilder<TEntity>): Query | Query[] {
+    queryBuilder: PrimitiveQueryBuilder<TEntity, TQuery>,
+    rootContext: string): TQuery {
 
     const typeRef: QueryPrimitive<TEntity> = {
         $$oDataQueryObjectType: QueryObjectType.QueryPrimitive,
@@ -21,55 +21,67 @@ function executePrimitiveQueryBuilder<TEntity>(
                 ...type
             },
             queryAliases: {},
-            root: root.types,
-            path: [{
-                path: "$it",
-                navigationProperty: false
-            }]
+            rootContext,
+            path: []
         }
     };
 
     return queryBuilder(typeRef, queryUtils());
 }
 
-function executeComplexQueryBuilder<TEntity>(
+function executeComplexQueryBuilder<TEntity, TQuery>(
     type: ODataComplexType,
-    root: ODataServiceConfig,
-    queryBuilder: ComplexQueryBuilder<TEntity>): Query | Query[] {
+    root: ODataServiceTypes,
+    queryBuilder: ComplexQueryBuilder<TEntity, TQuery>,
+    rootContext: string): TQuery {
 
-    const typeRef: QueryComplexObject<TEntity> = buildComplexTypeRef(type, root.types);
+    const typeRef: QueryComplexObject<TEntity> = buildComplexTypeRef(type, root, rootContext);
     return queryBuilder(typeRef, queryUtils());
 }
 
-function executeEnumQueryBuilder<TEntity>(
+function executeEnumQueryBuilder<TEntity, TQuery>(
     type: ODataEnum,
-    root: ODataServiceConfig,
-    queryBuilder: EnumQueryBuilder<TEntity>): Query | Query[] {
+    queryBuilder: EnumQueryBuilder<TEntity, TQuery>,
+    rootContext: string): TQuery {
 
     const typeRef: QueryEnum<TEntity> = {
         $$oDataEnumType: type,
         $$oDataQueryObjectType: QueryObjectType.QueryEnum,
         $$oDataQueryMetadata: {
-            root: root.types,
+            rootContext,
             typeRef: {
                 isCollection: false,
                 namespace: type.namespace,
                 name: type.name
             },
             queryAliases: {},
-            path: [{
-                path: "$it",
-                navigationProperty: false
-            }]
+            path: []
         }
     };
 
     return queryBuilder(typeRef, queryUtils());
 }
 
-export function recontextDataForQuery<TFetchResult, TResult, TQueryable>(
+export function executeQueryBuilder<TQueryable, TQuery>(
+    typeRef: ODataTypeName,
+    types: ODataServiceTypes,
+    queryBuilder: (entity: TQueryable, utils: Utils) => TQuery,
+    rootContext: string): TQuery {
+
+    // There is a lot of trust in these 2 lines of code.
+    // trust that the TEntity lines up with a typeRef in terms of being complex, primitive or enum
+    const t = lookup(typeRef, types)
+    return t.flag === "Complex"
+        ? executeComplexQueryBuilder(t.type, types, queryBuilder as any, rootContext)
+        : t.flag === "Primitive"
+            ? executePrimitiveQueryBuilder(t.type, queryBuilder as any, rootContext)
+            : executeEnumQueryBuilder(t.type, queryBuilder as any, rootContext);
+}
+
+export function recontextDataForRootQuery<TFetchResult, TResult, TQueryable>(
     data: EntitySetData<TFetchResult, TResult>,
-    queryBuilder: (entity: TQueryable, utils: Utils) => Query | Query[], urlEncode?: boolean) {
+    queryBuilder: (entity: TQueryable, utils: Utils) => Query | Query[],
+    urlEncode?: boolean) {
 
     if (data.state.query) {
         throw new Error("This request already has a query");
@@ -80,14 +92,8 @@ export function recontextDataForQuery<TFetchResult, TResult, TQueryable>(
         throw new Error("Querying of collections of collections is not supported");
     }
 
-    // There is a lot of trust in these 2 lines of code.
-    // trust that the TEntity lines up with a typeRef in terms of being complex, primitive or enum
     const t = lookup(typeRef, data.tools.root.types)
-    const query = t.flag === "Complex"
-        ? executeComplexQueryBuilder(t.type, data.tools.root, queryBuilder as any)
-        : t.flag === "Primitive"
-            ? executePrimitiveQueryBuilder(t.type, data.tools.root, queryBuilder as any)
-            : executeEnumQueryBuilder(t.type, data.tools.root, queryBuilder as any);
+    const query = executeQueryBuilder(t.type, data.tools.root.types, queryBuilder, "$it")
 
     return {
         tools: data.tools,

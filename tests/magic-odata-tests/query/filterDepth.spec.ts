@@ -430,8 +430,8 @@ describe("Query.Filter Depth", function () {
             throw new Error(fullName);
         }
 
-        const typeRef: QueryComplexObject<T> = buildComplexTypeRef(type.type, rootConfig.types);
-        return buildQuery(q(typeRef), rootConfig.types, false)
+        const typeRef: QueryComplexObject<T> = buildComplexTypeRef(type.type, rootConfig.types, "$it");
+        return buildQuery(q(typeRef), "$it", rootConfig.types, false)
     }
 
     const { $filter: { hasSubset, any, eq, and } } = queryUtils();

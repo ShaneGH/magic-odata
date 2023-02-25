@@ -1,4 +1,4 @@
-import { ODataComplexType, ODataTypeRef, ODataServiceTypes, ODataSingleTypeRef, ODataTypeName, ODataEnum, ODataServiceConfig } from "magic-odata-shared";
+import { ODataComplexType, ODataTypeRef, ODataServiceTypes, ODataEnum } from "magic-odata-shared";
 import { typeNameString, typeRefString } from "../utils.js";
 
 type Dict<T> = { [key: string]: T }
@@ -20,8 +20,8 @@ export type MutableQueryObjectMetadata = {
 }
 
 export type QueryObjectMetadata = {
+    rootContext: string
     typeRef: ODataTypeRef
-    root: ODataServiceTypes
     path: PathSegment[]
     queryAliases: Dict<boolean>
 }
@@ -99,15 +99,15 @@ function buildArrayCount(arrayMetadata: QueryObjectMetadata): QueryPrimitive<num
     return {
         $$oDataQueryObjectType: QueryObjectType.QueryPrimitive,
         $$oDataQueryMetadata: {
+            rootContext: arrayMetadata.rootContext,
             typeRef: { name: "Int32", namespace: "Edm", isCollection: false },
-            root: arrayMetadata.root,
             path: [...arrayMetadata.path, { navigationProperty: false, path: "$count" }],
             queryAliases: arrayMetadata.queryAliases
         }
     };
 }
 
-function buildPropertyTypeRef<T>(type: ODataTypeRef, root: ODataServiceTypes, path: PathSegment[], queryAliases: Dict<boolean>): QueryObject<T> {
+function buildPropertyTypeRef<T>(type: ODataTypeRef, root: ODataServiceTypes, rootContext: string, path: PathSegment[], queryAliases: Dict<boolean>): QueryObject<T> {
 
     if (type.isCollection) {
         if (!path.length) {
@@ -115,16 +115,9 @@ function buildPropertyTypeRef<T>(type: ODataTypeRef, root: ODataServiceTypes, pa
         }
 
         const newAliases = addAlias(path[path.length - 1].path, queryAliases);
-        const newRootPath = {
-            path: newAliases.newAlias,
-
-            // TODO: I am not sure of the consequences of true/false. Need to test/investigate
-            navigationProperty: false
-        }
-
         const $$oDataQueryMetadata = {
-            path: path,
-            root,
+            path,
+            rootContext,
             typeRef: type,
             queryAliases: newAliases.aliases
         }
@@ -133,7 +126,7 @@ function buildPropertyTypeRef<T>(type: ODataTypeRef, root: ODataServiceTypes, pa
             $count: buildArrayCount($$oDataQueryMetadata),
             $$oDataQueryObjectType: QueryObjectType.QueryCollection,
             $$oDataQueryMetadata,
-            childObjConfig: buildPropertyTypeRef<T>(type.collectionType, root, [newRootPath], newAliases.aliases),
+            childObjConfig: buildPropertyTypeRef<T>(type.collectionType, root, newAliases.newAlias, [], newAliases.aliases),
             childObjAlias: newAliases.newAlias
         };
     }
@@ -142,8 +135,8 @@ function buildPropertyTypeRef<T>(type: ODataTypeRef, root: ODataServiceTypes, pa
         return {
             $$oDataQueryObjectType: QueryObjectType.QueryPrimitive,
             $$oDataQueryMetadata: {
-                path: path,
-                root,
+                path,
+                rootContext,
                 typeRef: type,
                 queryAliases
             }
@@ -160,8 +153,8 @@ function buildPropertyTypeRef<T>(type: ODataTypeRef, root: ODataServiceTypes, pa
             $$oDataEnumType: tLookup.type,
             $$oDataQueryObjectType: QueryObjectType.QueryEnum,
             $$oDataQueryMetadata: {
-                path: path,
-                root,
+                rootContext,
+                path,
                 typeRef: type,
                 queryAliases
             }
@@ -172,8 +165,8 @@ function buildPropertyTypeRef<T>(type: ODataTypeRef, root: ODataServiceTypes, pa
     const base: QueryComplexObjectBase = {
         $$oDataQueryObjectType: QueryObjectType.QueryObject,
         $$oDataQueryMetadata: {
-            path: path,
-            root,
+            rootContext,
+            path,
             typeRef: type,
             queryAliases
         }
@@ -223,7 +216,7 @@ function buildPropertyTypeRef<T>(type: ODataTypeRef, root: ODataServiceTypes, pa
                                 navigationProperty: x.value.navigationProperty
                             }];
 
-                        return propertyCache = buildPropertyTypeRef(x.value.type, root, propPath, queryAliases);
+                        return propertyCache = buildPropertyTypeRef(x.value.type, root, rootContext, propPath, queryAliases);
                     }
                 });
 
@@ -231,13 +224,14 @@ function buildPropertyTypeRef<T>(type: ODataTypeRef, root: ODataServiceTypes, pa
         }, base) as QueryComplexObject<T>;
 }
 
-export function buildComplexTypeRef<T>(type: ODataComplexType, root: ODataServiceTypes): QueryComplexObject<T> {
+export function buildComplexTypeRef<T>(type: ODataComplexType, root: ODataServiceTypes,
+    rootContext: string): QueryComplexObject<T> {
 
     const typeRef = buildPropertyTypeRef<T>({
         name: type.name,
         namespace: type.namespace,
         isCollection: false
-    }, root, [], {});
+    }, root, rootContext, [], {});
 
     if (typeRef.$$oDataQueryObjectType !== QueryObjectType.QueryObject) {
         throw new Error(`Type ref is not a complex object: ${typeRef.$$oDataQueryObjectType}, ${typeRefString(typeRef.$$oDataQueryMetadata.typeRef)}`);
@@ -246,17 +240,19 @@ export function buildComplexTypeRef<T>(type: ODataComplexType, root: ODataServic
     return typeRef;
 }
 
-export function reContext<T>(obj: QueryComplexObject<T>): QueryComplexObject<T> {
+export function reContext<T>(obj: QueryComplexObject<T>, root: ODataServiceTypes): QueryComplexObject<T> {
 
     if (obj.$$oDataQueryMetadata.typeRef.isCollection) {
         throw new Error("Complex object has collection type ref");
     }
 
+    // can't just use spread operator here as it will not copy
+    // over getters
     const typeRef = buildPropertyTypeRef<T>({
         name: obj.$$oDataQueryMetadata.typeRef.name,
         namespace: obj.$$oDataQueryMetadata.typeRef.namespace,
         isCollection: false
-    }, obj.$$oDataQueryMetadata.root, [], obj.$$oDataQueryMetadata.queryAliases);
+    }, root, "$this", [], obj.$$oDataQueryMetadata.queryAliases);
 
     if (typeRef.$$oDataQueryObjectType !== QueryObjectType.QueryObject) {
         throw new Error(`Type ref is not a complex object: ${typeRef.$$oDataQueryObjectType}, ${typeRefString(typeRef.$$oDataQueryMetadata.typeRef)}`);

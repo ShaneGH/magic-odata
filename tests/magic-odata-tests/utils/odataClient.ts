@@ -36,8 +36,8 @@ export function queryBuilder<T>(fullName: string, q: (x: QueryComplexObject<T>) 
         throw new Error(fullName);
     }
 
-    const typeRef: QueryComplexObject<T> = buildComplexTypeRef(type.type, rootConfig.types);
-    return buildQuery(q(typeRef), rootConfig.types, false)
+    const typeRef: QueryComplexObject<T> = buildComplexTypeRef(type.type, rootConfig.types, "$it");
+    return buildQuery(q(typeRef), "$it", rootConfig.types, false)
 }
 
 export const uriClient = new ODataClient({

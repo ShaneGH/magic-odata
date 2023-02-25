@@ -15,11 +15,15 @@ export class Reader<TEnv, T> {
     private constructor(private _func: (env: TEnv) => T) { }
 
     map<T1>(f: (env: T) => T1) {
-        return new Reader<TEnv, T1>(env => f(this._func(env)))
+        return new Reader<TEnv, T1>(env => f(this.apply(env)))
+    }
+
+    mapEnv<TEnv1>(f: (env: TEnv1) => TEnv) {
+        return new Reader<TEnv1, T>(env => this.apply(f(env)))
     }
 
     bind<T1>(f: (env: T) => Reader<TEnv, T1>) {
-        return new Reader<TEnv, T1>(env => f(this._func(env)).apply(env))
+        return new Reader<TEnv, T1>(env => f(this.apply(env)).apply(env))
     }
 
     apply(env: TEnv) {

@@ -79,7 +79,7 @@ function _buildUri<TFetchResult, TResult>(
         entitySetContainerName: data.tools.entitySet.namespace || null,
         entitySetName: data.tools.entitySet.name,
         relativePath: relativePath,
-        query: buildQuery(data.state.query?.query || [], data.tools.root.types, data.state.query?.urlEncode)
+        query: buildQuery(data.state.query?.query || [], "$it", data.tools.root.types, data.state.query?.urlEncode)
     }
 }
 

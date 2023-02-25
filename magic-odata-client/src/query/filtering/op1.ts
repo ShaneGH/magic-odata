@@ -35,7 +35,7 @@ export function filterRaw(arg1: string | FilterableProps, arg2?: ((path: Filtera
         .keys(arg1)
         .reduce((s, x) => ({
             ...s,
-            [x]: operableToFilter(arg1[x]).apply(env).$$filter || "$it"
+            [x]: operableToFilter(arg1[x]).apply(env).$$filter
         }), {} as FilterablePaths));
 
     return paths

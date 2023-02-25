@@ -67,12 +67,15 @@ describe("Query.Filter Operators", function () {
 
             const ctxt = await addFullUserChain();
 
-            const result = await client.Users
+            const query = await client.Users
                 .withQuery((u, { $filter: { eq, and } }) =>
-                    and(eq(u.Id, ctxt.blogUser.Id), eq(u.Name, null)))
-                .get();
+                    and(eq(u.Id, ctxt.blogUser.Id), eq(u.Name, null)));
+
+            const filter = query.uri(false).query.$filter;
+            const result = await query.get();
 
             // just a non failure is fine
+            expect(filter).toBe(`Id eq '${ctxt.blogUser.Id}' and Name eq null`)
             expect(result.value.length).toBe(0);
         });
     });
@@ -184,6 +187,58 @@ describe("Query.Filter Operators", function () {
                 expect(result.value.length).toBe(0);
             }
         }
+    });
+
+    testCase("$filter", function () {
+
+        describe("Complex obj", () => {
+            it("Should work correctly", function () {
+
+                const result = client.Users
+                    .withQuery((u, { $filter: { eq, and, $filter, count } }) =>
+                        and(
+                            eq(u.Id, "123"),
+                            eq(
+                                count($filter(u.Blogs, b => eq(b.Name, "the blog"))),
+                                1)))
+                    .uri(false);
+
+                expect(result.query.$filter).toBe("Id eq '123' and Blogs/$filter(Name eq 'the blog')/$count eq 1")
+            })
+        });
+
+        describe("$it and $this", () => {
+            it("Should work correctly", function () {
+
+                const result = client.Users
+                    .withQuery((u, { $filter: { eq, gt, $filter, count } }) =>
+                        gt(
+                            count($filter(u.Blogs, b => eq(b.Name, u.Name))),
+                            0))
+                    .uri(false);
+
+                expect(result.query.$filter).toBe("Blogs/$filter(Name eq $it/Name)/$count gt 0")
+            })
+        });
+
+        describe("Primitive obj", () => {
+            it("Should work correctly asc", execute.bind(null, true));
+            it("Should work correctly desc", execute.bind(null, true));
+
+            async function execute(success: boolean) {
+
+                const ctxt = await addFullUserChain();
+                const word = success ? ctxt.blogPost.Content.split(" ")[0] : "invalid"
+
+                const result = await client.BlogPosts
+                    .withKey(x => x.key(ctxt.blogPost.Id!))
+                    .subPath(x => x.Words)
+                    .withQuery((w, { $filter: { eq } }) => eq(w, word))
+                    .get();
+
+                expect(result.value.length).toBe(success ? 1 : 0);
+            }
+        });
     });
 
     testCase("isIn", function () {

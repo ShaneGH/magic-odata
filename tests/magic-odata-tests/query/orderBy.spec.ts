@@ -84,6 +84,26 @@ describe("Query.OrderBy", function () {
     });
 
     testCase("orderBy", function () {
+        describe("$it", () => {
+            it("Should work correctly asc", execute.bind(null, true));
+            it("Should work correctly desc", execute.bind(null, true));
+
+            async function execute(asc: boolean) {
+
+                const ctxt = await addFullUserChain();
+                const result = await client.BlogPosts
+                    .withKey(x => x.key(ctxt.blogPost.Id!))
+                    .subPath(x => x.Words)
+                    .withQuery((w, { $orderby: { orderBy } }) => orderBy(w))
+                    .get();
+
+                expect(result.value.length).toBeGreaterThan(1);
+                for (var i = 1; i < result.value.length; i++) {
+                    expect(result.value[i - 1].localeCompare(result.value[i])).toBe(asc ? -1 : 1);
+                }
+            }
+        });
+
         describe("asc/desc", () => {
             it("Should work correctly asc", execute.bind(null, true));
             it("Should work correctly desc", execute.bind(null, true));

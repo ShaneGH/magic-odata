@@ -37,7 +37,11 @@ function orderBy(...properties: Property[]): OrderBy {
                 x = [x, "asc"]
             }
 
-            return `${x[0].$$oDataQueryMetadata.path.map(x => x.path).join("/")} ${x[1]}`
+            const order = x[0].$$oDataQueryMetadata.path.length
+                ? x[0].$$oDataQueryMetadata.path.map(x => x.path).join("/")
+                : x[0].$$oDataQueryMetadata.rootContext;
+
+            return `${order} ${x[1]}`
         })
         .join(",")
 

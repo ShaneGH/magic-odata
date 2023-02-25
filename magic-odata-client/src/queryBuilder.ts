@@ -55,21 +55,17 @@ export type Search = {
 
 export type FilterResult = {
     $$filter: string
-    // TODO: make non nullable
     $$output: ODataTypeRef
 }
 
 export type FilterEnv = {
-    $$root: ODataServiceTypes
+    root: ODataServiceTypes
+    rootContext: string
 }
 
 export type Filter = Reader<FilterEnv, FilterResult>
 
 export type Query = Top | Skip | Count | Expand | OrderBy | Select | Filter | Custom | Search
-
-function hasOwnProperty(s: Dict<string>, prop: string) {
-    return Object.prototype.hasOwnProperty.call(s, prop)
-}
 
 function maybeAdd(encode: boolean, s: Dict<string>, stateProp: string, inputProp: string | undefined, errorMessage: string) {
 
@@ -85,15 +81,14 @@ function maybeAdd(encode: boolean, s: Dict<string>, stateProp: string, inputProp
                 : inputProp
         }
         : s
-
 }
 
-export function buildQuery(q: Query | Query[], root: ODataServiceTypes, encode = true): Dict<string> {
+export function buildQuery(q: Query | Query[], rootContext: string, root: ODataServiceTypes, encode = true): Dict<string> {
     if (!Array.isArray(q)) {
-        return buildQuery([q], root, encode)
+        return buildQuery([q], rootContext, root, encode)
     }
 
-    const filterEnv = { $$root: root }
+    const filterEnv = { root, rootContext }
 
     return q
         .reduce((s, x) => {

@@ -20,7 +20,7 @@ function filterize<T>(
 
     return operableToFilter(supplimentary)
         .map(({ $$output }) => $$output)
-        .bind($$output => Reader.create<FilterEnv, FilterResult>(({ $$root }) => ({
+        .bind($$output => Reader.create<FilterEnv, FilterResult>(({ root: $$root }) => ({
             $$output,
             $$filter: mapper
                 ? mapper(toFilterize as T)
@@ -108,7 +108,7 @@ export function isIn<T>(lhs: Operable<T>, rhs: T[] | OperableCollection<T>, mapp
             $$output: { isCollection: true, collectionType: $$output },
             $$filter: `[${mapper
                 ? rhsA.map(mapper).join(",")
-                : rhsA.map(x => serialize(x, $$output, env.$$root)).join(",")}]`
+                : rhsA.map(x => serialize(x, $$output, env.root)).join(",")}]`
         })))
     }
 

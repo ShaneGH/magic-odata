@@ -91,7 +91,7 @@ function _expand<T>(
 
     return {
         $$oDataQueryObjectType: "Expand",
-        $$expand: ({ $$root }) => {
+        $$expand: ({ root: $$root }) => {
             const innerExpand = and && addPath
                 ? `${addPath}(${innerBit(obj, $$root, and)})`
                 : and
@@ -114,10 +114,10 @@ function innerBit<T>(
     and: ((x: QueryComplexObject<T>) => Query | Query[])) {
 
     const reContexted = obj.$$oDataQueryObjectType === QueryObjectType.QueryCollection
-        ? reContext(obj.childObjConfig)
-        : reContext(obj);
+        ? reContext(obj.childObjConfig, root)
+        : reContext(obj, root);
 
-    const innerQ = buildQuery(and(reContexted), root, false);
+    const innerQ = buildQuery(and(reContexted), reContexted.$$oDataQueryMetadata.rootContext, root, false);
     const inner = Object
         .keys(innerQ)
         .map(k => `${k}=${innerQ[k]}`)

@@ -2,7 +2,7 @@ import { QueryCollection, QueryObject, QueryPrimitive } from "./queryComplexObje
 import { add, ceiling, div, divby, floor, mod, mul, negate, round, sub } from "./filtering/arithmetic2.js";
 import {
     all, any, collectionFilter, collectionFunction, count, hasSubset, hasSubSequence, OperableCollection, concat as concatCollection, contains as containsCollection,
-    startsWith as startsWithCollection, endsWith as endsWithCollection, indexOf as indexOfCollection, length as lengthCollection, subString as subStringCollection
+    startsWith as startsWithCollection, endsWith as endsWithCollection, indexOf as indexOfCollection, length as lengthCollection, subString as subStringCollection, $filter
 } from "./filtering/collection1.js";
 import {
     concat as concatString, contains as containsString, startsWith as startsWithString,
@@ -69,6 +69,12 @@ export type FilterUtils = {
      * @example isIn(x.bandLeader, ["John", "Paul"])
      */
     isIn<T>(lhs: Operable<T>, rhs: T[] | OperableCollection<T>, mapper?: (x: T) => string): Filter;
+
+    /**
+     * An OData nested $filter operation. Like $filter=bandMembers/$filter(name eq "Ringo")/$count eq 1
+     * @example $filter(x.bandMembers, member => eq(member.Name, "Ringo"))
+     */
+    $filter<T, TQuery extends QueryObject<T>>(collection: QueryCollection<TQuery, T> | Filter, itemFilter: (item: TQuery) => Filter): Filter;
 
     /**
      * An OData "en" operation
@@ -174,7 +180,7 @@ export type FilterUtils = {
      * @param countUnit - IntegerTypes.Int32 The expected result of the type
      * @example count(x.bandMembers)
      */
-    count(collection: QueryCollection<any, any>, countUnit?: IntegerTypes): QueryPrimitive<Number>;
+    count<T>(collection: OperableCollection<T>, countUnit?: IntegerTypes): Filter;
 
     /**
      * An OData "concat" operation
@@ -629,6 +635,7 @@ export function newUtils(): FilterUtils {
         logicalOp: logicalInfixOp,
         eq,
         isIn,
+        $filter,
         ne,
         lt,
         le,

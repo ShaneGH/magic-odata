@@ -24,7 +24,7 @@ function filterize<T>(
         return operableToFilter(toFilterizeO)
     }
 
-    return Reader.create<FilterEnv, FilterResult>(({ $$root }) => ({
+    return Reader.create<FilterEnv, FilterResult>(({ root: $$root }) => ({
         $$output: expected,
         $$filter: mapper
             ? mapper(toFilterize as T)

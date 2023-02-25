@@ -6,6 +6,7 @@ import { IntegerTypes, NonNumericTypes, resolveOutputType } from "./queryPrimiti
 import { ODataTypeRef } from "../../../index.js";
 import { Reader } from "../../utils.js";
 import { functionCall } from "./op1.js";
+import { executeQueryBuilder } from "../../entitySet/addQuery.js";
 
 export type OperableCollection<T> = QueryCollection<QueryObject<T>, T> | Filter
 
@@ -45,7 +46,7 @@ function filterize<TArrayType>(
     }
 
     return operableToFilter(supplimentary)
-        .bind(({ $$output }) => Reader.create<FilterEnv, FilterResult>(({ $$root }) => ({
+        .bind(({ $$output }) => Reader.create<FilterEnv, FilterResult>(({ root: $$root }) => ({
             $$output,
             $$filter: `[${mapper
                 ? toFilterize.map(mapper).join(",")
@@ -65,7 +66,7 @@ function filterizeSingle<TArrayType>(
 
     return operableToFilter(supplimentary)
         .map(({ $$output }) => ($$output.isCollection && $$output.collectionType) || $$output)
-        .bind($$output => Reader.create<FilterEnv, FilterResult>(({ $$root }) => ({
+        .bind($$output => Reader.create<FilterEnv, FilterResult>(({ root: $$root }) => ({
             $$output,
             $$filter: mapper
                 ? mapper(toFilterize as TArrayType)
@@ -118,23 +119,39 @@ export function all<TQueryObj extends QueryObject<TArrayType>, TArrayType>(
     return collectionFilter(collection, "all", collectionItemOperation);
 }
 
-export function count(collection: QueryCollection<any, any>, countUnit = IntegerTypes.Int32): QueryPrimitive<Number> {
+export function count<T>(collection: OperableCollection<T>, countUnit = IntegerTypes.Int32): Filter {
+    return operableToFilter(collection)
+        .map(x => ({
+            $$output: resolveOutputType(countUnit),
+            $$filter: `${x.$$filter}/$count`
+        }))
+}
 
-    return {
-        $$oDataQueryObjectType: QueryObjectType.QueryPrimitive,
-        $$oDataQueryMetadata: {
-            root: collection.$$oDataQueryMetadata.root,
-            typeRef: resolveOutputType(countUnit),
-            queryAliases: collection.$$oDataQueryMetadata.queryAliases,
-            path: [
-                ...collection.$$oDataQueryMetadata.path,
-                {
-                    path: "$count",
-                    navigationProperty: false
+export function $filter<T, TQuery extends QueryObject<T>>(collection: QueryCollection<TQuery, T> | Filter, itemFilter: (item: TQuery) => Filter): Filter {
+
+    const output = operableToFilter(collection)
+        .bind(x => Reader
+            .create<FilterEnv, Filter>(env => {
+
+                if (!x.$$output.isCollection) {
+                    throw new Error(`$filter can only be done on collections. `
+                        + `Attempting to execute on ${x.$$output.namespace && `${x.$$output.namespace}/`}${x.$$output.name}`);
                 }
-            ]
-        }
-    }
+
+                // https://github.com/ShaneGH/magic-odata/issues/60
+                if (x.$$output.collectionType.isCollection) {
+                    throw new Error("Collections of collections are not supported");
+                }
+
+                return executeQueryBuilder<TQuery, Filter>(x.$$output.collectionType, env.root, itemFilter, "$this")
+                    .mapEnv<FilterEnv>(env => ({ ...env, rootContext: "$this" }))
+                    .map(({ $$filter }) => ({
+                        $$output: x.$$output,
+                        $$filter: `${x.$$filter}/$filter(${$$filter})`
+                    }))
+            }));
+
+    return Reader.create<FilterEnv, FilterResult>(env => output.apply(env).apply(env))
 }
 
 export function hasSubset<TArrayType>(

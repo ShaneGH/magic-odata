@@ -9,10 +9,22 @@ export type Operable<T> = QueryPrimitive<T> | QueryEnum<T> | Filter
 export function operableToFilter<T>(op: Operable<T> | QueryCollection<QueryObject<T>, T>) {
     if (op instanceof Reader) return op;
 
-    return Reader.retn<FilterEnv, FilterResult>({
-        $$filter: op.$$oDataQueryMetadata.path.map(x => x.path).join("/"),
-        $$output: op.$$oDataQueryMetadata.typeRef
-    })
+    return Reader.create<FilterEnv, FilterResult>(({ rootContext }) => {
+        let pathParts = rootContext !== op.$$oDataQueryMetadata.rootContext
+            ? [op.$$oDataQueryMetadata.rootContext, ...op.$$oDataQueryMetadata.path.map(x => x.path)]
+            : op.$$oDataQueryMetadata.path.map(x => x.path)
+
+        if (!pathParts.length) {
+            pathParts = [op.$$oDataQueryMetadata.rootContext]
+        }
+
+        return {
+            $$filter: !op.$$oDataQueryMetadata.path.length
+                ? op.$$oDataQueryMetadata.rootContext
+                : pathParts.join("/"),
+            $$output: op.$$oDataQueryMetadata.typeRef
+        }
+    });
 }
 
 export function valueToFilter<T>(val: Filter | T, typeRef: ODataTypeRef, mapper: ((x: T) => string)) {
@@ -21,7 +33,7 @@ export function valueToFilter<T>(val: Filter | T, typeRef: ODataTypeRef, mapper:
     return Reader.create<FilterEnv, FilterResult>(env => ({
         $$filter: mapper
             ? mapper(val)
-            : serialize(val, typeRef, env.$$root),
+            : serialize(val, typeRef, env.root),
         $$output: typeRef
     }))
 }

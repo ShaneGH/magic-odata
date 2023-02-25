@@ -3,7 +3,7 @@ import { Utils } from "./query/queryUtils.js";
 import { Query } from "./queryBuilder.js";
 import { ODataUriParts, RequestTools } from "./entitySet/requestTools.js";
 import { KeySelection, recontextDataForKey } from "./entitySet/selectByKey.js";
-import { recontextDataForQuery } from "./entitySet/addQuery.js";
+import { recontextDataForRootQuery } from "./entitySet/addQuery.js";
 import { CastSelection, recontextDataForCasting } from "./entitySet/cast.js";
 import { recontextDataForSubPath, SubPathSelection } from "./entitySet/subPath.js";
 import { buildUri, executeRequest } from "./entitySet/executeRequest.js";
@@ -125,7 +125,7 @@ export class EntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSubP
     // https://github.com/ShaneGH/magic-odata/issues/2
     withQuery(queryBuilder: (entity: TQueryable, utils: Utils) => Query | Query[], urlEncode?: boolean) {
 
-        const { tools, state } = recontextDataForQuery(this.state, queryBuilder, urlEncode)
+        const { tools, state } = recontextDataForRootQuery(this.state, queryBuilder, urlEncode)
         return new EntitySet<TEntity, TResult, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, TFetchResult>(
             tools, state);
     }

@@ -18,9 +18,10 @@ export type SelectUtils = {
     selectRaw(customSelect: string): Select
 }
 
-// not particularly useful, but helps the typescript compiler
-function path<T>(x: QueryObject<T>) {
-    return x.$$oDataQueryMetadata.path
+function getPath<T>(x: QueryObject<T>) {
+    return x.$$oDataQueryMetadata.path.length
+        ? x.$$oDataQueryMetadata.path.map(p => p.path).join("/")
+        : x.$$oDataQueryMetadata.rootContext
 }
 
 function select(...props: QueryObject<any>[]): Select {
@@ -30,7 +31,7 @@ function select(...props: QueryObject<any>[]): Select {
 
     return {
         $$oDataQueryObjectType: "Select",
-        $$select: props.map(path).map(ps => ps.map(p => p.path).join("/")).join(",")
+        $$select: props.map(getPath).join(",")
     }
 }
 
