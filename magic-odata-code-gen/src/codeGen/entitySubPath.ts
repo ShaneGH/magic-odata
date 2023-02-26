@@ -1,6 +1,7 @@
 import { ODataComplexType, ODataTypeRef, ODataServiceConfig, ODataServiceTypes, ODataSingleTypeRef, ODataEnum } from "magic-odata-shared";
 import { CodeGenConfig } from "../config.js";
-import { typeNameString, typeRefNameString } from "../utils.js";
+import { typeNameString } from "../utils.js";
+import { entitySetsName } from "../codeGen/utils.js";
 import { Keywords } from "./keywords.js";
 import { buildFullyQualifiedTsType, buildGetCasterName, buildGetKeyBuilderName, buildGetQueryableName, buildGetSubPathName, buildSanitizeNamespace, FullyQualifiedTsType, GetCasterName, GetKeyBuilderName, GetQueryableName, GetSubPathName, buildHttpClientType, Tab, HttpClientType } from "./utils.js"
 
@@ -72,12 +73,12 @@ function buildGetSubPathProps(
     function getTSubPath(typeRef: ODataTypeRef, tQueryable: string) {
 
         if (typeRef.isCollection) {
-            return `${keywords.CollectionSubPath}<${tQueryable}>`;
+            return `${keywords.CollectionSubPath}<${entitySetsName(settings)}, ${tQueryable}>`;
         }
 
         // https://github.com/ShaneGH/magic-odata/issues/12
         if (typeRef.namespace === "Edm") {
-            return `${keywords.PrimitiveSubPath}<${tQueryable}>`;
+            return `${keywords.PrimitiveSubPath}<${entitySetsName(settings)}, ${tQueryable}>`;
         }
 
         const type = allTypes[typeRef.namespace] && allTypes[typeRef.namespace][typeRef.name]
@@ -87,7 +88,7 @@ function buildGetSubPathProps(
 
         // https://github.com/ShaneGH/magic-odata/issues/12
         if (type.containerType === "Enum") {
-            return `${keywords.PrimitiveSubPath}<${tQueryable}>`;
+            return `${keywords.PrimitiveSubPath}<${entitySetsName(settings)}, ${tQueryable}>`;
         }
 
         return fullyQualifiedTsType(typeRef, getSubPathName)

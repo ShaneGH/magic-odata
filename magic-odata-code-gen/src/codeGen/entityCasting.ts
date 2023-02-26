@@ -1,10 +1,11 @@
 import { ComplexTypeOrEnum, ODataComplexType, ODataEnum, ODataServiceConfig, ODataServiceTypes, ODataSingleTypeRef } from "magic-odata-shared";
 import { CodeGenConfig } from "../config.js";
 import { Keywords } from "./keywords.js";
-import { buildFullyQualifiedTsType, buildGetCasterName, buildGetKeyBuilderName, buildGetQueryableName, buildGetSubPathName, FullyQualifiedTsType, GetCasterName, GetKeyBuilderName, GetQueryableName, GetSubPathName, buildHttpClientType, Tab, HttpClientType } from "./utils.js"
+import { buildFullyQualifiedTsType, buildGetCasterName, buildGetKeyBuilderName, buildGetQueryableName, buildGetSubPathName, FullyQualifiedTsType, GetCasterName, GetKeyBuilderName, GetQueryableName, GetSubPathName, buildHttpClientType, Tab, HttpClientType, entitySetsName } from "./utils.js"
 
 // https://github.com/ShaneGH/magic-odata/issues/4
 function buildGetComplexCasterProps(
+    settings: CodeGenConfig | null | undefined,
     allTypes: ODataServiceTypes,
     fullyQualifiedTsType: FullyQualifiedTsType,
     getQueryableName: GetQueryableName,
@@ -53,7 +54,7 @@ function buildGetComplexCasterProps(
                     tKeyBuilder: keyProp,
                     tQueryable,
                     tCaster: `${caster}.${casterType}`,
-                    tSubPath: singleCasterType ? subProps : `${keywords.CollectionSubPath}<${tQueryable}>`,
+                    tSubPath: singleCasterType ? subProps : `${keywords.CollectionSubPath}<${entitySetsName(settings)}, ${tQueryable}>`,
                     tResult: collectionResult
                         ? { isCollection: true as true, collectionType: typeRef }
                         : typeRef
@@ -75,7 +76,7 @@ export const buildEntityCasting = (tab: Tab, settings: CodeGenConfig | null | un
     const getKeyBuilderName = buildGetKeyBuilderName(settings);
     const fullyQualifiedTsType = buildFullyQualifiedTsType(settings);
     const httpClientType = buildHttpClientType(serviceConfig.types, keywords, tab, settings || null);
-    const getComplexCasterProps = buildGetComplexCasterProps(serviceConfig.types,
+    const getComplexCasterProps = buildGetComplexCasterProps(settings, serviceConfig.types,
         fullyQualifiedTsType, getQueryableName, getCasterName, getSubPathName, getKeyBuilderName,
         httpClientType, keywords);
 

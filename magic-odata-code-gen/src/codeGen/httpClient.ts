@@ -157,7 +157,7 @@ ${tab(`return new ${instanceType}(args);`)}
             tKeyBuilder: keyBuilderType,
             tQueryable: queryableType,
             tCaster: `${casterType}.Collection`,
-            tSubPath: `${keywords.CollectionSubPath}<${queryableType}>`,
+            tSubPath: `${keywords.CollectionSubPath}<${entitySetsName(settings)}, ${queryableType}>`,
             tResult: {
                 isCollection: true as true,
                 collectionType: entitySet.forType

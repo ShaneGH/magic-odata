@@ -30,38 +30,6 @@ export function buildTab(settings: CodeGenConfig | null | undefined): Tab {
     return f;
 }
 
-export function primitiveSubPath(types: ODataServiceTypes, keywords: Keywords, tab: Tab, settings: CodeGenConfig | null) {
-
-    const entitySet = buildHttpClientType(types, keywords, tab, settings)({
-        tResult: { isCollection: false, namespace: "Edm", name: "String" },
-        rawResult: true,
-        tKeyBuilder: keywords.ThisItemDoesNotHaveAKey,
-        tQueryable: "TQueryable",
-        tCaster: keywords.$ValueAnd$CountTypesCanNotBeOperatedOn,
-        tSubPath: keywords.$ValueAnd$CountTypesCanNotBeOperatedOn
-    }, true)
-
-    return `export type ${keywords.PrimitiveSubPath}<TQueryable> = {
-${tab(`$value: ${keywords.SubPathSelection}<${entitySet}>`)}
-}`
-}
-
-export function collectionSubPath(types: ODataServiceTypes, keywords: Keywords, tab: Tab, settings: CodeGenConfig | null) {
-
-    const entitySet = buildHttpClientType(types, keywords, tab, settings)({
-        tResult: { isCollection: false, namespace: "Edm", name: "Int32" },
-        rawResult: true,
-        tKeyBuilder: keywords.ThisItemDoesNotHaveAKey,
-        tQueryable: "TQueryable",
-        tCaster: keywords.$ValueAnd$CountTypesCanNotBeOperatedOn,
-        tSubPath: keywords.$ValueAnd$CountTypesCanNotBeOperatedOn
-    }, true)
-
-    return `export type ${keywords.CollectionSubPath}<TQueryable> = {
-${tab(`$count: ${keywords.SubPathSelection}<${entitySet}>`)}
-}`
-}
-
 export function lintingAndComments() {
     return `/* eslint-disable */
 /* tslint:disable */

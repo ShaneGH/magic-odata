@@ -36,7 +36,6 @@ export type Keywords = {
     Observable: string
     HttpError: string,
     AngularHttpResponse: string
-    $ValueAnd$CountTypesCanNotBeOperatedOn: string
     PrimitiveSubPath: string
     CollectionSubPath: string
     EdmDate: string
@@ -66,7 +65,6 @@ export function generateKeywords(allNamespaces: string[], rootLevelTypes: string
         EdmDateTimeOffset: getKeyword("EdmDateTimeOffset"),
         CollectionSubPath: getKeyword("CollectionSubPath"),
         RequestOptions: getKeyword("RequestOptions"),
-        $ValueAnd$CountTypesCanNotBeOperatedOn: getKeyword("$ValueAnd$CountTypesCanNotBeOperatedOn"),
         mergeMap: getKeyword("mergeMap"),
         map: getKeyword("map"),
         AngularHttpResponse: getKeyword("HttpResponse"),
@@ -131,7 +129,6 @@ ${tab(importWithAlias("EdmTimeOfDay"))},
 ${tab(importWithAlias("EdmDuration"))},
 ${tab(importWithAlias("EdmDateTimeOffset"))},
 ${tab(importWithAlias("RequestOptions"))},
-${tab(importWithAlias("$ValueAnd$CountTypesCanNotBeOperatedOn"))},
 ${tab(importWithAlias("HttpError"))},
 ${tab(importWithAlias("DefaultResponseInterceptor"))},
 ${tab(importWithAlias("KeySelection"))},
@@ -152,7 +149,9 @@ ${tab(importWithAlias("ODataResult"))},
 ${tab(importWithAlias("SingleItemsCannotBeQueriedByKey"))},
 ${tab(importWithAlias("ThisItemDoesNotHaveAKey"))},
 ${tab(importWithAlias("CastingOnCollectionsOfCollectionsIsNotSupported"))},
-${tab(importWithAlias("QueryingOnCollectionsOfCollectionsIsNotSupported"))}
+${tab(importWithAlias("QueryingOnCollectionsOfCollectionsIsNotSupported"))},
+${tab(importWithAlias("PrimitiveSubPath"))},
+${tab(importWithAlias("CollectionSubPath"))}
 } from 'magic-odata-client';`
 
     return [odataTsClient, ng, rxjs]

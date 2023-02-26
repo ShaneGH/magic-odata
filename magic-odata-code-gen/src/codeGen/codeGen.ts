@@ -6,7 +6,7 @@ import { edm } from "./edm.js";
 import { ProcessedNamespace, ProcessedServiceConfig, processServiceConfig } from "./entities.js";
 import { fetchHttpClient } from "./fetchHttpClient.js";
 import { generateKeywords, imports } from "./keywords.js";
-import { buildSanitizeNamespace, buildTab, configObj, lintingAndComments, primitiveSubPath, collectionSubPath } from "./utils.js";
+import { buildSanitizeNamespace, buildTab, configObj, lintingAndComments } from "./utils.js";
 
 export function codeGen(serviceConfig: ODataServiceConfig, settings: CodeGenConfig | null | undefined, warnings: SupressWarnings | null | undefined) {
 
@@ -30,11 +30,7 @@ ${entities()}
 
 ${configObj(serviceConfig, keywords, settings, tab)}
 
-${edm(tab, keywords)}
-
-${primitiveSubPath(serviceConfig.types, keywords, tab, settings || null)}
-
-${collectionSubPath(serviceConfig.types, keywords, tab, settings || null)}`
+${edm(tab, keywords)}`
 
     return output
         .replace(/\r\n/g, "\n")
