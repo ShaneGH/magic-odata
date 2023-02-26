@@ -46,11 +46,11 @@ function filterize<TArrayType>(
     }
 
     return operableToFilter(supplimentary)
-        .bind(({ $$output }) => Reader.create<FilterEnv, FilterResult>(({ root: $$root }) => ({
+        .bind(({ $$output }) => Reader.create<FilterEnv, FilterResult>(({ serviceConfig }) => ({
             $$output,
             $$filter: `[${mapper
                 ? toFilterize.map(mapper).join(",")
-                : toFilterize.map(x => serialize(x, $$output.isCollection ? $$output.collectionType : undefined, $$root)).join(",")}]`
+                : toFilterize.map(x => serialize(x, $$output.isCollection ? $$output.collectionType : undefined, serviceConfig.types)).join(",")}]`
         })))
 }
 
@@ -66,11 +66,11 @@ function filterizeSingle<TArrayType>(
 
     return operableToFilter(supplimentary)
         .map(({ $$output }) => ($$output.isCollection && $$output.collectionType) || $$output)
-        .bind($$output => Reader.create<FilterEnv, FilterResult>(({ root: $$root }) => ({
+        .bind($$output => Reader.create<FilterEnv, FilterResult>(({ serviceConfig }) => ({
             $$output,
             $$filter: mapper
                 ? mapper(toFilterize as TArrayType)
-                : serialize(toFilterize, $$output, $$root)
+                : serialize(toFilterize, $$output, serviceConfig.types)
         })))
 }
 
@@ -127,7 +127,7 @@ export function count<T>(collection: OperableCollection<T>, countUnit = IntegerT
         }))
 }
 
-export function $filter<T, TQuery extends QueryObject<T>>(collection: QueryCollection<TQuery, T> | Filter, itemFilter: (item: TQuery) => Filter): Filter {
+export function $filter<TRoot, T, TQuery extends QueryObject<T>>(collection: QueryCollection<TQuery, T> | Filter, itemFilter: (item: TQuery) => Filter): Filter {
 
     const output = operableToFilter(collection)
         .bind(x => Reader
@@ -143,7 +143,7 @@ export function $filter<T, TQuery extends QueryObject<T>>(collection: QueryColle
                     throw new Error("Collections of collections are not supported");
                 }
 
-                return executeQueryBuilder<TQuery, Filter>(x.$$output.collectionType, env.root, itemFilter, "$this")
+                return executeQueryBuilder<TRoot, TQuery, Filter>(x.$$output.collectionType, env.serviceConfig.types, itemFilter, "$this")
                     .mapEnv<FilterEnv>(env => ({ ...env, rootContext: "$this" }))
                     .map(({ $$filter }) => ({
                         $$output: x.$$output,

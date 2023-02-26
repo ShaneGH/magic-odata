@@ -1,5 +1,5 @@
-import { ODataServiceTypes } from "magic-odata-shared";
-import { buildQuery, Expand, Query } from "../queryBuilder.js"
+import { ODataServiceConfig, ODataServiceTypes } from "magic-odata-shared";
+import { buildQuery, Expand, FilterEnv, Query } from "../queryBuilder.js"
 import { PathSegment, QueryCollection, QueryComplexObject, QueryObjectType, reContext } from "./queryComplexObjectBuilder.js"
 
 export type ExpandUtils = {
@@ -91,11 +91,11 @@ function _expand<T>(
 
     return {
         $$oDataQueryObjectType: "Expand",
-        $$expand: ({ root: $$root }) => {
+        $$expand: filterEnv => {
             const innerExpand = and && addPath
-                ? `${addPath}(${innerBit(obj, $$root, and)})`
+                ? `${addPath}(${innerBit(filterEnv, obj, and)})`
                 : and
-                    ? `(${innerBit(obj, $$root, and)})`
+                    ? `(${innerBit(filterEnv, obj, and)})`
                     : addPath;
 
             const $$expand = expandString(obj.$$oDataQueryMetadata.path, innerExpand);
@@ -109,15 +109,20 @@ function _expand<T>(
 }
 
 function innerBit<T>(
+    filterEnv: FilterEnv,
     obj: QueryComplexObject<T> | QueryCollection<QueryComplexObject<T>, T>,
-    root: ODataServiceTypes,
     and: ((x: QueryComplexObject<T>) => Query | Query[])) {
 
     const reContexted = obj.$$oDataQueryObjectType === QueryObjectType.QueryCollection
-        ? reContext(obj.childObjConfig, root)
-        : reContext(obj, root);
+        ? reContext(obj.childObjConfig, filterEnv.serviceConfig.types)
+        : reContext(obj, filterEnv.serviceConfig.types);
 
-    const innerQ = buildQuery(and(reContexted), reContexted.$$oDataQueryMetadata.rootContext, root, false);
+    filterEnv = {
+        ...filterEnv,
+        rootContext: reContexted.$$oDataQueryMetadata.rootContext
+    }
+
+    const innerQ = buildQuery(and(reContexted), filterEnv, false);
     const inner = Object
         .keys(innerQ)
         .map(k => `${k}=${innerQ[k]}`)

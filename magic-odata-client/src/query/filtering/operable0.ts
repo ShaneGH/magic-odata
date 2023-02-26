@@ -33,7 +33,7 @@ export function valueToFilter<T>(val: Filter | T, typeRef: ODataTypeRef, mapper:
     return Reader.create<FilterEnv, FilterResult>(env => ({
         $$filter: mapper
             ? mapper(val)
-            : serialize(val, typeRef, env.root),
+            : serialize(val, typeRef, env.serviceConfig.types),
         $$output: typeRef
     }))
 }

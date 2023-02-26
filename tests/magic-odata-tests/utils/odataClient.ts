@@ -1,5 +1,6 @@
-import { buildQuery, Query, QueryComplexObject } from "magic-odata-client";
+import { buildQuery, ODataUriParts, Query, QueryComplexObject } from "magic-odata-client";
 import { buildComplexTypeRef } from "magic-odata-client/dist/src/query/queryComplexObjectBuilder.js";
+import { FilterEnv } from "magic-odata-client/dist/src/queryBuilder.js";
 import { ODataClient, rootConfigExporter } from "../generatedCode.js";
 
 export const oDataClient = new ODataClient({
@@ -37,7 +38,36 @@ export function queryBuilder<T>(fullName: string, q: (x: QueryComplexObject<T>) 
     }
 
     const typeRef: QueryComplexObject<T> = buildComplexTypeRef(type.type, rootConfig.types, "$it");
-    return buildQuery(q(typeRef), "$it", rootConfig.types, false)
+    const env: FilterEnv = {
+        buildUri: defaultUriInterceptor,
+        serviceConfig: rootConfig,
+        rootContext: "$it"
+    }
+
+    return buildQuery(q(typeRef), env, false)
+
+    // copied from magic-odata-client\src\entitySet\executeRequest.ts
+    function defaultUriInterceptor(uri: ODataUriParts): string {
+
+        let queryPart = Object
+            .keys(uri.query)
+            .map(x => `${x}=${uri.query[x]}`)
+            .join("&");
+
+        const uriRoot = removeTrailingSlash(uri.uriRoot)
+        const entityName = addLeadingSlash(removeTrailingSlash(uri.relativePath))
+        queryPart = queryPart && `?${queryPart}`
+
+        return `${uriRoot}${entityName}${queryPart}`
+    }
+
+    function addLeadingSlash(path: string) {
+        return path && `/${path}`
+    }
+
+    function removeTrailingSlash(path: string) {
+        return path && path.replace(/\/$/, "")
+    }
 }
 
 export const uriClient = new ODataClient({

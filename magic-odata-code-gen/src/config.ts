@@ -82,11 +82,6 @@ export type SupressWarnings = Partial<{
     /** 
      * @default false
      */
-    suppressUnableToFindTypeForEntitySet: boolean
-
-    /** 
-     * @default false
-     */
     suppressMultipleBaseTypes: boolean
 
     /** 

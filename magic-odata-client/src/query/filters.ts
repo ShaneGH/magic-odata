@@ -17,8 +17,15 @@ import { EdmDate, EdmDateTimeOffset, EdmDuration, EdmTimeOfDay } from "../edmTyp
 import { addDate, addDateTimeOffset, addDuration, date, day, divByDuration, divDuration, fractionalSeconds, hour, maxDateTime, minDateTime, minute, month, mulDuration, now, second, subDate, subDateTimeOffset, subDuration, time, totalOffsetMinutes, totalSeconds, year } from "./filtering/time2.js";
 import { caseExpression } from "./filtering/case2.js";
 import { FilterablePaths, FilterableProps, filterRaw } from "./filtering/op1.js";
+import { IEntitySet } from "../entitySet.js";
+import { $root } from "./root.js";
 
-export type FilterUtils = {
+/**
+ * This IEntitySet is made to generate a uri. It does not have the ability to query
+ */
+export type ThisEntitySetCannotQuery = never
+
+export type FilterUtils<TRoot> = {
     /**
      * Do a custom filter operation. If mixing this operation with other
      * filtering operations, it is best to include an output type so that values
@@ -627,10 +634,20 @@ export type FilterUtils = {
      */
     caseExpression(...cases: [Filter | true, Filter][]): Filter
 
+    /**
+     * Use the OData $root operation
+     * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part2-url-conventions.html#sec_root
+     * 
+     * Use the filter to do another separate OData query which can be incorporated into the current query
+     *
+     * @example eq(x.bandName, $root(root => root.bands.withKey(k => k.key("TheBeatles")).subPath(u => u.badName))
+     */
+    $root(filter: (root: TRoot) => IEntitySet<any, any, any, any, any, any, any, any>): Filter
 }
 
-export function newUtils(): FilterUtils {
+export function newUtils<TRoot>(): FilterUtils<TRoot> {
     return {
+        $root,
         filterRaw,
         logicalOp: logicalInfixOp,
         eq,

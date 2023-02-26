@@ -1,4 +1,5 @@
-import { ODataServiceTypes, ODataTypeRef } from "magic-odata-shared";
+import { ODataServiceConfig, ODataServiceTypes, ODataTypeRef } from "magic-odata-shared";
+import { ODataUriParts } from "./entitySet/requestTools.js";
 import { Reader } from "./utils.js";
 
 type Dict<T> = { [key: string]: T }
@@ -59,7 +60,8 @@ export type FilterResult = {
 }
 
 export type FilterEnv = {
-    root: ODataServiceTypes
+    buildUri: (uriParts: ODataUriParts) => string,
+    serviceConfig: ODataServiceConfig
     rootContext: string
 }
 
@@ -83,12 +85,10 @@ function maybeAdd(encode: boolean, s: Dict<string>, stateProp: string, inputProp
         : s
 }
 
-export function buildQuery(q: Query | Query[], rootContext: string, root: ODataServiceTypes, encode = true): Dict<string> {
+export function buildQuery(q: Query | Query[], filterEnv: FilterEnv, encode = true): Dict<string> {
     if (!Array.isArray(q)) {
-        return buildQuery([q], rootContext, root, encode)
+        return buildQuery([q], filterEnv, encode)
     }
-
-    const filterEnv = { root, rootContext }
 
     return q
         .reduce((s, x) => {

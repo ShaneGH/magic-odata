@@ -1,5 +1,5 @@
 import { ODataServiceConfig } from "magic-odata-shared";
-import { AngularHttpResultType, CodeGenConfig, SupressWarnings } from "../config.js";
+import { AngularHttpResultType, CodeGenConfig } from "../config.js";
 import { httpClient } from "./httpClient.js";
 import { Keywords } from "./keywords.js";
 import { angularResultType, Tab } from "./utils.js";
@@ -62,8 +62,7 @@ export function angularHttpClient(
   serviceConfig: ODataServiceConfig,
   tab: Tab,
   keywords: Keywords,
-  settings: CodeGenConfig | null,
-  warnings: SupressWarnings | null | undefined) {
+  settings: CodeGenConfig | null) {
 
   const responseType = settings?.angularMode == null || settings.angularMode === false
     ? null
@@ -88,7 +87,7 @@ export function angularHttpClient(
     httpClient(
       serviceConfig, tab, keywords,
       [`${keywords.Observable}<${keywords.AngularHttpResponse}<${angularResultType(settings)}>>`, `${keywords.Observable}<any>`],
-      body, settings, warnings)
+      body, settings)
   ]
     .filter(x => !!x)
     .join("\n\n")

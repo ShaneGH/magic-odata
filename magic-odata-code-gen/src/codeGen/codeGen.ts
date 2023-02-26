@@ -24,7 +24,7 @@ ${imports(keywords, tab, settings || null)}
 
 ${lintingAndComments()}
 
-${client(serviceConfig, tab, keywords, settings || null, warnings)}
+${client(serviceConfig, tab, keywords, settings || null)}
 
 ${entities()}
 

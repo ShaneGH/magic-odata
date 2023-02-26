@@ -9,12 +9,12 @@ import { Custom } from "../queryBuilder.js";
 /**
  * Utils for building queries
  */
-export type Utils = {
+export type Utils<TRoot> = {
     /**
      * Utils for $filter operations
      * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_BuiltinQueryFunctions
      */
-    $filter: FilterUtils
+    $filter: FilterUtils<TRoot>
 
     /**
      * Utils for $select operations
@@ -60,9 +60,9 @@ export type Utils = {
     custom: typeof custom
 }
 
-export function utils(): Utils {
+export function utils<TRoot>(): Utils<TRoot> {
     return {
-        $filter: filter(),
+        $filter: filter<TRoot>(),
         $select: select(),
         $expand: expand(),
         $orderby: orderBy(),

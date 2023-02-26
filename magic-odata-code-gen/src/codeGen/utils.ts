@@ -250,7 +250,7 @@ export function angularResultType(settings: CodeGenConfig | null): string | null
         : settings.angularMode.httpResultType
 }
 
-const httpClientGenericNames = ["TEntity", "TResult", "TKeyBuilder", "TQueryable", "TCaster", "TSubPath", "TFetchResult"]
+const httpClientGenericNames = ["TRoot", "TEntity", "TResult", "TKeyBuilder", "TQueryable", "TCaster", "TSubPath", "TFetchResult"]
 const longest = httpClientGenericNames.map(x => x.length).reduce((s, x) => s > x ? s : x, -1);
 
 export type HttpClientType = (generics: HttpClientGenerics, asInterface: boolean) => string
@@ -282,6 +282,7 @@ export function buildHttpClientType(types: ODataServiceTypes, keywords: Keywords
         const tResult = fullyQualifiedTsType(generics.tResult);
 
         const gs = [
+            entitySetsName(settings),
             tEntity,
             generics.rawResult
                 ? `${async}<${tResult}>`
@@ -300,6 +301,14 @@ export function buildHttpClientType(types: ODataServiceTypes, keywords: Keywords
 
         return `${asInterface ? keywords.IEntitySet : keywords.EntitySet}<\n${gs}>`
     }
+}
+
+export function entitySetsName(settings: CodeGenConfig | null | undefined) {
+    return `I${httpClientName(settings)}EntitySets`;
+}
+
+export function httpClientName(settings: CodeGenConfig | null | undefined) {
+    return settings?.oDataClientName || "ODataClient";
 }
 
 export type GetSubPathName = (forType: string) => string

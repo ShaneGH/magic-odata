@@ -4,13 +4,13 @@ import { Query } from "../queryBuilder.js";
 import { buildComplexTypeRef, QueryComplexObject, QueryEnum, QueryObjectType, QueryPrimitive } from "../query/queryComplexObjectBuilder.js";
 import { EntitySetData, getDeepTypeRef, lookup } from "./utils.js";
 
-type ComplexQueryBuilder<TEntity, TQuery> = (entity: QueryComplexObject<TEntity>, utils: Utils) => TQuery
-type PrimitiveQueryBuilder<TEntity, TQuery> = (entity: QueryPrimitive<TEntity>, utils: Utils) => TQuery
-type EnumQueryBuilder<TEntity, TQuery> = (entity: QueryEnum<TEntity>, utils: Utils) => TQuery
+type ComplexQueryBuilder<TRoot, TEntity, TQuery> = (entity: QueryComplexObject<TEntity>, utils: Utils<TRoot>) => TQuery
+type PrimitiveQueryBuilder<TRoot, TEntity, TQuery> = (entity: QueryPrimitive<TEntity>, utils: Utils<TRoot>) => TQuery
+type EnumQueryBuilder<TRoot, TEntity, TQuery> = (entity: QueryEnum<TEntity>, utils: Utils<TRoot>) => TQuery
 
-function executePrimitiveQueryBuilder<TEntity, TQuery>(
+function executePrimitiveQueryBuilder<TRoot, TEntity, TQuery>(
     type: ODataTypeName,
-    queryBuilder: PrimitiveQueryBuilder<TEntity, TQuery>,
+    queryBuilder: PrimitiveQueryBuilder<TRoot, TEntity, TQuery>,
     rootContext: string): TQuery {
 
     const typeRef: QueryPrimitive<TEntity> = {
@@ -29,19 +29,19 @@ function executePrimitiveQueryBuilder<TEntity, TQuery>(
     return queryBuilder(typeRef, queryUtils());
 }
 
-function executeComplexQueryBuilder<TEntity, TQuery>(
+function executeComplexQueryBuilder<TRoot, TEntity, TQuery>(
     type: ODataComplexType,
     root: ODataServiceTypes,
-    queryBuilder: ComplexQueryBuilder<TEntity, TQuery>,
+    queryBuilder: ComplexQueryBuilder<TRoot, TEntity, TQuery>,
     rootContext: string): TQuery {
 
     const typeRef: QueryComplexObject<TEntity> = buildComplexTypeRef(type, root, rootContext);
     return queryBuilder(typeRef, queryUtils());
 }
 
-function executeEnumQueryBuilder<TEntity, TQuery>(
+function executeEnumQueryBuilder<TRoot, TEntity, TQuery>(
     type: ODataEnum,
-    queryBuilder: EnumQueryBuilder<TEntity, TQuery>,
+    queryBuilder: EnumQueryBuilder<TRoot, TEntity, TQuery>,
     rootContext: string): TQuery {
 
     const typeRef: QueryEnum<TEntity> = {
@@ -62,10 +62,10 @@ function executeEnumQueryBuilder<TEntity, TQuery>(
     return queryBuilder(typeRef, queryUtils());
 }
 
-export function executeQueryBuilder<TQueryable, TQuery>(
+export function executeQueryBuilder<TRoot, TQueryable, TQuery>(
     typeRef: ODataTypeName,
     types: ODataServiceTypes,
-    queryBuilder: (entity: TQueryable, utils: Utils) => TQuery,
+    queryBuilder: (entity: TQueryable, utils: Utils<TRoot>) => TQuery,
     rootContext: string): TQuery {
 
     // There is a lot of trust in these 2 lines of code.
@@ -78,9 +78,9 @@ export function executeQueryBuilder<TQueryable, TQuery>(
             : executeEnumQueryBuilder(t.type, queryBuilder as any, rootContext);
 }
 
-export function recontextDataForRootQuery<TFetchResult, TResult, TQueryable>(
+export function recontextDataForRootQuery<TRoot, TFetchResult, TResult, TQueryable>(
     data: EntitySetData<TFetchResult, TResult>,
-    queryBuilder: (entity: TQueryable, utils: Utils) => Query | Query[],
+    queryBuilder: (entity: TQueryable, utils: Utils<TRoot>) => Query | Query[],
     urlEncode?: boolean) {
 
     if (data.state.query) {

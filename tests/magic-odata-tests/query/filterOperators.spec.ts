@@ -189,6 +189,22 @@ describe("Query.Filter Operators", function () {
         }
     });
 
+    testCase("$root", function () {
+        it("Should work correctly (success)", function execute() {
+
+            const result = client.Users
+                .withQuery((u, { $filter: { eq, $root } }) => eq(
+                    u.Name,
+                    $root(root => root.My.Odata.Container.BlogPosts
+                        .withKey(k => k.key("12345"))
+                        .subPath(bp => bp.Name)
+                        .withQuery((bp, { $filter: { eq } }) => eq(bp, "John")))))
+                .uri(false);
+
+            expect(result.query.$filter).toBe("Name eq $root/BlogPosts('12345')/Name?$filter=$it eq 'John'");
+        });
+    })
+
     testCase("$filter", function () {
 
         describe("Complex obj", () => {
@@ -222,8 +238,8 @@ describe("Query.Filter Operators", function () {
         });
 
         describe("Primitive obj", () => {
-            it("Should work correctly asc", execute.bind(null, true));
-            it("Should work correctly desc", execute.bind(null, true));
+            it("Should work correctly (success)", execute.bind(null, true));
+            it("Should work correctly (failure)", execute.bind(null, false));
 
             async function execute(success: boolean) {
 

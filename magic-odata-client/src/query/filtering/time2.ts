@@ -24,11 +24,11 @@ function filterize<T>(
         return operableToFilter(toFilterizeO)
     }
 
-    return Reader.create<FilterEnv, FilterResult>(({ root: $$root }) => ({
+    return Reader.create<FilterEnv, FilterResult>(({ serviceConfig }) => ({
         $$output: expected,
         $$filter: mapper
             ? mapper(toFilterize as T)
-            : serialize(toFilterize, expected, $$root)
+            : serialize(toFilterize, expected, serviceConfig.types)
     }))
 }
 

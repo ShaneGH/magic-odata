@@ -1,40 +1,25 @@
-import { ODataComplexType, ODataEntitySet, ODataServiceConfig } from "magic-odata-shared";
-import { CodeGenConfig, SupressWarnings } from "../config.js";
-import { typeNameString, warn } from "../utils.js";
+import { ODataEntitySet, ODataServiceConfig } from "magic-odata-shared";
+import { CodeGenConfig } from "../config.js";
 import { Keywords } from "./keywords.js";
-import { buildFullyQualifiedTsType, buildGetCasterName, buildGetKeyBuilderName, buildGetQueryableName, buildGetSubPathName, buildLookupComplexType, buildSanitizeNamespace, buildHttpClientType, Tab } from "./utils.js";
+import { buildFullyQualifiedTsType, buildGetCasterName, buildGetKeyBuilderName, buildGetQueryableName, buildGetSubPathName, buildSanitizeNamespace, buildHttpClientType, Tab, entitySetsName, httpClientName } from "./utils.js";
 
+// TOOD: duplicate_logic HttpClient
 export function httpClient(
     serviceConfig: ODataServiceConfig,
     tab: Tab,
     keywords: Keywords,
     requestToolsGenerics: [string, string],
     parseResponseFunctionBody: string,
-    settings: CodeGenConfig | null | undefined,
-    warnings: SupressWarnings | null | undefined) {
+    settings: CodeGenConfig | null | undefined) {
 
     const fullyQualifiedTsType = buildFullyQualifiedTsType(settings);
     const sanitizeNamespace = buildSanitizeNamespace(settings);
     const getKeyBuilderName = buildGetKeyBuilderName(settings);
-    const lookupComplexType = buildLookupComplexType(serviceConfig, settings);
 
     const getQueryableName = buildGetQueryableName(settings);
     const getCasterName = buildGetCasterName(settings)
     const getSubPathName = buildGetSubPathName(settings)
     const httpClientType = buildHttpClientType(serviceConfig.types, keywords, tab, settings || null);
-
-    const methods = Object
-        .keys(serviceConfig.entitySets)
-        .sort((x, y) => x < y ? -1 : 1)
-        .map(namespace => ({
-            escapedNamespaceParts: sanitizeNamespace(namespace).split(".").filter(x => !!x),
-            entitySets: Object
-                .keys(serviceConfig.entitySets[namespace])
-                .map(k => serviceConfig.entitySets[namespace][k])
-        }))
-        .map(x => methodsForEntitySetNamespace(x.escapedNamespaceParts, x.entitySets))
-        .join("\n\n");
-
     const constructor = `constructor(private ${keywords._httpClientArgs}: ${keywords.RequestTools}<${requestToolsGenerics.join(", ")}>) { }`;
 
     return `
@@ -43,16 +28,33 @@ ${parseResponse()}
 ${toODataTypeRef()}
 
 /**
+ * A description of all of the entity in an OData model
+ */
+export interface ${entitySetsName(settings)} {
+${tab(methods(true))}
+}
+
+/**
  * The http client which serves as an entry point to OData
  */
-export class ${className()} {
+export class ${httpClientName(settings)} implements ${entitySetsName(settings)} {
 ${tab(constructor)}
 
-${tab(methods)}
+${tab(methods(false))}
 }`
 
-    function className() {
-        return settings?.oDataClientName || "ODataClient";
+    function methods(isForInterface: boolean) {
+        return Object
+            .keys(serviceConfig.entitySets)
+            .sort((x, y) => x < y ? -1 : 1)
+            .map(namespace => ({
+                escapedNamespaceParts: sanitizeNamespace(namespace).split(".").filter(x => !!x),
+                entitySets: Object
+                    .keys(serviceConfig.entitySets[namespace])
+                    .map(k => serviceConfig.entitySets[namespace][k])
+            }))
+            .map(x => methodsForEntitySetNamespace(isForInterface, x.escapedNamespaceParts, x.entitySets))
+            .join("\n\n");
     }
 
     function toODataTypeRef() {
@@ -71,6 +73,7 @@ ${tab(parseResponseFunctionBody)}
     }
 
     function methodsForEntitySetNamespace(
+        isForInterface: boolean,
         entitySetNamespaceParts: string[],
         entitySets: ODataEntitySet[],
         first = true): string {
@@ -78,15 +81,22 @@ ${tab(parseResponseFunctionBody)}
         if (!entitySetNamespaceParts.length) {
             return [...entitySets]
                 .sort((x, y) => x.name < y.name ? -1 : 1)
-                .map(x => methodForEntitySet(x, first))
+                .map(x => methodForEntitySet(isForInterface, x, first))
                 .filter(x => x)
-                .join(first ? "\n\n" : ",\n\n");
+                .join(first || isForInterface ? "\n\n" : ",\n\n");
         }
 
         const methods = tab(methodsForEntitySetNamespace(
+            isForInterface,
             entitySetNamespaceParts.slice(1),
             entitySets,
             false));
+
+        if (isForInterface) {
+            return `${entitySetNamespaceParts[0]}: {
+${tab(methods)}
+}`
+        }
 
         const cacheArgs = first
             // TODO: weird error. If I remove the ";" from this.${keywords._httpClientArgs};, the last letter of 
@@ -102,21 +112,19 @@ ${methods}
 }`;
     }
 
-    function methodForEntitySet(entitySet: ODataEntitySet, hasThisContext: boolean): string | undefined {
-
-        const type = lookupComplexType(entitySet.forType);
-        if (!type) {
-            warn(warnings, "suppressUnableToFindTypeForEntitySet", `Could not find type for entity set: ${typeNameString(entitySet, settings)}.`);
-            return undefined;
-        }
+    function methodForEntitySet(isForInterface: boolean, entitySet: ODataEntitySet, hasThisContext: boolean): string | undefined {
 
         const generics = entitySet.isSingleton
-            ? singletonGenerics(entitySet, type)
-            : entitySetGenerics(entitySet, type);
+            ? singletonGenerics(entitySet)
+            : entitySetGenerics(entitySet);
+        const interfaceType = httpClientType(generics, true);
+
+        if (isForInterface) {
+            return `${entitySet.name}: ${interfaceType};`;
+        }
 
         const ths = hasThisContext ? "this." : ""
         const instanceType = httpClientType(generics, false);
-        const interfaceType = httpClientType(generics, true);
         const constructorArgs = {
             requestTools: `${ths}${keywords._httpClientArgs}`,
             defaultResponseInterceptor: `${keywords.responseParser}`,
@@ -132,17 +140,17 @@ ${methods}
 
         args = `const args = {\n${tab(args)}\n}`
 
-        return `get ${entitySet.name}() {
+        return `get ${entitySet.name}() : \n${tab(interfaceType)} {
+
 ${tab(args)}
 
-${tab(`return new ${instanceType}(args) as \n${tab(interfaceType)};`)}
+${tab(`return new ${instanceType}(args);`)}
 }`
     }
 
-    function entitySetGenerics(entitySet: ODataEntitySet, type: ODataComplexType) {
+    function entitySetGenerics(entitySet: ODataEntitySet) {
         const queryableType = fullyQualifiedTsType(entitySet.forType, getQueryableName);
         const casterType = fullyQualifiedTsType(entitySet.forType, getCasterName)
-        const subPathType = fullyQualifiedTsType(entitySet.forType, getSubPathName)
         const keyBuilderType = fullyQualifiedTsType(entitySet.forType, getKeyBuilderName)
 
         return {
@@ -157,7 +165,7 @@ ${tab(`return new ${instanceType}(args) as \n${tab(interfaceType)};`)}
         }
     }
 
-    function singletonGenerics(entitySet: ODataEntitySet, type: ODataComplexType) {
+    function singletonGenerics(entitySet: ODataEntitySet) {
         const queryableType = fullyQualifiedTsType(entitySet.forType, getQueryableName);
         const casterType = fullyQualifiedTsType(entitySet.forType, getCasterName)
         const subPathType = fullyQualifiedTsType(entitySet.forType, getSubPathName)

@@ -8,6 +8,7 @@ import { CastSelection, recontextDataForCasting } from "./entitySet/cast.js";
 import { recontextDataForSubPath, SubPathSelection } from "./entitySet/subPath.js";
 import { buildUri, executeRequest } from "./entitySet/executeRequest.js";
 import { Accept } from "./entitySet/utils.js";
+import { ODataTypeRef } from "../index.js";
 
 export type ODataResultMetadata = Partial<{
 
@@ -30,7 +31,7 @@ export type OperationIsNotPossibleAfterQuery = never
 /**
  * Path and query utils on an entity set or sub path
  */
-export interface IEntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSubPath, TFetchResult> {
+export interface IEntitySet<TRoot, TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSubPath, TFetchResult> {
 
     /**
      * Create a new EntitySet scoped to a single entity
@@ -54,8 +55,8 @@ export interface IEntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, 
      * 
      * @param urlEncode Default true
      */
-    withQuery(queryBuilder: (entity: TQueryable, utils: Utils) => Query | Query[], urlEncode?: boolean)
-        : IEntitySet<TEntity, TResult, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, TFetchResult>;
+    withQuery(queryBuilder: (entity: TQueryable, utils: Utils<TRoot>) => Query | Query[], urlEncode?: boolean)
+        : IEntitySet<TRoot, TEntity, TResult, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, TFetchResult>;
 
     /**
      * Execute a get request
@@ -80,10 +81,15 @@ export interface IEntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, 
      * @param encodeUri Specify whether to encode the query parts. Default: the value specifed in withQuery(...)
      */
     uri(encodeQueryParts?: boolean): ODataUriParts
+
+    /**
+     * Get type info about the values returned from this query
+     */
+    getOutputType(): ODataTypeRef
 }
 
-export class EntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSubPath, TFetchResult>
-    implements IEntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSubPath, TFetchResult> {
+export class EntitySet<TRoot, TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSubPath, TFetchResult>
+    implements IEntitySet<TRoot, TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSubPath, TFetchResult> {
     // ^^NOTE^^: these generic type names are copy pasted into code gen project \src\codeGen\utils.ts
     // ^^NOTE^^: make sure that they stay in sync
 
@@ -91,7 +97,8 @@ export class EntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSubP
 
     constructor(
         tools: EntitySetTools<TFetchResult, TResult>,
-        state: EntityQueryState | undefined = undefined) {
+        state: EntityQueryState | undefined = undefined,
+        private disableHttp = false) {
 
         this.state = {
             tools,
@@ -102,38 +109,46 @@ export class EntitySet<TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSubP
         };
     }
 
+    getOutputType(): ODataTypeRef {
+        return this.state.tools.type
+    }
+
     withKey<TNewEntityQuery>(key: (builder: TKeyBuilder) => KeySelection<TNewEntityQuery>): TNewEntityQuery {
 
         const { state, tools } = recontextDataForKey(this.state, key)
-        return new EntitySet<any, any, any, any, any, any, any>(tools, state) as TNewEntityQuery;
+        return new EntitySet<TRoot, any, any, any, any, any, any, any>(tools, state, this.disableHttp) as TNewEntityQuery;
     }
 
     cast<TNewEntityQuery>(
         cast: (caster: TCaster) => CastSelection<TNewEntityQuery>): TNewEntityQuery {
 
         const { tools, state } = recontextDataForCasting(this.state, cast)
-        return new EntitySet<any, any, any, any, any, any, any>(tools, state) as TNewEntityQuery;
+        return new EntitySet<TRoot, any, any, any, any, any, any, any>(tools, state, this.disableHttp) as TNewEntityQuery;
     }
 
     subPath<TNewEntityQuery>(
         selector: (entity: TSubPath) => SubPathSelection<TNewEntityQuery>): TNewEntityQuery {
 
         const { state, tools } = recontextDataForSubPath(this.state, selector)
-        return new EntitySet<any, any, any, any, any, any, any>(tools, state) as TNewEntityQuery;
+        return new EntitySet<TRoot, any, any, any, any, any, any, any>(tools, state, this.disableHttp) as TNewEntityQuery;
     }
 
     // https://github.com/ShaneGH/magic-odata/issues/2
-    withQuery(queryBuilder: (entity: TQueryable, utils: Utils) => Query | Query[], urlEncode?: boolean) {
+    withQuery(queryBuilder: (entity: TQueryable, utils: Utils<TRoot>) => Query | Query[], urlEncode?: boolean) {
 
         const { tools, state } = recontextDataForRootQuery(this.state, queryBuilder, urlEncode)
-        return new EntitySet<TEntity, TResult, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, TFetchResult>(
-            tools, state);
+        return new EntitySet<TRoot, TEntity, TResult, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, TFetchResult>(
+            tools, state, this.disableHttp);
     }
 
     get(overrideRequestTools?: Partial<RequestTools<TFetchResult, TResult>>): TResult;
     get<TOverrideResultType>(overrideRequestTools?: Partial<RequestTools<TFetchResult, TOverrideResultType>>): TOverrideResultType;
     get<TOverrideFetchResult, TOverrideResultType>(overrideRequestTools?: Partial<RequestTools<TOverrideFetchResult, TOverrideResultType>>): TOverrideResultType;
     get(overrideRequestTools?: Partial<RequestTools<TFetchResult, TResult>>): TResult {
+        if (this.disableHttp) {
+            throw new Error("This entity set has http requests disabled");
+        }
+
         return executeRequest(this.state, this.path(), overrideRequestTools)
     }
 

@@ -16,21 +16,22 @@ function removeTrailingSlash(path: string) {
     return path && path.replace(/\/$/, "")
 }
 
+function defaultUriInterceptor(uri: ODataUriParts): string {
+
+    let queryPart = Object
+        .keys(uri.query)
+        .map(x => `${x}=${uri.query[x]}`)
+        .join("&");
+
+    const uriRoot = removeTrailingSlash(uri.uriRoot)
+    const entityName = addLeadingSlash(removeTrailingSlash(uri.relativePath))
+    queryPart = queryPart && `?${queryPart}`
+
+    return `${uriRoot}${entityName}${queryPart}`
+}
+
 const defaultRequestTools: Partial<RequestTools<any, any>> = {
-    uriInterceptor: (uri: ODataUriParts) => {
-
-        let queryPart = Object
-            .keys(uri.query)
-            .map(x => `${x}=${uri.query[x]}`)
-            .join("&");
-
-        const uriRoot = removeTrailingSlash(uri.uriRoot)
-        const entityName = addLeadingSlash(removeTrailingSlash(uri.relativePath))
-        queryPart = queryPart && `?${queryPart}`
-
-        return `${uriRoot}${entityName}${queryPart}`
-    },
-
+    uriInterceptor: defaultUriInterceptor,
     requestInterceptor: (_: any, x: RequestOptions) => x
 }
 
@@ -73,13 +74,19 @@ function _buildUri<TFetchResult, TResult>(
     relativePath: string,
     tools: RequestTools<TFetchResult, TResult>): ODataUriParts {
 
+    const filterEnv = {
+        buildUri: defaultUriInterceptor,
+        serviceConfig: data.tools.root,
+        rootContext: "$it"
+    }
+
     return {
         uriRoot: tools.uriRoot,
         // if namespace === "", give null instead
         entitySetContainerName: data.tools.entitySet.namespace || null,
         entitySetName: data.tools.entitySet.name,
         relativePath: relativePath,
-        query: buildQuery(data.state.query?.query || [], "$it", data.tools.root.types, data.state.query?.urlEncode)
+        query: buildQuery(data.state.query?.query || [], filterEnv, data.state.query?.urlEncode)
     }
 }
 
