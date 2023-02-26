@@ -424,6 +424,23 @@ const users = new MyOdataCliet({...})
     .get();
 ```
 
+## Root
+
+The OData [$root](http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part2-url-conventions.html#sec_root) object can be used to refer to the entire odata service
+
+```typescript
+// find the User for Blog with id "blog_id"
+const users = new MyOdataCliet({...})
+    .User
+    .withQuery((u, { $filter: { eq, $root } }) => eq(
+        u.Name,
+        $root(root => root.Blogs
+            .withKey(k => k.key("blog_id"))
+            .subPath(bp => bp.user)
+            .subPath(bp => bp.id))))
+    .get();
+```
+
 ## Custom
 
 The custom operator allows to you add anything as a URL parameter

@@ -66,6 +66,8 @@ Write safe, statically typed odata queries in typescript. No more `string`. No m
     * $metadata files protected with authentication
     * Angular mode
  * Client configuration
+ * OData GET requests
+ * OData URI generation
  * Entity keys
  * Entity path
  * Query options
@@ -76,6 +78,7 @@ Write safe, statically typed odata queries in typescript. No more `string`. No m
     * $search
     * $skip, $top and $count
     * custom
+    * $root
  * Casting
  * $value
 
