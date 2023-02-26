@@ -4,6 +4,8 @@
  * [Code generation](#code-generation)
  * [Client configuration](#client-configuration)
  * [Angular configuration](#angular-configuration)
+ * [Basic Queries](#basic-queries)
+ * [Uri Generation](#uri-generation)
  * [Key lookup](#key-lookup)
  * [Sub path lookup](#sub-path-lookup)
     * [$value and $count](#value-and-count)
@@ -178,6 +180,30 @@ In app.module.ts. See [client configuration](#client-configuration) for more inf
   ...
 })
 export class AppModule { }
+```
+
+# Basic Queries
+
+Execute a query by chaining optional odata operations (e.g. path, key lookup, query) and calling the `get` method
+
+```typescript
+// get all users
+const users = new MyOdataCliet({...})
+    .Users
+    .get()
+```
+
+# Uri Generation
+
+You can also use the client to build a URI without executing a HTTP request
+
+```typescript
+// get all users
+const userUriComponents = new MyOdataCliet({...})
+    .Users
+    .withQuery((user, { $filter: { eq } }) => eq(user.Id, '123'))
+    // the argument specifies whether to encode uri componentes or not
+    .uri(false)
 ```
 
 # Key Lookup
