@@ -16,6 +16,7 @@
     * [$orderBy](#orderby)
     * [$search](#search)
     * [$skip, $top and $count](#paging)
+    * [$root](#root)
     * [custom](#custom)
  * [Casting](#casting)
 
@@ -433,7 +434,7 @@ The OData [$root](http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part2
 const users = new MyOdataCliet({...})
     .User
     .withQuery((u, { $filter: { eq, $root } }) => eq(
-        u.Name,
+        u.id,
         $root(root => root.Blogs
             .withKey(k => k.key("blog_id"))
             .subPath(bp => bp.user)
