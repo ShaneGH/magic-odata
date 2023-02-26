@@ -1,4 +1,4 @@
-import { ComplexTypeOrEnum, ODataComplexTypeProperty, ODataEntitySetNamespaces, ODataEntitySets, ODataServiceConfig, ODataSingleTypeRef, ODataTypeRef } from "magic-odata-shared";
+import { ComplexTypeOrEnum, ODataComplexTypeProperty, ODataEntitySetNamespaces, ODataEntitySets, ODataServiceConfig, ODataSingleTypeRef, ODataTypeRef, Function } from "magic-odata-shared";
 import { Config } from "./config.js";
 import { typeNameString, warn } from "./utils.js";
 
@@ -14,7 +14,8 @@ export function applyWhitelist(serviceConfig: ODataServiceConfig, settings: Conf
         console.warn("The entity whitelist is empty. This will generate an empty OData client. Set the whitelist to null to add all entities")
         return {
             entitySets: {},
-            types: {}
+            types: {},
+            unboundFunctions: [] as Function[]
         }
     }
 

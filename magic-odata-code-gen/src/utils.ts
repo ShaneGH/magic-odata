@@ -21,7 +21,6 @@ export function warn(warnings: SupressWarnings | null | undefined, suppression: 
         return true;
     }
 
-    if (!message.endsWith(".")) message += "."
-    console.warn(`${message} To supress this warning, set warningSettings.${suppression} to false`)
+    console.warn(`${message}\nTo supress this warning, set warningSettings.${suppression} to false`)
     return false;
 }

@@ -103,6 +103,11 @@ export type SupressWarnings = Partial<{
      * @default false
      */
     suppressIgnoredKeyType: boolean
+
+    /** 
+     * @default false
+     */
+    suppressInvalidFunctionConfiguration: boolean
 }>
 
 export enum TypeCaseSettings {

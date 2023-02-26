@@ -1,6 +1,6 @@
 
 import { useNamespaces } from 'xpath'
-import { ODataServiceTypes, ODataComplexType, ODataTypeRef, ODataSingleTypeRef, ODataServiceConfig, ODataEntitySetNamespaces, ODataEntitySet, ODataEnum, ComplexTypeOrEnum } from 'magic-odata-shared'
+import { ODataServiceTypes, ODataComplexType, ODataTypeRef, ODataSingleTypeRef, ODataServiceConfig, ODataEntitySetNamespaces, ODataEntitySet, ODataEnum, ComplexTypeOrEnum, Function, FunctionParam } from 'magic-odata-shared'
 import { SupressWarnings } from './config.js';
 import { warn } from './utils.js';
 
@@ -16,11 +16,84 @@ function nsLookup<T>(rootNode: Node, xpath: string) {
 export function processConfig(warningConfig: SupressWarnings, config: Document): ODataServiceConfig {
 
     checkVersion(warningConfig, config);
-
     return {
         types: processTypes(warningConfig, config),
-        entitySets: processEntitySets(config)
+        entitySets: processEntitySets(warningConfig, config),
+        unboundFunctions: processUnboundFunctions(warningConfig, config)
     };
+}
+
+function processUnboundFunctions(warningConfig: SupressWarnings, config: Document) {
+    return processFunctions(warningConfig, config, x => {
+        const isBound = nsLookup<Attr>(x, "@IsBound")
+        return !isBound.length || /^false$/i.test(isBound[0].value)
+    })
+}
+
+function processFunctions(warningConfig: SupressWarnings, config: Document, filter: (node: Node) => boolean) {
+    return findFunctions(config, filter)
+        .map(processFunction.bind(null, warningConfig))
+        .filter(x => !!x)
+        .map(x => x!)
+}
+
+function findFunctions(config: Document, filter: (node: Node) => boolean) {
+    return nsLookup<Node>(config, "edmx:Edmx/edmx:DataServices/edm:Schema/edm:Function")
+        .filter(filter)
+}
+
+function processFunction(warningConfig: SupressWarnings, f: Node): Function | null {
+
+    var name = nsLookup<Attr>(f, "@Name")
+    if (name.length !== 1) {
+        let names = name.map(x => x.value).join(", ")
+        names = names && ` (${names})`
+
+        warn(warningConfig, "suppressInvalidFunctionConfiguration", `Found function with ${name.length} names${names}. Ignoring.`);
+        return null
+    }
+
+    var returnType = nsLookup<Attr>(f, "edm:ReturnType/@Type")
+    if (returnType.length !== 1) {
+        warn(warningConfig, "suppressInvalidFunctionConfiguration", `Function ${name[0].value} has ${returnType.length} return types. Ignoring.`);
+        return null
+    }
+
+    const params = nsLookup<Node>(f, "edm:Parameter")
+        .map(x => processFunctionParam(name[0].value, x, warningConfig)!)
+
+    if (params.filter(x => !x).length) {
+        return null;
+    }
+
+    return {
+        name: name[0].value,
+        params,
+        returnType: parseTypeStr(returnType[0].value)
+    }
+}
+
+function processFunctionParam(fName: string, param: Node, warningConfig: SupressWarnings): FunctionParam | null {
+
+    const name = nsLookup<Attr>(param, "@Name")
+    if (name.length !== 1) {
+        let names = name.map(x => x.value).join(", ")
+        names = names && ` (${names})`
+        warn(warningConfig, "suppressInvalidFunctionConfiguration", `Function ${fName} has a parameter with ${name.length} names${names}. Ignoring.`);
+        return null
+    }
+
+    var paramType = nsLookup<Attr>(param, "@Type")
+    if (paramType.length !== 1) {
+        warn(warningConfig, "suppressInvalidFunctionConfiguration", `Function ${fName} has a parameter ${name[0].value} with ${paramType.length} types. Ignoring.`);
+        return null
+    }
+
+    return {
+        isBindingParameter: "bindingParameter" === paramType[0].value,
+        name: name[0].value,
+        type: parseTypeStr(paramType[0].value)
+    }
 }
 
 function processTypes(warningConfig: SupressWarnings, config: Document): ODataServiceTypes {
@@ -45,15 +118,15 @@ function processTypes(warningConfig: SupressWarnings, config: Document): ODataSe
         .reduce(sortComplexTypesIntoNamespace, {});
 }
 
-function processEntitySets(config: Document): ODataEntitySetNamespaces {
+function processEntitySets(warningConfig: SupressWarnings, config: Document): ODataEntitySetNamespaces {
 
-    return nsLookup(config, "edmx:Edmx/edmx:DataServices/edm:Schema/edm:EntityContainer")
-        .map(x => mapEntityContainer(x as Node))
+    return nsLookup<Node>(config, "edmx:Edmx/edmx:DataServices/edm:Schema/edm:EntityContainer")
+        .map(x => mapEntityContainer(warningConfig, x))
         .reduce((s, x) => [...s, ...x], [])
         .reduce(sortEntitySetsIntoNamespace, {});
 }
 
-function mapEntityContainer(entityContainer: Node): ODataEntitySet[] {
+function mapEntityContainer(warningConfig: SupressWarnings, entityContainer: Node): ODataEntitySet[] {
     const namespaces = nsLookup(entityContainer, "@Name") as Attr[];
     if (namespaces.length > 1) {
         const names = namespaces.map(x => x.value).join(", ");
@@ -61,33 +134,56 @@ function mapEntityContainer(entityContainer: Node): ODataEntitySet[] {
     }
 
     const namespace = namespaces[0]?.value || "";
-    return nsLookup(entityContainer, "edm:EntitySet")
-        .map(node => mapEntitySet(namespace, node as Node))
-        .concat(nsLookup(entityContainer, "edm:Singleton")
-            .map(node => mapSingleton(namespace, node as Node)));
+    return nsLookup<Node>(entityContainer, "edm:EntitySet")
+        .map(node => mapEntitySet(warningConfig, namespace, node))
+        .concat(nsLookup<Node>(entityContainer, "edm:Singleton")
+            .map(node => mapSingleton(namespace, node)));
 }
 
-function mapEntitySet(namespace: string, entitySet: Node): ODataEntitySet {
+function processEntitySetFunctions(warningConfig: SupressWarnings, config: Document, forType: ODataSingleTypeRef) {
+    return processFunctions(warningConfig, config, x => {
+        const isBound = nsLookup<Attr>(x, "@IsBound")
+        if (!isBound.length || !/^true$/i.test(isBound[0].value)) {
+            return false
+        }
+
+        const bindingParameter = nsLookup<Node>(x, 'edm:Parameter[@Name="bindingParameter"]')
+        if (!bindingParameter.length) {
+            return false
+        }
+
+        const bindingParameterType = nsLookup<Attr>(x, "edm:Parameter/@Type")
+        return bindingParameterType[0]?.value === `Collection(${forType.namespace && `${forType.namespace}.`}${forType.name})`
+    })
+}
+
+function mapEntitySet(warningConfig: SupressWarnings, namespace: string, entitySet: Node): ODataEntitySet {
 
     const name = getName(entitySet, "@Name", namespace);
-    const forType = getType(entitySet, "@EntityType", namespace, name);
+    const forType = getSingleType(entitySet, "@EntityType", namespace, name);
+
     return {
         isSingleton: false,
         namespace,
         name: name,
-        forType
+        forType,
+        collectionFunctions: !entitySet.ownerDocument
+            ? []
+            : processEntitySetFunctions(warningConfig, entitySet.ownerDocument, forType)
     };
 }
 
 function mapSingleton(namespace: string, entitySet: Node): ODataEntitySet {
 
     const name = getName(entitySet, "@Name", namespace);
-    const forType = getType(entitySet, "@Type", namespace, name);
+    const forType = getSingleType(entitySet, "@Type", namespace, name);
     return {
         isSingleton: true,
         namespace,
         name: name,
-        forType
+        forType,
+        // functions are on the entity itself
+        collectionFunctions: []
     };
 }
 
@@ -104,7 +200,7 @@ function getName(entitySet: Node, nameAttr: string, namespace: string) {
     return name[0].value;
 }
 
-function getType(entitySet: Node, typeAttr: string, namespace: string, forName: string): ODataSingleTypeRef {
+function getSingleType(entitySet: Node, typeAttr: string, namespace: string, forName: string): ODataSingleTypeRef {
 
     const type = nsLookup(entitySet, typeAttr) as Attr[];
     if (type.length > 1) {
@@ -114,11 +210,16 @@ function getType(entitySet: Node, typeAttr: string, namespace: string, forName: 
         throw new Error(`Could not find type for entity set ${forName} in collection ${namespace}`);
     }
 
-    const lastDot = type[0].value.lastIndexOf(".");
-    return lastDot === -1
-        // TODO: can this be true???
-        ? { isCollection: false, namespace: "", name: type[0].value }
-        : { isCollection: false, namespace: type[0].value.substring(0, lastDot), name: type[0].value.substring(lastDot + 1) };
+    let result = parseTypeStr(type[0].value)
+    if (!result.isCollection) return result;
+
+    // TODO: possible to simulate this?
+    console.warn(`EntityContianer ${type[0].value} refers to a collection. This is not supported. Unwrapping container to use entity type`);
+    while (result.isCollection) {
+        result = result.collectionType
+    }
+
+    return result
 }
 
 function checkVersion(warningConfig: SupressWarnings, config: Document) {
@@ -243,13 +344,36 @@ function mapEnumType(warningConfig: SupressWarnings, node: Node): ODataEnum | nu
     }
 }
 
+function processEntityFunctions(warningConfig: SupressWarnings, config: Document, forType: ODataSingleTypeRef) {
+    return processFunctions(warningConfig, config, x => {
+        const isBound = nsLookup<Attr>(x, "@IsBound")
+        if (!isBound.length || !/^true$/i.test(isBound[0].value)) {
+            return false
+        }
+
+        const bindingParameter = nsLookup<Node>(x, 'edm:Parameter[@Name="bindingParameter"]')
+        if (!bindingParameter.length) {
+            return false
+        }
+
+        const bindingParameterType = nsLookup<Attr>(x, "edm:Parameter/@Type")
+        return bindingParameterType[0]?.value === `${forType.namespace && `${forType.namespace}.`}${forType.name}`
+    })
+}
+
 function mapEntityType(warningConfig: SupressWarnings, node: Node): ODataComplexType {
 
+    const name = getName();
+    const namespace = (nsLookup(node.parentNode!, "@Namespace")[0] as Attr)?.value || "";
+
     return {
-        name: name(),
+        namespace,
+        name,
+        functions: node.ownerDocument
+            ? processEntityFunctions(warningConfig, node.ownerDocument, { isCollection: false, namespace, name })
+            : [],
         keyProps: keyTypes(),
         baseType: baseType(),
-        namespace: (nsLookup(node.parentNode!, "@Namespace")[0] as Attr)?.value || "",
         properties: nsLookup(node, "edm:Property")
             .map(prop => ({ navigationProp: false, prop: prop as Node }))
             .concat(nsLookup(node, "edm:NavigationProperty")
@@ -268,7 +392,7 @@ function mapEntityType(warningConfig: SupressWarnings, node: Node): ODataComplex
 
         const baseType = nsLookup(node, "@BaseType") as Attr[];
         if (baseType.length > 1 && !warningConfig.suppressAll && !warningConfig.suppressMultipleBaseTypes) {
-            console.warn(`Found multiple base types for ${name()}: ${baseType.map(x => x.value)}. Using first one found`);
+            console.warn(`Found multiple base types for ${getName()}: ${baseType.map(x => x.value)}. Using first one found`);
         }
 
         if (!baseType.length) {
@@ -281,7 +405,7 @@ function mapEntityType(warningConfig: SupressWarnings, node: Node): ODataComplex
             : { namespace: baseType[0].value.substring(0, dot), name: baseType[0].value.substring(dot + 1) };
     }
 
-    function name() {
+    function getName() {
         const val = (nsLookup(node, "@Name")[0] as Attr)?.value;
         if (!val) {
             throw new Error("Found edm:EntityType with no @Name");

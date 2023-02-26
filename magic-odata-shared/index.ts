@@ -14,6 +14,7 @@ export type ODataComplexTypeProperty = {
 export type ODataComplexType = ODataTypeName & {
     keyProps?: string[] | undefined
     baseType?: ODataTypeName
+    functions: Function[]
     properties: {
         [key: string]: ODataComplexTypeProperty
     }
@@ -50,6 +51,7 @@ export type ODataEnum = ODataTypeName & {
 
 export type ODataServiceConfig = {
     entitySets: ODataEntitySetNamespaces
+    unboundFunctions: Function[]
     types: ODataServiceTypes
 }
 
@@ -58,6 +60,19 @@ export type ODataEntitySet = {
     name: string,
     namespace: string,
     forType: ODataSingleTypeRef
+    collectionFunctions: Function[]
+}
+
+export type FunctionParam = {
+    isBindingParameter: boolean
+    name: string
+    type: ODataTypeRef
+}
+
+export type Function = {
+    name: string
+    params: FunctionParam[]
+    returnType: ODataTypeRef
 }
 
 export type ODataEntitySetNamespaces = {

@@ -1,10 +1,12 @@
 using System.Linq.Expressions;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Formatter;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Query.Expressions;
 using Microsoft.AspNetCore.OData.Results;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OData.UriParser;
 using TestServer.Model;
 
@@ -443,6 +445,54 @@ public class BlogsController : ODataControllerBase<Blog>
         : base(inMemoryDb)
     {
         this._inMemoryDb = inMemoryDb;
+    }
+
+    [HttpGet("MyBlogs()")]
+    [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
+    public IQueryable<Blog> GetMyBlogs()
+    {
+        return _inMemoryDb.Users
+            .Where(x => x.Id == "Me")
+            .SelectMany(u => u.Blogs);
+    }
+
+    [HttpGet("Blogs({key})/WordCount(filterCommentsOnly={filterCommentsOnly})")]
+    [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
+    public SingleResult<int> GetWordCount(string key, bool filterCommentsOnly)
+    {
+        var posts = _inMemoryDb.Blogs
+           .Where(x => x.Id == key)
+           .SelectMany(u => u.Posts);
+
+        if (filterCommentsOnly)
+        {
+            posts = posts
+                .Where(x => x.Comments.Count > 0);
+        }
+
+        var result = posts
+           .ToList()
+           .SelectMany(p => Regex
+               .Split(p.Content, @"\s")
+               .Where(x => x != ""))
+           .Count();
+
+        return new[] { result }.AsQueryable().AsSingleResult();
+    }
+
+    [HttpGet("Blogs({key})/WordCount()")]
+    [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
+    public SingleResult<int> GetWordCount(string key)
+    {
+        return GetWordCount(key, false);
+    }
+
+    [HttpGet("Blogs/BlogsByPopularity()")]
+    [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
+    public IQueryable<Blog> BlogsByPopularity(string key)
+    {
+        return _inMemoryDb.Blogs
+            .OrderBy(x => x.Posts.Sum(p => p.Comments.Count));
     }
 
     [HttpGet("Blogs({key})/User")]
