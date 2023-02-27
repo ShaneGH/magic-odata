@@ -1,6 +1,6 @@
 
 import { My, ODataClient } from "../generatedCode.js";
-import { addComment, addFullUserChain, addUser } from "../utils/client.js";
+import { addBlog, addBlogPost, addComment, addFullUserChain, addUser } from "../utils/client.js";
 import { uniqueString } from "../utils/utils.js";
 import { WithKeyType } from "magic-odata-client";
 import { RequestOptions, ResponseInterceptor } from "magic-odata-client";
@@ -31,19 +31,12 @@ function recordingFetcher(recorder: string[]) {
 
 describe("Singleton", function () {
 
-    it("Should filter (success)", execute.bind(null, true));
-    it("Should filter (failure)", execute.bind(null, false))
-
-    async function execute(success: boolean) {
-
-        const word = success
-            ? "Blog"
-            : "Invalid";
+    it("Should get", async function () {
 
         const result = await oDataClient.AppDetails.get();
 
         expect(result.Id).toBe(1)
-    }
+    })
 });
 
 describe("keyRaw", function () {
@@ -430,6 +423,96 @@ describe("SubPath", function () {
                 .get();
 
             expect(uri).toBe(`xxx/Users/My.Odata.Entities.User/$count`);
+        });
+    })
+
+    describe("function calls", () => {
+
+        describe("Singleton", () => {
+            const user = addFullUserChain();
+            it("Should call a function with no inputs", async () => {
+                await user
+                const userCount = await oDataClient.AppDetails
+                    .subPath(x => x.CountUsers())
+                    .get();
+
+                expect(userCount.value).toBeGreaterThan(0);
+            });
+
+            it("Should call a function after casting", async () => {
+                await user
+                const userCount = await oDataClient.AppDetailsBase
+                    .cast(x => x.AppDetails())
+                    .subPath(x => x.CountUsers())
+                    .get();
+
+                expect(userCount.value).toBeGreaterThan(0);
+            });
+        });
+
+        describe("Entity", () => {
+            it("Should call a function with no inputs", async () => {
+                const user = await addFullUserChain();
+                const wordCount = await oDataClient.Blogs
+                    .withKey(k => k.key(user.blog.Id))
+                    .subPath(x => x.WordCount())
+                    .get();
+
+                expect(wordCount.value).toBeGreaterThan(0);
+                expect(wordCount.value).toBe(user.blogPost.Content.split(/\s/).length);
+            });
+
+            it("Should call a function deep in the path", async () => {
+                const user = await addFullUserChain();
+                const wordCount = await oDataClient.Users
+                    .withKey(k => k.key(user.blogUser.Id))
+                    .subPath(u => u.Blogs)
+                    .withKey(k => k.key(user.blog.Id))
+                    .subPath(x => x.WordCount())
+                    .get();
+
+                expect(wordCount.value).toBeGreaterThan(0);
+                expect(wordCount.value).toBe(user.blogPost.Content.split(/\s/).length);
+            });
+
+            it("Should call a function with inputs (test 1)", functionWithInputs.bind(null, true));
+            it("Should call a function with inputs (test 2)", functionWithInputs.bind(null, false));
+
+            async function functionWithInputs(filter: boolean) {
+                const user = await addFullUserChain({ blogPostContent: "word1 word2" });
+                await addBlogPost(user.blog.Id, "word3")
+
+                const wordCount = await oDataClient.Blogs
+                    .withKey(k => k.key(user.blog.Id))
+                    .subPath(x => x.WordCount({ filterCommentsOnly: filter }))
+                    .get();
+
+                expect(wordCount.value).toBe(filter ? 2 : 3);
+            }
+
+            it("Should call a function after casting 1", async () => {
+                const user = await addFullUserChain();
+                const wordCount = await oDataClient.HasIds
+                    .cast(i => i.Blog())
+                    .withKey(k => k.key(user.blog.Id))
+                    .subPath(x => x.WordCount())
+                    .get();
+
+                expect(wordCount.value).toBeGreaterThan(0);
+                expect(wordCount.value).toBe(user.blogPost.Content.split(/\s/).length);
+            });
+
+            it("Should call a function after casting 2 (key before cast)", async () => {
+                const user = await addFullUserChain();
+                const wordCount = await oDataClient.HasIds
+                    .withKey(k => k.key(user.blog.Id))
+                    .cast(i => i.Blog())
+                    .subPath(x => x.WordCount())
+                    .get();
+
+                expect(wordCount.value).toBeGreaterThan(0);
+                expect(wordCount.value).toBe(user.blogPost.Content.split(/\s/).length);
+            });
         });
     })
 });

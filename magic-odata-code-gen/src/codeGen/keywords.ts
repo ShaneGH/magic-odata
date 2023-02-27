@@ -24,6 +24,7 @@ export type Keywords = {
     ODataCollectionResult: string
     ODataResult: string
     SingleItemsCannotBeQueriedByKey: string
+    CastingOnEnumsAndPrimitivesIsNotSupported: string
     CastingOnCollectionsOfCollectionsIsNotSupported: string
     QueryingOnCollectionsOfCollectionsIsNotSupported: string
     ThisItemDoesNotHaveAKey: string,
@@ -97,6 +98,7 @@ export function generateKeywords(allNamespaces: string[], rootLevelTypes: string
         SingleItemsCannotBeQueriedByKey: getKeyword("SingleItemsCannotBeQueriedByKey"),
         PrimitiveSubPath: getKeyword("PrimitiveSubPath"),
         CastingOnCollectionsOfCollectionsIsNotSupported: getKeyword("CastingOnCollectionsOfCollectionsIsNotSupported"),
+        CastingOnEnumsAndPrimitivesIsNotSupported: getKeyword("CastingOnEnumsAndPrimitivesIsNotSupported"),
         QueryingOnCollectionsOfCollectionsIsNotSupported: getKeyword("QueryingOnCollectionsOfCollectionsIsNotSupported"),
         ThisItemDoesNotHaveAKey: getKeyword("ThisItemDoesNotHaveAKey")
     }
@@ -148,6 +150,7 @@ ${tab(importWithAlias("ODataCollectionResult"))},
 ${tab(importWithAlias("ODataResult"))},
 ${tab(importWithAlias("SingleItemsCannotBeQueriedByKey"))},
 ${tab(importWithAlias("ThisItemDoesNotHaveAKey"))},
+${tab(importWithAlias("CastingOnEnumsAndPrimitivesIsNotSupported"))},
 ${tab(importWithAlias("CastingOnCollectionsOfCollectionsIsNotSupported"))},
 ${tab(importWithAlias("QueryingOnCollectionsOfCollectionsIsNotSupported"))},
 ${tab(importWithAlias("PrimitiveSubPath"))},

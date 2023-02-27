@@ -70,7 +70,7 @@ const ${keywords.rootConfig}: ${keywords.ODataServiceConfig} = ${oDataServiceCon
 ${exportSettings}`
 }
 
-type SanitizeNamespace = (namespace: string) => string
+export type SanitizeNamespace = (namespace: string) => string
 export const buildSanitizeNamespace = (settings: CodeGenConfig | null | undefined): SanitizeNamespace => (namespace: string) => {
     return sanitizeNamespace(namespace, settings)
 }
@@ -277,6 +277,23 @@ export function entitySetsName(settings: CodeGenConfig | null | undefined) {
 
 export function httpClientName(settings: CodeGenConfig | null | undefined) {
     return settings?.oDataClientName || "ODataClient";
+}
+
+export type GetUnboundFunctionsName = () => string
+export const buildGetUnboundFunctionsName = (settings: CodeGenConfig | null | undefined): GetUnboundFunctionsName => () => {
+    return settings?.unboundFunctionContainerTypeNameTemplate || "UnboundFunctions";
+}
+
+export type GetEntitySetFunctionsName = (forType: string) => string
+export const buildGetEntitySetFunctionsName = (settings: CodeGenConfig | null | undefined): GetEntitySetFunctionsName => (forType: string) => {
+    const qTemplate = settings?.entitySetFunctionContainerTypeNameTemplate || "{0}EntitySetFunctions";
+    return qTemplate.replace(/\{0\}/g, forType);
+}
+
+export type GetEntityFunctionsName = (forType: string) => string
+export const buildGetEntityFunctionsName = (settings: CodeGenConfig | null | undefined): GetEntityFunctionsName => (forType: string) => {
+    const qTemplate = settings?.entityFunctionContainerTypeNameTemplate || "{0}EntityFunctions";
+    return qTemplate.replace(/\{0\}/g, forType);
 }
 
 export type GetSubPathName = (forType: string) => string

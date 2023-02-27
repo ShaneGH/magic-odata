@@ -58,6 +58,7 @@ ${edm(tab, keywords)}`
                     ...s,
                     [x]: {
                         data: ns[x].data,
+                        functions: ns[x].functions,
                         caster: null,
                         subPath: null,
                         query: null,
@@ -73,6 +74,7 @@ ${edm(tab, keywords)}`
                     ...s,
                     [x]: {
                         data: null,
+                        functions: null,
                         caster: ns[x].caster,
                         subPath: ns[x].subPath,
                         query: ns[x].query,
@@ -110,6 +112,7 @@ ${buildModule(utils)}`
                 .keys(module)
                 .map(name => [
                     module[name].data,
+                    module[name].functions,
                     module[name].query,
                     module[name].caster,
                     module[name].subPath,

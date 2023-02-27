@@ -207,6 +207,26 @@ export type CodeGenConfig = Partial<{
     subPathTypeNameTemplate: string,
 
     /** 
+     * Specifies how to name unbound the Function type.
+     * @default "UnboundFunctions"
+     */
+    unboundFunctionContainerTypeNameTemplate: string,
+
+    /** 
+     * Specifies how to name bound entity set Function types. Use "{0}" to inject the name of the type
+     * that these functions are for
+     * @default "{0}EntitySetFunctions"
+     */
+    entitySetFunctionContainerTypeNameTemplate: string,
+
+    /** 
+     * Specifies how to name entity Function types. Use "{0}" to inject the name of the type
+     * that these functions are for
+     * @default "{0}EntityFunctions"
+     */
+    entityFunctionContainerTypeNameTemplate: string,
+
+    /** 
      * If set, dictates how many spaces constitute a tab
      * @default 2
      */

@@ -90,7 +90,7 @@ function processFunctionParam(fName: string, param: Node, warningConfig: Supress
     }
 
     return {
-        isBindingParameter: "bindingParameter" === paramType[0].value,
+        isBindingParameter: "bindingParameter" === name[0].value,
         name: name[0].value,
         type: parseTypeStr(paramType[0].value)
     }

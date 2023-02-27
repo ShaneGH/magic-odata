@@ -89,6 +89,7 @@ export {
 export {
     SingleItemsCannotBeQueriedByKey,
     CastingOnCollectionsOfCollectionsIsNotSupported,
+    CastingOnEnumsAndPrimitivesIsNotSupported,
     QueryingOnCollectionsOfCollectionsIsNotSupported,
     ThisItemDoesNotHaveAKey,
     $ValueAnd$CountTypesCanNotBeOperatedOn,

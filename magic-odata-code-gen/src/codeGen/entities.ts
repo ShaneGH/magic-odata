@@ -3,6 +3,7 @@ import { CodeGenConfig, SupressWarnings } from "../config.js"
 import { warn } from "../utils.js"
 import { buildEntityCasting } from "./entityCasting.js"
 import { buildEntityData } from "./entityData.js"
+import { buildGenerateEntityFunction } from "./entityFunctions.js"
 import { buildEntityKeyBuilder } from "./entityKeyBuilder.js"
 import { buildEntityQuery } from "./entityQuery.js"
 import { buildEntitySubPath } from "./entitySubPath.js"
@@ -11,6 +12,7 @@ import { buildSanitizeNamespace, Tab } from "./utils.js"
 
 export type EntityParts = {
     data: string | null
+    functions: string | null
     caster: string | null
     subPath: string | null
     query: string | null
@@ -25,9 +27,11 @@ const buildEntityBuilder = (settings: CodeGenConfig | null | undefined, tab: Tab
     const entityCastings = buildEntityCasting(tab, settings, serviceConfig, keywords);
     const entityKeyBuilder = buildEntityKeyBuilder(tab, settings, serviceConfig, keywords)
     const entitySubPathProps = buildEntitySubPath(tab, settings, serviceConfig, keywords);
+    const entityFunctions = buildGenerateEntityFunction(serviceConfig, keywords, settings, tab)
 
     return (type: ComplexTypeOrEnum) => ({
         data: entityData(type),
+        functions: type.containerType === "Enum" ? null : entityFunctions(type.type),
         query: entityDataBuilder(type),
         caster: entityCastings(type),
         keyBuilder: type.containerType === "ComplexType" ? entityKeyBuilder(type.type) : null,

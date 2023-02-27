@@ -31,6 +31,14 @@ public class AppDetailsController : ODataController
             .AsSingleResult();
     }
 
+    [HttpGet("AppDetails/CountUsers()")]
+    [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
+    public SingleResult<int> CountUsers()
+    {
+        var count = _inMemoryDb.Users.Count();
+        return new[] { count }.AsQueryable().AsSingleResult();
+    }
+
     [HttpGet("AppDetails/AppName")]
     [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
     public SingleResult<string> GetAppName()
@@ -99,13 +107,21 @@ public class AppDetailsBaseController : ODataController
 
     [HttpGet("AppDetailsBase")]
     [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
-    public SingleResult<AppDetailsBase> Get([FromODataUri] UserType key)
+    public SingleResult<AppDetailsBase> Get()
     {
         return _inMemoryDb.AppDetails
             .ToList()
             .Cast<AppDetailsBase>()
             .AsQueryable()
             .AsSingleResult();
+    }
+
+    [HttpGet("AppDetailsBase/My.Odata.Entities.AppDetails/CountUsers()")]
+    [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
+    public SingleResult<int> CountUsers()
+    {
+        var count = _inMemoryDb.Users.Count();
+        return new[] { count }.AsQueryable().AsSingleResult();
     }
 
     [HttpGet("AppDetailsBase/My.Odata.Entities.AppDetails")]
@@ -136,18 +152,6 @@ public class AppDetailsBaseController : ODataController
             .ToList()
             .SelectMany(x => x.AppNameWords)
             .AsQueryable();
-    }
-
-    [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
-    public IQueryable<UserRole> Get()
-    {
-        var es = _inMemoryDb.UserRoles.AsQueryable();
-        if (Request.Headers.ContainsKey("ToList"))
-        {
-            es = es.ToList().AsQueryable();
-        }
-
-        return es;
     }
 }
 
@@ -337,6 +341,42 @@ public class HasIdsController : ODataControllerBase<HasId>
             .AsSingleResult();
     }
 
+    [HttpGet("HasIds/My.Odata.Entities.Blog({blogId})/WordCount()")]
+    [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
+    public SingleResult<int> GetBlogWordCountFromHasIds([FromRoute] string blogId)
+    {
+        var posts = _inMemoryDb.Blogs
+           .Where(x => x.Id == blogId)
+           .SelectMany(u => u.Posts);
+
+        var result = posts
+           .ToList()
+           .SelectMany(p => Regex
+               .Split(p.Content, @"\s")
+               .Where(x => x != ""))
+           .Count();
+
+        return new[] { result }.AsQueryable().AsSingleResult();
+    }
+
+    [HttpGet("HasIds({key})/My.Odata.Entities.Blog/WordCount()")]
+    [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
+    public SingleResult<int> GetBlogWordCountFromHasIds2([FromRoute] string key)
+    {
+        var posts = _inMemoryDb.Blogs
+           .Where(x => x.Id == key)
+           .SelectMany(u => u.Posts);
+
+        var result = posts
+           .ToList()
+           .SelectMany(p => Regex
+               .Split(p.Content, @"\s")
+               .Where(x => x != ""))
+           .Count();
+
+        return new[] { result }.AsQueryable().AsSingleResult();
+    }
+
     [HttpGet("HasIds({key})/My.Odata.Entities.Blog")]
     [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
     public SingleResult<Blog> GetBlogsFromHasIds([FromRoute] string key)
@@ -430,6 +470,24 @@ public class UsersController : ODataControllerBase<User>
         return _inMemoryDb.Users
             .Where(x => x.Id == key)
             .SelectMany(u => u.Blogs);
+    }
+
+    [HttpGet("Users({userId})/Blogs({blogId})/WordCount()")]
+    [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
+    public SingleResult<int> GetUserBlogs([FromRoute] string userId, [FromRoute] string blogId)
+    {
+        var posts = _inMemoryDb.Blogs
+           .Where(x => x.Id == blogId && x.UserId == userId)
+           .SelectMany(u => u.Posts);
+
+        var result = posts
+           .ToList()
+           .SelectMany(p => Regex
+               .Split(p.Content, @"\s")
+               .Where(x => x != ""))
+           .Count();
+
+        return new[] { result }.AsQueryable().AsSingleResult();
     }
 
     protected override void AddEntity(EntityDbContext db, User entity) => db.Users.Add(entity);

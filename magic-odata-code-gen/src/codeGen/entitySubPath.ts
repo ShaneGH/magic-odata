@@ -1,7 +1,7 @@
 import { ODataComplexType, ODataTypeRef, ODataServiceConfig, ODataServiceTypes, ODataSingleTypeRef, ODataEnum } from "magic-odata-shared";
 import { CodeGenConfig } from "../config.js";
 import { typeNameString } from "../utils.js";
-import { entitySetsName } from "../codeGen/utils.js";
+import { buildGetEntityFunctionsName, entitySetsName } from "../codeGen/utils.js";
 import { Keywords } from "./keywords.js";
 import { buildFullyQualifiedTsType, buildGetCasterName, buildGetKeyBuilderName, buildGetQueryableName, buildGetSubPathName, buildSanitizeNamespace, FullyQualifiedTsType, GetCasterName, GetKeyBuilderName, GetQueryableName, GetSubPathName, buildHttpClientType, Tab, HttpClientType } from "./utils.js"
 
@@ -34,7 +34,8 @@ type EntityTypeInfo = {
     type: IsComplexType | IsPrimitiveType | IsEnumType
 }
 
-function buildGetSubPathProps(
+export type GetTypeForSubPath = (t: ODataTypeRef) => string
+export function buildGetTypeForSubPath(
     allTypes: ODataServiceTypes,
     fullyQualifiedTsType: FullyQualifiedTsType,
     getQueryableName: GetQueryableName,
@@ -43,31 +44,24 @@ function buildGetSubPathProps(
     getKeyBuilderName: GetKeyBuilderName,
     keywords: Keywords,
     httpClientType: HttpClientType,
-    settings: CodeGenConfig | null) {
+    settings: CodeGenConfig | null): GetTypeForSubPath {
 
-    return (type: ODataComplexType): string[] => {
+    return t => {
+        // TODO: test with arrays of arrays?
 
-        return Object
-            .keys(type.properties)
-            .map(key => [key, type.properties[key].type] as [string, ODataTypeRef])
-            .map(([key, value]) => {
+        const entityInfo = getEntityTypeInfo(t)
+        const tQueryable = getTQuery(entityInfo)
 
-                // TODO: test with arrays of arrays?
+        const generics = {
+            tKeyBuilder: getTKeyBuilder(entityInfo),
+            tQueryable,
+            tCaster: getTCaster(entityInfo),
+            tSubPath: getTSubPath(t, tQueryable),
+            tResult: t
+        }
 
-                const entityInfo = getEntityTypeInfo(value)
-                const tQueryable = getTQuery(entityInfo)
-
-                const generics = {
-                    tKeyBuilder: getTKeyBuilder(entityInfo),
-                    tQueryable,
-                    tCaster: getTCaster(entityInfo),
-                    tSubPath: getTSubPath(value, tQueryable),
-                    tResult: value
-                }
-
-                const entityQueryType = httpClientType(generics, true);
-                return `${key}: ${keywords.SubPathSelection}<${entityQueryType}>`
-            })
+        const entityQueryType = httpClientType(generics, true);
+        return `${keywords.SubPathSelection}<${entityQueryType}>`
     }
 
     function getTSubPath(typeRef: ODataTypeRef, tQueryable: string) {
@@ -97,8 +91,12 @@ function buildGetSubPathProps(
     function getTCaster(info: EntityTypeInfo, forceSingle = false) {
 
         // https://github.com/ShaneGH/magic-odata/issues/12
-        if (info.type.objectType !== ObjectType.ComplexType || info.collectionDepth > 1) {
+        if (info.collectionDepth > 1) {
             return keywords.CastingOnCollectionsOfCollectionsIsNotSupported;
+        }
+
+        if (info.type.objectType !== ObjectType.ComplexType) {
+            return keywords.CastingOnEnumsAndPrimitivesIsNotSupported;
         }
 
         const caster = fullyQualifiedTsType({
@@ -152,28 +150,6 @@ function buildGetSubPathProps(
         }, getQueryableName)
     }
 
-    function typeName(info: EntityTypeInfo, unwrapCollections = 0) {
-        const collectionStr = [...Array(Math.max(0, info.collectionDepth - unwrapCollections)).keys()]
-            .map(_ => "[]")
-            .join("")
-
-        const resultStr = info.type.objectType === ObjectType.PrimitiveType
-            ? fullyQualifiedTsType(info.type.primitiveType)
-            : info.type.objectType === ObjectType.EnumType
-                ? fullyQualifiedTsType({
-                    isCollection: false,
-                    namespace: info.type.enumType.namespace,
-                    name: info.type.enumType.name
-                })
-                : fullyQualifiedTsType({
-                    isCollection: false,
-                    namespace: info.type.complexType.namespace,
-                    name: info.type.complexType.name
-                });
-
-        return resultStr + collectionStr
-    }
-
     // TODO: this is a messy abstraction. Remove if possible
     // Might be entwined with TEntity on EntitySet. TEntity is never an array, even though maybe it should be
     function getEntityTypeInfo(propertyType: ODataTypeRef): EntityTypeInfo {
@@ -220,6 +196,37 @@ function buildGetSubPathProps(
     }
 }
 
+function buildGetSubPathProps(
+    allTypes: ODataServiceTypes,
+    fullyQualifiedTsType: FullyQualifiedTsType,
+    getQueryableName: GetQueryableName,
+    getCasterName: GetCasterName,
+    getSubPathName: GetSubPathName,
+    getKeyBuilderName: GetKeyBuilderName,
+    keywords: Keywords,
+    httpClientType: HttpClientType,
+    settings: CodeGenConfig | null) {
+
+    const getTypeForSubPath = buildGetTypeForSubPath(
+        allTypes,
+        fullyQualifiedTsType,
+        getQueryableName,
+        getCasterName,
+        getSubPathName,
+        getKeyBuilderName,
+        keywords,
+        httpClientType,
+        settings);
+
+    return (type: ODataComplexType): string[] => {
+
+        return Object
+            .keys(type.properties)
+            .map(key => [key, type.properties[key].type] as [string, ODataTypeRef])
+            .map(([key, value]) => `${key}: ${getTypeForSubPath(value)}`)
+    }
+}
+
 export type EntityCasting = (type: ODataComplexType) => string
 export const buildEntitySubPath = (tab: Tab, settings: CodeGenConfig | null | undefined, serviceConfig: ODataServiceConfig,
     keywords: Keywords) => {
@@ -230,6 +237,7 @@ export const buildEntitySubPath = (tab: Tab, settings: CodeGenConfig | null | un
     const fullyQualifiedTsType = buildFullyQualifiedTsType(settings);
     const getKeyBuilderName = buildGetKeyBuilderName(settings);
     const getQueryableName = buildGetQueryableName(settings);
+    const functionsType = buildGetEntityFunctionsName(settings)
     const httpClientType = buildHttpClientType(serviceConfig.types, keywords, tab, settings || null);
     const getSubPathProps = buildGetSubPathProps(serviceConfig.types, fullyQualifiedTsType, getQueryableName,
         getCasterName, getSubPathName, getKeyBuilderName, keywords, httpClientType, settings || null);
@@ -241,7 +249,7 @@ export const buildEntitySubPath = (tab: Tab, settings: CodeGenConfig | null | un
         const baseType = (fullyQualifiedBaseTypeName || "") && `${fullyQualifiedBaseTypeName} & `
         const props = getSubPathProps(type)
 
-        return `export type ${subPathName} = ${baseType}{
+        return `export type ${subPathName} = ${baseType}${functionsType(type.name)} & {
 ${tab(props.join("\n\n"))}
 }`;
     }

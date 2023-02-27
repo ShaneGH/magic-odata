@@ -127,7 +127,7 @@ ${methods}
         const instanceType = httpClientType(generics, false);
         const constructorArgs = {
             requestTools: `${ths}${keywords._httpClientArgs}`,
-            defaultResponseInterceptor: `${keywords.responseParser}`,
+            defaultResponseInterceptor: keywords.responseParser,
             type: `${keywords.toODataTypeRef}(${!entitySet.isSingleton}, "${entitySet.forType.namespace || ""}", "${entitySet.forType.name}")`,
             entitySet: `${keywords.rootConfig}.entitySets["${entitySet.namespace || ""}"]["${entitySet.name}"]`,
             root: keywords.rootConfig
@@ -149,15 +149,15 @@ ${tab(`return new ${instanceType}(args);`)}
     }
 
     function entitySetGenerics(entitySet: ODataEntitySet) {
-        const queryableType = fullyQualifiedTsType(entitySet.forType, getQueryableName);
+        const tQueryable = fullyQualifiedTsType(entitySet.forType, getQueryableName);
         const casterType = fullyQualifiedTsType(entitySet.forType, getCasterName)
-        const keyBuilderType = fullyQualifiedTsType(entitySet.forType, getKeyBuilderName)
+        const tKeyBuilder = fullyQualifiedTsType(entitySet.forType, getKeyBuilderName)
 
         return {
-            tKeyBuilder: keyBuilderType,
-            tQueryable: queryableType,
+            tKeyBuilder,
+            tQueryable,
             tCaster: `${casterType}.Collection`,
-            tSubPath: `${keywords.CollectionSubPath}<${entitySetsName(settings)}, ${queryableType}>`,
+            tSubPath: `${keywords.CollectionSubPath}<${entitySetsName(settings)}, ${tQueryable}>`,
             tResult: {
                 isCollection: true as true,
                 collectionType: entitySet.forType
@@ -166,15 +166,15 @@ ${tab(`return new ${instanceType}(args);`)}
     }
 
     function singletonGenerics(entitySet: ODataEntitySet) {
-        const queryableType = fullyQualifiedTsType(entitySet.forType, getQueryableName);
+        const tQueryable = fullyQualifiedTsType(entitySet.forType, getQueryableName);
         const casterType = fullyQualifiedTsType(entitySet.forType, getCasterName)
-        const subPathType = fullyQualifiedTsType(entitySet.forType, getSubPathName)
+        const tSubPath = fullyQualifiedTsType(entitySet.forType, getSubPathName)
 
         return {
             tKeyBuilder: keywords.SingleItemsCannotBeQueriedByKey,
-            tQueryable: queryableType,
+            tQueryable,
             tCaster: `${casterType}.Single`,
-            tSubPath: subPathType,
+            tSubPath,
             tResult: entitySet.forType
         }
     }

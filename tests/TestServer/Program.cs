@@ -155,6 +155,11 @@ public class Program
 
         builder.Singleton<AppDetails>("AppDetails");
         builder.Singleton<AppDetailsBase>("AppDetailsBase");
+        builder
+            .EntityType<AppDetails>()
+            .Function("CountUsers")
+            .Returns<int>();
+
         builder.EntitySet<UserProfile>("UserProfiles");
         builder.EntitySet<UserRole>("UserRoles");
         builder.EntitySet<HasId>("HasIds");

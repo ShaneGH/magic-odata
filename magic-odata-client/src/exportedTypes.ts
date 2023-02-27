@@ -19,6 +19,14 @@ export type SingleItemsCannotBeQueriedByKey = never
 export type CastingOnCollectionsOfCollectionsIsNotSupported = never
 
 /*
+ * This use case is not yet supported
+ * https://github.com/ShaneGH/magic-odata/issues/38
+ * 
+ * This is a type designed not to be used
+ */
+export type CastingOnEnumsAndPrimitivesIsNotSupported = never
+
+/*
  * We are not sure if this is a valid use case. The odata spec is vague on the matter
  * Many OData server implementations do not support this
  * 
