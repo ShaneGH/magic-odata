@@ -14,5 +14,6 @@ Bound
     * Composeable functions /func1()/func2()
     * what happens if the function has a param named "bindingParameter"
     * how does the whitelist behave with unbound and collection bound functions
+    * Optional namespaces on entity set functions
     * // TODO: collection_functions
     

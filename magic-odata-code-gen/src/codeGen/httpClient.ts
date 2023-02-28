@@ -1,7 +1,7 @@
 import { ODataEntitySet, ODataServiceConfig } from "magic-odata-shared";
 import { CodeGenConfig } from "../config.js";
 import { Keywords } from "./keywords.js";
-import { buildFullyQualifiedTsType, buildGetCasterName, buildGetKeyBuilderName, buildGetQueryableName, buildGetSubPathName, buildSanitizeNamespace, buildHttpClientType, Tab, entitySetsName, httpClientName } from "./utils.js";
+import { buildFullyQualifiedTsType, buildGetCasterName, buildGetKeyBuilderName, buildGetQueryableName, buildGetSubPathName, buildSanitizeNamespace, buildHttpClientType, Tab, entitySetsName, httpClientName, buildGetEntitySetFunctionsName } from "./utils.js";
 
 // TOOD: duplicate_logic HttpClient
 export function httpClient(
@@ -16,6 +16,7 @@ export function httpClient(
     const sanitizeNamespace = buildSanitizeNamespace(settings);
     const getKeyBuilderName = buildGetKeyBuilderName(settings);
 
+    const getEntitySetFunctionsName = buildGetEntitySetFunctionsName(settings)
     const getQueryableName = buildGetQueryableName(settings);
     const getCasterName = buildGetCasterName(settings)
     const getSubPathName = buildGetSubPathName(settings)
@@ -152,12 +153,14 @@ ${tab(`return new ${instanceType}(args);`)}
         const tQueryable = fullyQualifiedTsType(entitySet.forType, getQueryableName);
         const casterType = fullyQualifiedTsType(entitySet.forType, getCasterName)
         const tKeyBuilder = fullyQualifiedTsType(entitySet.forType, getKeyBuilderName)
+        const mockedType = { isCollection: false as false, namespace: entitySet.namespace, name: entitySet.name }
+        const functionsName = fullyQualifiedTsType(mockedType, getEntitySetFunctionsName)
 
         return {
             tKeyBuilder,
             tQueryable,
             tCaster: `${casterType}.Collection`,
-            tSubPath: `${keywords.CollectionSubPath}<${entitySetsName(settings)}, ${tQueryable}>`,
+            tSubPath: `${keywords.EntitySetSubPath}<${entitySetsName(settings)}, ${functionsName}, ${tQueryable}>`,
             tResult: {
                 isCollection: true as true,
                 collectionType: entitySet.forType

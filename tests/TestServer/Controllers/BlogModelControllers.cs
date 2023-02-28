@@ -545,12 +545,15 @@ public class BlogsController : ODataControllerBase<Blog>
         return GetWordCount(key, false);
     }
 
-    [HttpGet("Blogs/BlogsByPopularity()")]
+    [HttpGet("Blogs/Top10BlogsByName()")]
     [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
-    public IQueryable<Blog> BlogsByPopularity(string key)
+    public IQueryable<Blog> Top10BlogsByName()
     {
         return _inMemoryDb.Blogs
-            .OrderBy(x => x.Posts.Sum(p => p.Comments.Count));
+            .OrderBy(x => x.Name)
+            .Take(10)
+            .ToList()
+            .AsQueryable();
     }
 
     [HttpGet("Blogs({key})/User")]

@@ -39,6 +39,7 @@ export type Keywords = {
     AngularHttpResponse: string
     PrimitiveSubPath: string
     CollectionSubPath: string
+    EntitySetSubPath: string
     EdmDate: string
     EdmTimeOfDay: string
     EdmDuration: string
@@ -57,14 +58,13 @@ export function generateKeywords(allNamespaces: string[], rootLevelTypes: string
         .concat(rootLevelTypes)
         .reduce((s, x) => ({ ...s, [x]: true }), {} as Dict<boolean>)
 
-    const keys = Object.keys(lookup)
-
     return {
         EdmDate: getKeyword("EdmDate"),
         EdmTimeOfDay: getKeyword("EdmTimeOfDay"),
         EdmDuration: getKeyword("EdmDuration"),
         EdmDateTimeOffset: getKeyword("EdmDateTimeOffset"),
         CollectionSubPath: getKeyword("CollectionSubPath"),
+        EntitySetSubPath: getKeyword("EntitySetSubPath"),
         RequestOptions: getKeyword("RequestOptions"),
         mergeMap: getKeyword("mergeMap"),
         map: getKeyword("map"),
@@ -154,7 +154,8 @@ ${tab(importWithAlias("CastingOnEnumsAndPrimitivesIsNotSupported"))},
 ${tab(importWithAlias("CastingOnCollectionsOfCollectionsIsNotSupported"))},
 ${tab(importWithAlias("QueryingOnCollectionsOfCollectionsIsNotSupported"))},
 ${tab(importWithAlias("PrimitiveSubPath"))},
-${tab(importWithAlias("CollectionSubPath"))}
+${tab(importWithAlias("CollectionSubPath"))},
+${tab(importWithAlias("EntitySetSubPath"))}
 } from 'magic-odata-client';`
 
     return [odataTsClient, ng, rxjs]

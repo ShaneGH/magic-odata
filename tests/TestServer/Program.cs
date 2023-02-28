@@ -186,7 +186,7 @@ public class Program
 
         builder
             .EntityType<Blog>()
-            .Collection.Function("BlogsByPopularity")
+            .Collection.Function("Top10BlogsByName")
             .ReturnsCollection<Blog>();
 
         builder.EntitySet<CompositeKeyItem>("CompositeKeyItems");

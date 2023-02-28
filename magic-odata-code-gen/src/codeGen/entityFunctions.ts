@@ -5,7 +5,7 @@ import { Keywords } from "./keywords.js";
 import {
     buildGetEntityFunctionsName, buildGetEntitySetFunctionsName,
     buildGetUnboundFunctionsName, buildFullyQualifiedTsType, FullyQualifiedTsType, Tab,
-    HttpClientType, buildHttpClientType, buildLookupType, LookupType, GetKeyBuilderName, buildGetKeyBuilderName, buildGetQueryableName, buildGetCasterName, buildGetSubPathName
+    buildHttpClientType, buildGetKeyBuilderName, buildGetQueryableName, buildGetCasterName, buildGetSubPathName
 } from "./utils.js";
 
 export function generateUnboundFunctionTypes(serviceConfig: ODataServiceConfig, keywords: Keywords, config: CodeGenConfig, tab: Tab): string {
@@ -59,7 +59,7 @@ ${tab(functions.join("\n\n"))}
 }
 
 export type GenerateEntitySetFunction = (es: ODataEntitySet) => string
-export function buildGenerateEntitySetFunction(serviceConfig: ODataServiceConfig, keywords: Keywords, config: CodeGenConfig, tab: Tab): GenerateEntitySetFunction {
+export function buildGenerateEntitySetFunction(serviceConfig: ODataServiceConfig, keywords: Keywords, config: CodeGenConfig | null, tab: Tab): GenerateEntitySetFunction {
     const getEntitySetFunctionsName = buildGetEntitySetFunctionsName(config);
     const typeName = buildFullyQualifiedTsType(config)
     const httpClient = buildHttpClientType(serviceConfig.types, keywords, tab, config)
@@ -79,9 +79,9 @@ export function buildGenerateEntitySetFunction(serviceConfig: ODataServiceConfig
         const functions = (e.collectionFunctions || [])
             .map(mapFunction.bind(null, typeName, getTypeForSubPath))
 
-        return `export type ${getEntitySetFunctionsName(e.name)}
+        return `export type ${getEntitySetFunctionsName(e.name)} = {
 ${tab(functions.join("\n\n"))}
-`
+}`
     }
 }
 

@@ -450,6 +450,29 @@ describe("SubPath", function () {
             });
         });
 
+        describe("Entity set", () => {
+            it("Should call a function with no inputs", async () => {
+
+                const user = await addUser();
+                await Promise.all(
+                    [...Array(10).keys()].map(() => addBlog(user.Id!)))
+
+                const top10 = await oDataClient.Blogs
+                    .subPath(x => x.Top10BlogsByName())
+                    .get();
+
+                expect(top10.value.length).toBe(10);
+                for (let i = 1; i < top10.value.length; i++) {
+                    expect(
+                        top10.value[i].Name
+                            .toLocaleLowerCase()
+                            .localeCompare(top10.value[i - 1].Name
+                                .toLocaleLowerCase()))
+                        .toBeGreaterThanOrEqual(0)
+                }
+            });
+        });
+
         describe("Entity", () => {
             it("Should call a function with no inputs", async () => {
                 const user = await addFullUserChain();

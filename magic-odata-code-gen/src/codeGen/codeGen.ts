@@ -4,9 +4,10 @@ import { AsyncType, CodeGenConfig, SupressWarnings } from "../config.js";
 import { angularHttpClient } from "./angularHttpClient.js";
 import { edm } from "./edm.js";
 import { ProcessedNamespace, ProcessedServiceConfig, processServiceConfig } from "./entities.js";
+import { entitySetFunctions } from "./entitySetFunctions.js";
 import { fetchHttpClient } from "./fetchHttpClient.js";
 import { generateKeywords, imports } from "./keywords.js";
-import { buildSanitizeNamespace, buildTab, configObj, lintingAndComments } from "./utils.js";
+import { buildSanitizeNamespace, buildTab, configObj, linting, comments } from "./utils.js";
 
 export function codeGen(serviceConfig: ODataServiceConfig, settings: CodeGenConfig | null | undefined, warnings: SupressWarnings | null | undefined) {
 
@@ -19,14 +20,17 @@ export function codeGen(serviceConfig: ODataServiceConfig, settings: CodeGenConf
     const tab = buildTab(settings)
     const client = settings?.angularMode ? angularHttpClient : fetchHttpClient
 
-    const output = `
+    const output = `${linting()}
+
 ${imports(keywords, tab, settings || null)}
 
-${lintingAndComments()}
+${comments()}
 
 ${client(serviceConfig, tab, keywords, settings || null)}
 
 ${entities()}
+
+${entitySetFunctions(serviceConfig, keywords, settings, tab)}
 
 ${configObj(serviceConfig, keywords, settings, tab)}
 
@@ -104,6 +108,7 @@ ${buildModule(utils)}`
                 .map(x => x
                     ? `export module ${sanitizeNamespace(x)} {\n${tab(processModule(result[x]))}\n}`
                     : processModule(result[x]))
+                .filter(x => !!x)
                 .join("\n\n");
         }
 
@@ -118,8 +123,9 @@ ${buildModule(utils)}`
                     module[name].subPath,
                     module[name].keyBuilder
                 ]
-                    .filter(x => x)
+                    .filter(x => !!x)
                     .join("\n\n"))
+                .filter(x => !!x)
                 .join("\n\n")
         }
 

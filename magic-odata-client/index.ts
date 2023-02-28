@@ -94,5 +94,6 @@ export {
     ThisItemDoesNotHaveAKey,
     $ValueAnd$CountTypesCanNotBeOperatedOn,
     PrimitiveSubPath,
-    CollectionSubPath
+    CollectionSubPath,
+    EntitySetSubPath
 } from "./src/exportedTypes.js"

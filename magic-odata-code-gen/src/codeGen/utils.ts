@@ -30,12 +30,8 @@ export function buildTab(settings: CodeGenConfig | null | undefined): Tab {
     return f;
 }
 
-export function lintingAndComments() {
-    return `/* eslint-disable */
-/* tslint:disable */
-// ReSharper disable InconsistentNaming
-
-/********************************************************/
+export function comments() {
+    return `/********************************************************/
 /********************************************************/
 /****************                        ****************/
 /***************   🎉 Auto generated 🎉  ***************/
@@ -44,6 +40,12 @@ export function lintingAndComments() {
 /****************                        ****************/
 /********************************************************/
 /********************************************************/`
+}
+
+export function linting() {
+    return `/* eslint-disable */
+/* tslint:disable */
+// ReSharper disable InconsistentNaming`
 }
 
 export function configObj(serviceConfig: ODataServiceConfig, keywords: Keywords, settings: CodeGenConfig | null | undefined, tab: Tab) {

@@ -72,3 +72,5 @@ export type CollectionSubPath<TRoot, TQueryable> = {
       /* TSubPath */     $ValueAnd$CountTypesCanNotBeOperatedOn,
       /* TFetchResult */ Promise<Response>>>
 }
+
+export type EntitySetSubPath<TRoot, TFunctions, TQueryable> = TFunctions & CollectionSubPath<TRoot, TQueryable>
