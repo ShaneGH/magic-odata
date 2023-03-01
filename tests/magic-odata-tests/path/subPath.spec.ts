@@ -2,7 +2,7 @@
 import { My, ODataClient } from "../generatedCode.js";
 import { addBlog, addBlogPost, addComment, addFullUserChain, addUser } from "../utils/client.js";
 import { uniqueString } from "../utils/utils.js";
-import { WithKeyType } from "magic-odata-client";
+import { ODataCollectionResult, WithKeyType } from "magic-odata-client";
 import { RequestOptions, ResponseInterceptor } from "magic-odata-client";
 import { oDataClient, uriClient } from "../utils/odataClient.js";
 import { RootResponseInterceptor } from "magic-odata-client";
@@ -535,6 +535,17 @@ describe("SubPath", function () {
 
                 expect(wordCount.value).toBeGreaterThan(0);
                 expect(wordCount.value).toBe(user.blogPost.Content.split(/\s/).length);
+            });
+
+            it("Should call a composed functions", () => {
+                const uris = oDataClient.Users
+                    .withKey(k => k.key("123"))
+                    .subPath(x => x.FavouriteBlog())
+                    .subPath(x => x.WordCount())
+                    .uri(false);
+
+                // asp net doesn't like this req :(
+                expect(uris.relativePath).toBe("Users('123')/FavouriteBlog()/WordCount()");
             });
         });
     })

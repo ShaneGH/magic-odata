@@ -24,7 +24,7 @@ public class AppDetailsController : ODataController
 
     [HttpGet("AppDetails")]
     [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
-    public SingleResult<AppDetails> Get([FromODataUri] UserType key)
+    public SingleResult<AppDetails> Get()
     {
         return _inMemoryDb.AppDetails
             .AsQueryable()
@@ -80,18 +80,6 @@ public class AppDetailsController : ODataController
             .ToList()
             .SelectMany(x => x.UserTypes)
             .AsQueryable();
-    }
-
-    [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
-    public IQueryable<UserRole> Get()
-    {
-        var es = _inMemoryDb.UserRoles.AsQueryable();
-        if (Request.Headers.ContainsKey("ToList"))
-        {
-            es = es.ToList().AsQueryable();
-        }
-
-        return es;
     }
 }
 
@@ -345,36 +333,16 @@ public class HasIdsController : ODataControllerBase<HasId>
     [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
     public SingleResult<int> GetBlogWordCountFromHasIds([FromRoute] string blogId)
     {
-        var posts = _inMemoryDb.Blogs
-           .Where(x => x.Id == blogId)
-           .SelectMany(u => u.Posts);
-
-        var result = posts
-           .ToList()
-           .SelectMany(p => Regex
-               .Split(p.Content, @"\s")
-               .Where(x => x != ""))
-           .Count();
-
-        return new[] { result }.AsQueryable().AsSingleResult();
+        return BlogsController.GetWordCount(_inMemoryDb.Blogs
+           .Where(x => x.Id == blogId));
     }
 
     [HttpGet("HasIds({key})/My.Odata.Entities.Blog/WordCount()")]
     [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
     public SingleResult<int> GetBlogWordCountFromHasIds2([FromRoute] string key)
     {
-        var posts = _inMemoryDb.Blogs
-           .Where(x => x.Id == key)
-           .SelectMany(u => u.Posts);
-
-        var result = posts
-           .ToList()
-           .SelectMany(p => Regex
-               .Split(p.Content, @"\s")
-               .Where(x => x != ""))
-           .Count();
-
-        return new[] { result }.AsQueryable().AsSingleResult();
+        return BlogsController.GetWordCount(_inMemoryDb.Blogs
+           .Where(x => x.Id == key));
     }
 
     [HttpGet("HasIds({key})/My.Odata.Entities.Blog")]
@@ -418,6 +386,28 @@ public class UsersController : ODataControllerBase<User>
             .Where(x => x.Id == key)
             .Select(u => u.Name)
             .AsSingleResult();
+    }
+
+    [HttpGet("Users({key})/FavouriteBlog()")]
+    [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
+    public SingleResult<Blog> GetFavouriteBlog([FromRoute] string key)
+    {
+        return _inMemoryDb.Blogs
+            .Where(x => x.UserId == key)
+            .OrderBy(x => x.Name)
+            .Take(1)
+            .AsSingleResult();
+    }
+
+    [HttpGet("Users({key})/FavouriteBlog()/WordCount()")]
+    [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
+    public SingleResult<int> GetFavouriteBlogWordCount([FromRoute] string key)
+    {
+        return BlogsController.GetWordCount(_inMemoryDb.Users
+            .Where(x => x.Id == key)
+            .SelectMany(u => u.Blogs)
+            .OrderBy(x => x.Name)
+            .Take(1));
     }
 
     [HttpGet("Users({key})/Score")]
@@ -476,18 +466,8 @@ public class UsersController : ODataControllerBase<User>
     [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
     public SingleResult<int> GetUserBlogs([FromRoute] string userId, [FromRoute] string blogId)
     {
-        var posts = _inMemoryDb.Blogs
-           .Where(x => x.Id == blogId && x.UserId == userId)
-           .SelectMany(u => u.Posts);
-
-        var result = posts
-           .ToList()
-           .SelectMany(p => Regex
-               .Split(p.Content, @"\s")
-               .Where(x => x != ""))
-           .Count();
-
-        return new[] { result }.AsQueryable().AsSingleResult();
+        return BlogsController.GetWordCount(_inMemoryDb.Blogs
+           .Where(x => x.Id == blogId && x.UserId == userId));
     }
 
     protected override void AddEntity(EntityDbContext db, User entity) => db.Users.Add(entity);
@@ -503,6 +483,19 @@ public class BlogsController : ODataControllerBase<Blog>
         : base(inMemoryDb)
     {
         this._inMemoryDb = inMemoryDb;
+    }
+
+    public static SingleResult<int> GetWordCount(IQueryable<Blog> singleBlog)
+    {
+        var result = singleBlog
+           .SelectMany(u => u.Posts)
+           .ToList()
+           .SelectMany(p => Regex
+               .Split(p.Content, @"\s")
+               .Where(x => x != ""))
+           .Count();
+
+        return new[] { result }.AsQueryable().AsSingleResult();
     }
 
     [HttpGet("MyBlogs()")]

@@ -173,6 +173,11 @@ public class Program
 
         builder.Function("MyBlogs").ReturnsCollection<Blog>();
 
+        builder
+            .EntityType<User>()
+            .Function("FavouriteBlog")
+            .Returns<Blog>();
+
         var wordCount1 = builder
             .EntityType<Blog>()
             .Function("WordCount");
