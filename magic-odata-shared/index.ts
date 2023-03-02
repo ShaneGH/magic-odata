@@ -70,6 +70,7 @@ export type FunctionParam = {
 }
 
 export type Function = {
+    namespace: string
     name: string
     params: FunctionParam[]
     returnType: ODataTypeRef

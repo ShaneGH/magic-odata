@@ -173,6 +173,11 @@ public class Program
 
         builder.Function("MyBlogs").ReturnsCollection<Blog>();
 
+        var calculator = builder.Function("Calculator");
+        calculator.Parameter<int>("lhs");
+        calculator.Parameter<int>("rhs");
+        calculator.Returns<int>();
+
         builder
             .EntityType<User>()
             .Function("FavouriteBlog")

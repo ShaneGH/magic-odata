@@ -60,8 +60,8 @@ ${tab(methods(false))}
 
     function toODataTypeRef() {
         return `function ${keywords.toODataTypeRef}(collection: boolean, namespace: string, name: string): ${keywords.ODataTypeRef} {
-${tab(`const collectionType: ${keywords.ODataTypeRef} = { isCollection: false, name, namespace }`)}
-${tab("return collection ? { isCollection: true, collectionType } : collectionType")}
+${tab(`const collectionType: ${keywords.ODataTypeRef} = { isCollection: false, name, namespace }
+return collection ? { isCollection: true, collectionType } : collectionType`)}
 }`
     }
 

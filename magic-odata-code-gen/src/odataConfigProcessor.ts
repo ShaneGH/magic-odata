@@ -1,6 +1,9 @@
 
 import { useNamespaces } from 'xpath'
-import { ODataServiceTypes, ODataComplexType, ODataTypeRef, ODataSingleTypeRef, ODataServiceConfig, ODataEntitySetNamespaces, ODataEntitySet, ODataEnum, ComplexTypeOrEnum, Function, FunctionParam } from 'magic-odata-shared'
+import {
+    ODataServiceTypes, ODataComplexType, ODataTypeRef, ODataSingleTypeRef, ODataServiceConfig,
+    ODataEntitySetNamespaces, ODataEntitySet, ODataEnum, ComplexTypeOrEnum, Function, FunctionParam
+} from 'magic-odata-shared'
 import { SupressWarnings } from './config.js';
 import { warn } from './utils.js';
 
@@ -19,7 +22,7 @@ export function processConfig(warningConfig: SupressWarnings, config: Document):
     return {
         types: processTypes(warningConfig, config),
         entitySets: processEntitySets(warningConfig, config),
-        unboundFunctions: processUnboundFunctions(warningConfig, config)
+        unboundFunctions: []
     };
 }
 
@@ -30,20 +33,21 @@ function processUnboundFunctions(warningConfig: SupressWarnings, config: Documen
     })
 }
 
-function processFunctions(warningConfig: SupressWarnings, config: Document, filter: (node: Node) => boolean) {
+function processFunctions(warningConfig: SupressWarnings, config: Document, filter: (node: Element) => boolean) {
     return findFunctions(config, filter)
         .map(processFunction.bind(null, warningConfig))
         .filter(x => !!x)
         .map(x => x!)
 }
 
-function findFunctions(config: Document, filter: (node: Node) => boolean) {
-    return nsLookup<Node>(config, "edmx:Edmx/edmx:DataServices/edm:Schema/edm:Function")
+function findFunctions(config: Document, filter: (node: Element) => boolean) {
+    return nsLookup<Element>(config, "edmx:Edmx/edmx:DataServices/edm:Schema/edm:Function")
         .filter(filter)
 }
 
-function processFunction(warningConfig: SupressWarnings, f: Node): Function | null {
+function processFunction(warningConfig: SupressWarnings, x: { ns: string, f: Element }): Function | null {
 
+    const { ns, f } = x
     var name = nsLookup<Attr>(f, "@Name")
     if (name.length !== 1) {
         let names = name.map(x => x.value).join(", ")
@@ -67,6 +71,7 @@ function processFunction(warningConfig: SupressWarnings, f: Node): Function | nu
     }
 
     return {
+        namespace: ns,
         name: name[0].value,
         params,
         returnType: parseTypeStr(returnType[0].value)
@@ -120,25 +125,55 @@ function processTypes(warningConfig: SupressWarnings, config: Document): ODataSe
 
 function processEntitySets(warningConfig: SupressWarnings, config: Document): ODataEntitySetNamespaces {
 
-    return nsLookup<Node>(config, "edmx:Edmx/edmx:DataServices/edm:Schema/edm:EntityContainer")
+    return nsLookup<Element>(config, "edmx:Edmx/edmx:DataServices/edm:Schema/edm:EntityContainer")
         .map(x => mapEntityContainer(warningConfig, x))
         .reduce((s, x) => [...s, ...x], [])
         .reduce(sortEntitySetsIntoNamespace, {});
 }
 
-function mapEntityContainer(warningConfig: SupressWarnings, entityContainer: Node): ODataEntitySet[] {
-    const namespaces = nsLookup(entityContainer, "@Name") as Attr[];
+function mapEntityContainer(warningConfig: SupressWarnings, entityContainer: Element): ODataEntitySet[] {
+    const namespaces = nsLookup<Attr>(entityContainer, "@Name")
     if (namespaces.length > 1) {
         const names = namespaces.map(x => x.value).join(", ");
         console.warn(`Found more than one Name for EntityContianer: ${names}. Using first value.`);
     }
 
     const namespace = namespaces[0]?.value || "";
+    // TODO: unbound functions
+    //const unboundFunctions = getUnboundFunctions(entityContainer, warningConfig)
+
     return nsLookup<Node>(entityContainer, "edm:EntitySet")
         .map(node => mapEntitySet(warningConfig, namespace, node))
         .concat(nsLookup<Node>(entityContainer, "edm:Singleton")
             .map(node => mapSingleton(namespace, node)));
 }
+
+// TODO: unbound functions
+// function getUnboundFunctions(entityContainer: Element, warningConfig: SupressWarnings): Function[] {
+//     const functionImports = nsLookup<Element>(entityContainer, "edm:FunctionImport")
+//     if (!functionImports.length) return []
+
+//     const unboundFunctions = processUnboundFunctions(warningConfig, entityContainer.ownerDocument!)
+//     const output = functionImports
+//         .map(fImport => {
+//             const functionName = nsLookup<Attr>(fImport, "@Function")[0]?.value
+//             if (!functionName) {
+//                 warn(warningConfig, "suppressInvalidFunctionConfiguration", "Found FunctionImport node with no Function attribute. Ignoring")
+//                 return null
+//             }
+
+//             const f = unboundFunctions.filter(x => `${x.namespace && `${x.namespace}.`}${x.name}` === functionName)[0]
+//             if (!f) {
+//                 warn(warningConfig, "suppressInvalidFunctionConfiguration", `Could not find function definition for unboudn function ${functionName}. Ignoring`)
+//                 return null
+//             }
+
+//             return f!
+//         })
+//         .filter(x => !!x)
+
+//     return output as Function[]
+// }
 
 function processEntitySetFunctions(warningConfig: SupressWarnings, config: Document, forType: ODataSingleTypeRef) {
     return processFunctions(warningConfig, config, x => {

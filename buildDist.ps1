@@ -1,6 +1,6 @@
 
-pushd .\magic-odata-client
-echo "Building query"
+pushd .\magic-odata-code-gen
+echo "Building query compile time"
 tsc
 if (-not($?)) {
     popd
@@ -8,8 +8,9 @@ if (-not($?)) {
 }
 
 popd
-pushd .\magic-odata-code-gen
-echo "Building query compile time"
+
+pushd .\magic-odata-client
+echo "Building query"
 tsc
 if (-not($?)) {
     popd

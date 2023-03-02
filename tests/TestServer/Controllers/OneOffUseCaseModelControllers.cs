@@ -10,6 +10,24 @@ namespace TestServer.Controllers;
 
 
 [Route(Program.OdataRoot)]
+public class UnboundFunctionController : ODataController
+{
+    private readonly EntityDbContext _inMemoryDb;
+
+    public UnboundFunctionController(EntityDbContext inMemoryDb)
+    {
+        this._inMemoryDb = inMemoryDb;
+    }
+
+    [HttpGet("Calculator(lhs={key1},lhs={key2})")]
+    [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
+    public SingleResult<int> Calculator([FromRoute] int key1, [FromRoute] int key2)
+    {
+        return SingleResult.Create(new[] { key1 + key2 }.AsQueryable());
+    }
+}
+
+[Route(Program.OdataRoot)]
 public class CompositeKeyItemsController : ODataController
 {
     private readonly EntityDbContext _inMemoryDb;
