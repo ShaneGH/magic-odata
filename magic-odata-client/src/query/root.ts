@@ -1,4 +1,4 @@
-import { ODataEntitySets, ODataServiceConfig, ODataTypeRef } from "magic-odata-shared";
+import { Dict, EntityContainer, ODataEntitySet, ODataServiceConfig } from "magic-odata-shared";
 import { EntitySet, IEntitySet } from "../entitySet.js";
 import { EntitySetTools } from "../entitySet/utils.js";
 import { FilterEnv, FilterResult } from "../queryBuilder.js";
@@ -13,11 +13,11 @@ export function $root(filter: (root: any) => IEntitySet<any, any, any, any, any,
     return Reader.create<FilterEnv, FilterResult>(env => {
 
         const entitySetTree = Object
-            .keys(env.serviceConfig.entitySets)
+            .keys(env.schema.entityContainers)
             .map(ns => methodsForEntitySetNamespace(
                 env.serviceConfig,
                 ns.replace(/[^a-zA-Z0-9$._]/g, ".").split("."),
-                env.serviceConfig.entitySets[ns]))
+                env.schema.entityContainers[ns].entitySets))
             .reduce((s, x) => {
                 if (!s) return x
                 return merge(s, x, "root")
@@ -113,7 +113,7 @@ type Node =
 function methodsForEntitySetNamespace(
     serviceConfig: ODataServiceConfig,
     entitySetNamespaceParts: string[],
-    entitySets: ODataEntitySets): Node {
+    entitySets: Dict<ODataEntitySet>): Node {
 
     if (!entitySetNamespaceParts.length) {
         return Object

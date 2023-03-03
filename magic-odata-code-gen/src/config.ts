@@ -207,17 +207,16 @@ export type CodeGenConfig = Partial<{
     subPathTypeNameTemplate: string,
 
     /** 
+     * Specifies the name for entity set functions for a schema namespace
+     * @default "EntitySetFunctions"
+     */
+    entitySetFunctionsTypeName: string,
+
+    /** 
      * Specifies how to name unbound the Function type.
      * @default "UnboundFunctions"
      */
     unboundFunctionContainerTypeNameTemplate: string,
-
-    /** 
-     * Specifies how to name bound entity set Function types. Use "{0}" to inject the name of the type
-     * that these functions are for
-     * @default "{0}EntitySetFunctions"
-     */
-    entitySetFunctionContainerTypeNameTemplate: string,
 
     /** 
      * Specifies how to name entity Function types. Use "{0}" to inject the name of the type
@@ -245,6 +244,15 @@ export type CodeGenConfig = Partial<{
      * @default "."
      */
     namespaceSpecialCharacter: string
+
+    /** 
+     * If true, the OData client will be added to a module inside the generated file representing it's schema namespace
+     * Otherwise the OData client will be added to the root of the generated file
+     * 
+     * You should set this to true if there are multiple Schemas in a single $metadata document
+     * @default false
+     */
+    addODataClientToNamespace: boolean
 
     /** 
      * The name of the http client to export

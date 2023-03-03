@@ -24,7 +24,7 @@ function filterize<T>(
             $$output,
             $$filter: mapper
                 ? mapper(toFilterize as T)
-                : serialize(toFilterize, $$output, serviceConfig.types)
+                : serialize(toFilterize, $$output, serviceConfig.schemaNamespaces)
         })))
 }
 
@@ -108,7 +108,7 @@ export function isIn<T>(lhs: Operable<T>, rhs: T[] | OperableCollection<T>, mapp
             $$output: { isCollection: true, collectionType: $$output },
             $$filter: `[${mapper
                 ? rhsA.map(mapper).join(",")
-                : rhsA.map(x => serialize(x, $$output, env.serviceConfig.types)).join(",")}]`
+                : rhsA.map(x => serialize(x, $$output, env.serviceConfig.schemaNamespaces)).join(",")}]`
         })))
     }
 

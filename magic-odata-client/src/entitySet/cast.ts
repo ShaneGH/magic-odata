@@ -10,10 +10,10 @@ function buildCaster<TFetchResult, TResult, TCaster>(
     const { namespace, name, isCollection } = getCastingTypeRef(data.tools.type);
 
     const inherits = Object
-        .keys(data.tools.root.types)
+        .keys(data.tools.root.schemaNamespaces)
         .map(ns => Object
-            .keys(data.tools.root.types[ns])
-            .map(t => data.tools.root.types[ns][t]))
+            .keys(data.tools.root.schemaNamespaces[ns].types)
+            .map(t => data.tools.root.schemaNamespaces[ns].types[t]))
         .reduce((s, x) => [...s, ...x], [])
         .filter(x => x.containerType === "ComplexType"
             && ((x.type.baseType

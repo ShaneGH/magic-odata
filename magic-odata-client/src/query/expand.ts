@@ -1,4 +1,3 @@
-import { ODataServiceConfig, ODataServiceTypes } from "magic-odata-shared";
 import { buildQuery, Expand, FilterEnv, Query } from "../queryBuilder.js"
 import { PathSegment, QueryCollection, QueryComplexObject, QueryObjectType, reContext } from "./queryComplexObjectBuilder.js"
 
@@ -114,8 +113,8 @@ function innerBit<T>(
     and: ((x: QueryComplexObject<T>) => Query | Query[])) {
 
     const reContexted = obj.$$oDataQueryObjectType === QueryObjectType.QueryCollection
-        ? reContext(obj.childObjConfig, filterEnv.serviceConfig.types)
-        : reContext(obj, filterEnv.serviceConfig.types);
+        ? reContext(obj.childObjConfig, filterEnv.serviceConfig.schemaNamespaces)
+        : reContext(obj, filterEnv.serviceConfig.schemaNamespaces);
 
     filterEnv = {
         ...filterEnv,

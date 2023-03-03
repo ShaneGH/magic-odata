@@ -1,7 +1,12 @@
 import { ODataEntitySet, ODataServiceConfig } from "magic-odata-shared";
 import { CodeGenConfig } from "../config.js";
+import { treeify, Node } from "../utils.js";
 import { Keywords } from "./keywords.js";
-import { buildFullyQualifiedTsType, buildGetCasterName, buildGetKeyBuilderName, buildGetQueryableName, buildGetSubPathName, buildSanitizeNamespace, buildHttpClientType, Tab, entitySetsName, httpClientName, buildGetEntitySetFunctionsName } from "./utils.js";
+import {
+    buildFullyQualifiedTsType, buildGetCasterName, buildGetKeyBuilderName, buildGetQueryableName, getEntitySetFunctionsName,
+    buildGetSubPathName, buildSanitizeNamespace, buildHttpClientType, Tab, entitySetsName, httpClientName, Dict
+} from "./utils.js";
+
 
 // TOOD: duplicate_logic HttpClient
 export function httpClient(
@@ -16,11 +21,10 @@ export function httpClient(
     const sanitizeNamespace = buildSanitizeNamespace(settings);
     const getKeyBuilderName = buildGetKeyBuilderName(settings);
 
-    const getEntitySetFunctionsName = buildGetEntitySetFunctionsName(settings)
     const getQueryableName = buildGetQueryableName(settings);
     const getCasterName = buildGetCasterName(settings)
     const getSubPathName = buildGetSubPathName(settings)
-    const httpClientType = buildHttpClientType(serviceConfig.types, keywords, tab, settings || null);
+    const httpClientType = buildHttpClientType(serviceConfig.schemaNamespaces, keywords, tab, settings || null);
     const constructor = `constructor(private ${keywords._httpClientArgs}: ${keywords.RequestTools}<${requestToolsGenerics.join(", ")}>) { }`;
 
     return `
@@ -28,11 +32,13 @@ ${parseResponse()}
 
 ${toODataTypeRef()}
 
+${toODataEntitySet()}
+
 /**
  * A description of all of the entity in an OData model
  */
 export interface ${entitySetsName(settings)} {
-${tab(methods(true))}
+${tab(entitySets(true))}
 }
 
 /**
@@ -41,27 +47,64 @@ ${tab(methods(true))}
 export class ${httpClientName(settings)} implements ${entitySetsName(settings)} {
 ${tab(constructor)}
 
-${tab(methods(false))}
+${tab(entitySets(false))}
 }`
+    function toList<T>(x: Dict<T>): [string, T][] {
+        return Object.keys(x).map(k => [k, x[k]])
+    }
 
-    function methods(isForInterface: boolean) {
+    function mapDict<T, T1>(items: Dict<T>, mapper: (x: T) => T1) {
         return Object
-            .keys(serviceConfig.entitySets)
-            .sort((x, y) => x < y ? -1 : 1)
-            .map(namespace => ({
-                escapedNamespaceParts: sanitizeNamespace(namespace).split(".").filter(x => !!x),
-                entitySets: Object
-                    .keys(serviceConfig.entitySets[namespace])
-                    .map(k => serviceConfig.entitySets[namespace][k])
-            }))
-            .map(x => methodsForEntitySetNamespace(isForInterface, x.escapedNamespaceParts, x.entitySets))
-            .join("\n\n");
+            .keys(items)
+            .reduce((s, x) => ({
+                [x]: mapper(items[x])
+            }), {} as Dict<T1>)
+    }
+
+    function groupBy<T>(x: T[], grouping: (x: T) => string): Dict<T[]> {
+        return x
+            .reduce((s, x) => {
+                const key = grouping(x)
+                return s[key]
+                    ? {
+                        ...s,
+                        [key]: s[key].concat([x])
+                    } : {
+                        ...s,
+                        [key]: [x]
+                    }
+            }, {} as Dict<T[]>)
+    }
+
+    function flatten<T>(xs: T[][]) {
+        return xs.reduce((s, x) => [...s, ...x], [])
+    }
+
+    function entitySets(isForInterface: boolean) {
+
+        const entitySets = flatten(flatten(
+            toList(serviceConfig.schemaNamespaces)
+                .map(([_, ns]) => toList(ns.entityContainers)
+                    .map(([_, ctr]) => toList(ctr.entitySets)
+                        .map(([_, x]) => x)))))
+
+        const entitySetsPerContainer = mapDict(groupBy(entitySets, x => x.namespace), es =>
+            treeify(es.map(e => [sanitizeNamespace(e.containerName).split(".").filter(x => !!x), e])))
+
+
+        return methodsForEntitySetNamespace(isForInterface, entitySetsPerContainer[Object.keys(entitySetsPerContainer)[0]])
     }
 
     function toODataTypeRef() {
         return `function ${keywords.toODataTypeRef}(collection: boolean, namespace: string, name: string): ${keywords.ODataTypeRef} {
 ${tab(`const collectionType: ${keywords.ODataTypeRef} = { isCollection: false, name, namespace }
 return collection ? { isCollection: true, collectionType } : collectionType`)}
+}`
+    }
+
+    function toODataEntitySet() {
+        return `function ${keywords.toODataEntitySet}(namespace: string, collection: string, entitySet: string): ${keywords.ODataEntitySet} {
+${tab(`return ${keywords.rootConfig}.schemaNamespaces[namespace || ""].entityContainers[collection || ""].entitySets[entitySet]`)}
 }`
     }
 
@@ -75,42 +118,33 @@ ${tab(parseResponseFunctionBody)}
 
     function methodsForEntitySetNamespace(
         isForInterface: boolean,
-        entitySetNamespaceParts: string[],
-        entitySets: ODataEntitySet[],
+        entitySets: Node<ODataEntitySet[]>,
         first = true): string {
 
-        if (!entitySetNamespaceParts.length) {
-            return [...entitySets]
-                .sort((x, y) => x.name < y.name ? -1 : 1)
-                .map(x => methodForEntitySet(isForInterface, x, first))
-                .filter(x => x)
-                .join(first || isForInterface ? "\n\n" : ",\n\n");
-        }
+        const methods = entitySets.value?.map(x => methodForEntitySet(isForInterface, x, first)).filter(x => !!x) || []
 
-        const methods = tab(methodsForEntitySetNamespace(
-            isForInterface,
-            entitySetNamespaceParts.slice(1),
-            entitySets,
-            false));
-
-        if (isForInterface) {
-            return `${entitySetNamespaceParts[0]}: {
-${tab(methods)}
-}`
-        }
-
-        const cacheArgs = first
+        const cacheArgs = !isForInterface && first
             // TODO: weird error. If I remove the ";" from this.${keywords._httpClientArgs};, the last letter of 
             // _httpClientArgs also disappears
-            ? tab(`const ${keywords._httpClientArgs} = this.${keywords._httpClientArgs};`)
+            ? `const ${keywords._httpClientArgs} = this.${keywords._httpClientArgs};\n`
             : ""
 
-        return `get ${entitySetNamespaceParts[0]}() {
-${cacheArgs}
-${tab(`return {
-${methods}
+        const subPaths = Object
+            .keys(entitySets.children)
+            .map(c => !isForInterface
+                ? `get ${c}() {
+${tab(`${cacheArgs}return {
+${tab(methodsForEntitySetNamespace(isForInterface, entitySets.children[c], false))}
 }`)}
-}`;
+}`
+                : `${c}: {
+${tab(methodsForEntitySetNamespace(isForInterface, entitySets.children[c], false))}
+}`)
+
+        return [
+            ...methods,
+            ...subPaths
+        ].join(first || isForInterface ? "\n\n" : ",\n\n")
     }
 
     function methodForEntitySet(isForInterface: boolean, entitySet: ODataEntitySet, hasThisContext: boolean): string | undefined {
@@ -130,7 +164,7 @@ ${methods}
             requestTools: `${ths}${keywords._httpClientArgs}`,
             defaultResponseInterceptor: keywords.responseParser,
             type: `${keywords.toODataTypeRef}(${!entitySet.isSingleton}, "${entitySet.forType.namespace || ""}", "${entitySet.forType.name}")`,
-            entitySet: `${keywords.rootConfig}.entitySets["${entitySet.namespace || ""}"]["${entitySet.name}"]`,
+            entitySet: `${keywords.toODataEntitySet}("${entitySet.namespace || ""}", "${entitySet.containerName || ""}", "${entitySet.name}")`,
             root: keywords.rootConfig
         } as any
 
@@ -153,8 +187,12 @@ ${tab(`return new ${instanceType}(args);`)}
         const tQueryable = fullyQualifiedTsType(entitySet.forType, getQueryableName);
         const casterType = fullyQualifiedTsType(entitySet.forType, getCasterName)
         const tKeyBuilder = fullyQualifiedTsType(entitySet.forType, getKeyBuilderName)
-        const mockedType = { isCollection: false as false, namespace: entitySet.namespace, name: entitySet.name }
-        const functionsName = fullyQualifiedTsType(mockedType, getEntitySetFunctionsName)
+        const mockedType = {
+            isCollection: false as false,
+            namespace: entitySet.namespace,
+            name: getEntitySetFunctionsName(settings)
+        }
+        const functionsName = `${fullyQualifiedTsType(mockedType)}["${entitySet.containerName || ""}"]["${entitySet.name}"]`
 
         return {
             tKeyBuilder,

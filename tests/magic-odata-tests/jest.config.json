@@ -1,5 +1,5 @@
 {
     "setupFilesAfterEnv": [
-        "./dist/setup-jest.js"
+        "./dist/tests/magic-odata-tests/setup-jest.js"
     ]
 }

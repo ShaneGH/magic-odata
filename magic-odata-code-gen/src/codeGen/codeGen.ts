@@ -16,7 +16,9 @@ export function codeGen(serviceConfig: ODataServiceConfig, settings: CodeGenConf
     }
 
     const sanitizeNamespace = buildSanitizeNamespace(settings)
-    const keywords = generateKeywords(Object.keys(serviceConfig.types), Object.keys(serviceConfig.types[""] || {}));
+    const keywords = generateKeywords(
+        Object.keys(serviceConfig.schemaNamespaces),
+        Object.keys(serviceConfig.schemaNamespaces[""]?.types || {}));
     const tab = buildTab(settings)
     const client = settings?.angularMode ? angularHttpClient : fetchHttpClient
 

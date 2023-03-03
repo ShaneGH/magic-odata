@@ -1,4 +1,4 @@
-import { ComplexTypeOrEnum, ODataComplexType, ODataEnum, ODataServiceConfig, ODataServiceTypes, ODataSingleTypeRef } from "magic-odata-shared";
+import { ComplexTypeOrEnum, Dict, ODataComplexType, ODataSchema, ODataServiceConfig, ODataSingleTypeRef } from "magic-odata-shared";
 import { CodeGenConfig } from "../config.js";
 import { Keywords } from "./keywords.js";
 import { buildFullyQualifiedTsType, buildGetCasterName, buildGetKeyBuilderName, buildGetQueryableName, buildGetSubPathName, FullyQualifiedTsType, GetCasterName, GetKeyBuilderName, GetQueryableName, GetSubPathName, buildHttpClientType, Tab, HttpClientType, entitySetsName } from "./utils.js"
@@ -6,7 +6,7 @@ import { buildFullyQualifiedTsType, buildGetCasterName, buildGetKeyBuilderName, 
 // https://github.com/ShaneGH/magic-odata/issues/4
 function buildGetComplexCasterProps(
     settings: CodeGenConfig | null | undefined,
-    allTypes: ODataServiceTypes,
+    allTypes: Dict<ODataSchema>,
     fullyQualifiedTsType: FullyQualifiedTsType,
     getQueryableName: GetQueryableName,
     getCasterName: GetCasterName,
@@ -18,8 +18,8 @@ function buildGetComplexCasterProps(
     const allComplexTypeFlatList = Object
         .keys(allTypes)
         .map(ns => Object
-            .keys(allTypes[ns])
-            .map(t => allTypes[ns][t])
+            .keys(allTypes[ns].types)
+            .map(t => allTypes[ns].types[t])
             .map(t => t.containerType === "ComplexType" ? t.type : null)
             .filter(x => !!x)
             .map(x => x!))
@@ -75,8 +75,8 @@ export const buildEntityCasting = (tab: Tab, settings: CodeGenConfig | null | un
     const getQueryableName = buildGetQueryableName(settings);
     const getKeyBuilderName = buildGetKeyBuilderName(settings);
     const fullyQualifiedTsType = buildFullyQualifiedTsType(settings);
-    const httpClientType = buildHttpClientType(serviceConfig.types, keywords, tab, settings || null);
-    const getComplexCasterProps = buildGetComplexCasterProps(settings, serviceConfig.types,
+    const httpClientType = buildHttpClientType(serviceConfig.schemaNamespaces, keywords, tab, settings || null);
+    const getComplexCasterProps = buildGetComplexCasterProps(settings, serviceConfig.schemaNamespaces,
         fullyQualifiedTsType, getQueryableName, getCasterName, getSubPathName, getKeyBuilderName,
         httpClientType, keywords);
 

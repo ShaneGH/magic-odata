@@ -13,7 +13,7 @@ export const buildEntityKeyBuilder = (tab: Tab, settings: CodeGenConfig | null |
     const getKeyBuilderName = buildGetKeyBuilderName(settings);
     const fullyQualifiedTsType = buildFullyQualifiedTsType(settings);
     const getKeyType = buildGetKeyType(settings, serviceConfig, keywords);
-    const httpClientType = buildHttpClientType(serviceConfig.types, keywords, tab, settings || null);
+    const httpClientType = buildHttpClientType(serviceConfig.schemaNamespaces, keywords, tab, settings || null);
 
     return (type: ODataComplexType) => {
         const keyBuilderName = getKeyBuilderName(type.name)

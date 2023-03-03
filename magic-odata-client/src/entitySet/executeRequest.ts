@@ -74,16 +74,21 @@ function _buildUri<TFetchResult, TResult>(
     relativePath: string,
     tools: RequestTools<TFetchResult, TResult>): ODataUriParts {
 
+    if (!data.tools.root.schemaNamespaces[data.tools.entitySet.namespace]) {
+        throw new Error(`Invalid config. Could not find schema: ${data.tools.entitySet.namespace}`);
+    }
+
     const filterEnv = {
         buildUri: defaultUriInterceptor,
         serviceConfig: data.tools.root,
-        rootContext: "$it"
+        rootContext: "$it",
+        schema: data.tools.root.schemaNamespaces[data.tools.entitySet.namespace]
     }
 
     return {
         uriRoot: tools.uriRoot,
         // if namespace === "", give null instead
-        entitySetContainerName: data.tools.entitySet.namespace || null,
+        entitySetContainerName: data.tools.entitySet.containerName || null,
         entitySetName: data.tools.entitySet.name,
         relativePath: relativePath,
         query: buildQuery(data.state.query?.query || [], filterEnv, data.state.query?.urlEncode)

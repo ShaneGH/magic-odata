@@ -1,4 +1,4 @@
-import { ODataComplexType, ODataEnum, ODataServiceTypes, ODataTypeName } from "magic-odata-shared";
+import { Dict, ODataComplexType, ODataEnum, ODataSchema, ODataTypeName } from "magic-odata-shared";
 import { Utils, utils as queryUtils } from "../query/queryUtils.js";
 import { Query } from "../queryBuilder.js";
 import { buildComplexTypeRef, QueryComplexObject, QueryEnum, QueryObjectType, QueryPrimitive } from "../query/queryComplexObjectBuilder.js";
@@ -31,7 +31,7 @@ function executePrimitiveQueryBuilder<TRoot, TEntity, TQuery>(
 
 function executeComplexQueryBuilder<TRoot, TEntity, TQuery>(
     type: ODataComplexType,
-    root: ODataServiceTypes,
+    root: Dict<ODataSchema>,
     queryBuilder: ComplexQueryBuilder<TRoot, TEntity, TQuery>,
     rootContext: string): TQuery {
 
@@ -64,7 +64,7 @@ function executeEnumQueryBuilder<TRoot, TEntity, TQuery>(
 
 export function executeQueryBuilder<TRoot, TQueryable, TQuery>(
     typeRef: ODataTypeName,
-    types: ODataServiceTypes,
+    types: Dict<ODataSchema>,
     queryBuilder: (entity: TQueryable, utils: Utils<TRoot>) => TQuery,
     rootContext: string): TQuery {
 
@@ -92,8 +92,8 @@ export function recontextDataForRootQuery<TRoot, TFetchResult, TResult, TQueryab
         throw new Error("Querying of collections of collections is not supported");
     }
 
-    const t = lookup(typeRef, data.tools.root.types)
-    const query = executeQueryBuilder(t.type, data.tools.root.types, queryBuilder, "$it")
+    const t = lookup(typeRef, data.tools.root.schemaNamespaces)
+    const query = executeQueryBuilder(t.type, data.tools.root.schemaNamespaces, queryBuilder, "$it")
 
     return {
         tools: data.tools,

@@ -1,8 +1,8 @@
 
 import { useNamespaces } from 'xpath'
 import {
-    ODataServiceTypes, ODataComplexType, ODataTypeRef, ODataSingleTypeRef, ODataServiceConfig,
-    ODataEntitySetNamespaces, ODataEntitySet, ODataEnum, ComplexTypeOrEnum, Function, FunctionParam
+    ODataComplexType, ODataTypeRef, ODataSingleTypeRef, ODataServiceConfig,
+    ODataEntitySet, ODataEnum, ComplexTypeOrEnum, Function, FunctionParam, ODataSchema, Dict, EntityContainer
 } from 'magic-odata-shared'
 import { SupressWarnings } from './config.js';
 import { warn } from './utils.js';
@@ -20,9 +20,7 @@ export function processConfig(warningConfig: SupressWarnings, config: Document):
 
     checkVersion(warningConfig, config);
     return {
-        types: processTypes(warningConfig, config),
-        entitySets: processEntitySets(warningConfig, config),
-        unboundFunctions: []
+        schemaNamespaces: processSchemaNamespaces(warningConfig, config)
     };
 }
 
@@ -45,9 +43,13 @@ function findFunctions(config: Document, filter: (node: Element) => boolean) {
         .filter(filter)
 }
 
-function processFunction(warningConfig: SupressWarnings, x: { ns: string, f: Element }): Function | null {
+function getSchemaNamespace(n: Node) {
 
-    const { ns, f } = x
+    return nsLookup<Attr>(n, "//ancestor::edm:Schema/@Namespace")[0]?.value || ""
+}
+
+function processFunction(warningConfig: SupressWarnings, f: Element): Function | null {
+
     var name = nsLookup<Attr>(f, "@Name")
     if (name.length !== 1) {
         let names = name.map(x => x.value).join(", ")
@@ -71,7 +73,7 @@ function processFunction(warningConfig: SupressWarnings, x: { ns: string, f: Ele
     }
 
     return {
-        namespace: ns,
+        namespace: getSchemaNamespace(f),
         name: name[0].value,
         params,
         returnType: parseTypeStr(returnType[0].value)
@@ -101,16 +103,16 @@ function processFunctionParam(fName: string, param: Node, warningConfig: Supress
     }
 }
 
-function processTypes(warningConfig: SupressWarnings, config: Document): ODataServiceTypes {
+function processTypes(warningConfig: SupressWarnings, schema: Element): Dict<ComplexTypeOrEnum> {
 
-    const complexTypes = nsLookup<Node>(config, "edmx:Edmx/edmx:DataServices/edm:Schema/edm:EntityType")
-        .concat(nsLookup<Node>(config, "edmx:Edmx/edmx:DataServices/edm:Schema/edm:ComplexType"))
+    const complexTypes = nsLookup<Node>(schema, "edm:EntityType")
+        .concat(nsLookup<Node>(schema, "edm:ComplexType"))
         .map((x: Node): ComplexTypeOrEnum => ({
             containerType: "ComplexType",
             type: mapEntityType(warningConfig, x)
         }));
 
-    const enumTypes = nsLookup(config, "edmx:Edmx/edmx:DataServices/edm:Schema/edm:EnumType")
+    const enumTypes = nsLookup(schema, "edm:EnumType")
         .map(x => mapEnumType(warningConfig, x as Node))
         .filter(x => !!x)
         .map((x: ODataEnum | null): ComplexTypeOrEnum => ({
@@ -120,32 +122,59 @@ function processTypes(warningConfig: SupressWarnings, config: Document): ODataSe
 
     return complexTypes
         .concat(enumTypes)
-        .reduce(sortComplexTypesIntoNamespace, {});
+        .reduce((s, x) => ({
+            ...s,
+            [x.type.name]: x
+        }), {} as Dict<ComplexTypeOrEnum>);
 }
 
-function processEntitySets(warningConfig: SupressWarnings, config: Document): ODataEntitySetNamespaces {
+function processSchemaNamespaces(warningConfig: SupressWarnings, config: Document): Dict<ODataSchema> {
 
-    return nsLookup<Element>(config, "edmx:Edmx/edmx:DataServices/edm:Schema/edm:EntityContainer")
+    return nsLookup<Element>(config, "edmx:Edmx/edmx:DataServices/edm:Schema")
+        .reduce((s, schema) => ({
+            ...s,
+            [nsLookup<Attr>(schema, "@Namespace")[0]?.value || ""]: processSchemaNamespace(warningConfig, schema)
+        }), {} as Dict<ODataSchema>)
+}
+
+function processSchemaNamespace(warningConfig: SupressWarnings, schema: Element): ODataSchema {
+    return {
+        types: processTypes(warningConfig, schema),
+        entityContainers: processEntityContainers(warningConfig, schema)
+    }
+}
+
+function processEntityContainers(warningConfig: SupressWarnings, schema: Element): Dict<EntityContainer> {
+
+    return nsLookup<Element>(schema, "edm:EntityContainer")
         .map(x => mapEntityContainer(warningConfig, x))
-        .reduce((s, x) => [...s, ...x], [])
-        .reduce(sortEntitySetsIntoNamespace, {});
+        .reduce((s, x) => ({
+            ...s,
+            [x[0]]: x[1]
+        }), {} as Dict<EntityContainer>);
 }
 
-function mapEntityContainer(warningConfig: SupressWarnings, entityContainer: Element): ODataEntitySet[] {
-    const namespaces = nsLookup<Attr>(entityContainer, "@Name")
-    if (namespaces.length > 1) {
-        const names = namespaces.map(x => x.value).join(", ");
+function mapEntityContainer(warningConfig: SupressWarnings, entityContainer: Element): [string, EntityContainer] {
+    const containerNames = nsLookup<Attr>(entityContainer, "@Name")
+    if (containerNames.length > 1) {
+        const names = containerNames.map(x => x.value).join(", ");
         console.warn(`Found more than one Name for EntityContianer: ${names}. Using first value.`);
     }
 
-    const namespace = namespaces[0]?.value || "";
+    const containerName = containerNames[0]?.value || "";
     // TODO: unbound functions
     //const unboundFunctions = getUnboundFunctions(entityContainer, warningConfig)
 
-    return nsLookup<Node>(entityContainer, "edm:EntitySet")
-        .map(node => mapEntitySet(warningConfig, namespace, node))
-        .concat(nsLookup<Node>(entityContainer, "edm:Singleton")
-            .map(node => mapSingleton(namespace, node)));
+    const entitySets = nsLookup<Element>(entityContainer, "edm:EntitySet")
+        .map(node => mapEntitySet(warningConfig, containerName, node))
+        .concat(nsLookup<Element>(entityContainer, "edm:Singleton")
+            .map(node => mapSingleton(containerName, node)))
+        .reduce((s, x) => ({
+            ...s,
+            [x.name]: x
+        }), {} as Dict<ODataEntitySet>);
+
+    return [containerName, { entitySets }]
 }
 
 // TODO: unbound functions
@@ -192,14 +221,15 @@ function processEntitySetFunctions(warningConfig: SupressWarnings, config: Docum
     })
 }
 
-function mapEntitySet(warningConfig: SupressWarnings, namespace: string, entitySet: Node): ODataEntitySet {
+function mapEntitySet(warningConfig: SupressWarnings, containerName: string, entitySet: Element): ODataEntitySet {
 
-    const name = getName(entitySet, "@Name", namespace);
-    const forType = getSingleType(entitySet, "@EntityType", namespace, name);
+    const name = getName(entitySet, "@Name", containerName);
+    const forType = getSingleType(entitySet, "@EntityType", containerName, name);
 
     return {
         isSingleton: false,
-        namespace,
+        namespace: getSchemaNamespace(entitySet),
+        containerName,
         name: name,
         forType,
         collectionFunctions: !entitySet.ownerDocument
@@ -208,13 +238,14 @@ function mapEntitySet(warningConfig: SupressWarnings, namespace: string, entityS
     };
 }
 
-function mapSingleton(namespace: string, entitySet: Node): ODataEntitySet {
+function mapSingleton(containerName: string, entitySet: Element): ODataEntitySet {
 
-    const name = getName(entitySet, "@Name", namespace);
-    const forType = getSingleType(entitySet, "@Type", namespace, name);
+    const name = getName(entitySet, "@Name", containerName);
+    const forType = getSingleType(entitySet, "@Type", containerName, name);
     return {
         isSingleton: true,
-        namespace,
+        namespace: getSchemaNamespace(entitySet),
+        containerName,
         name: name,
         forType,
         // functions are on the entity itself
@@ -287,30 +318,6 @@ function checkVersion(warningConfig: SupressWarnings, config: Document) {
     } catch {
         warn(warningConfig, "suppressUnableToVerifyOdataVersion", "Error checking odata version")
     }
-}
-
-function sortComplexTypesIntoNamespace(root: ODataServiceTypes, type: ComplexTypeOrEnum): ODataServiceTypes {
-    const ns = root[type.type.namespace] || {};
-
-    return {
-        ...root,
-        [type.type.namespace]: {
-            ...ns,
-            [type.type.name]: type
-        }
-    };
-}
-
-function sortEntitySetsIntoNamespace(root: ODataEntitySetNamespaces, type: ODataEntitySet): ODataEntitySetNamespaces {
-    const ns = root[type.namespace] || {};
-
-    return {
-        ...root,
-        [type.namespace]: {
-            ...ns,
-            [type.name]: type
-        }
-    };
 }
 
 function getEnumValue(warningConfig: SupressWarnings, attr?: Attr) {

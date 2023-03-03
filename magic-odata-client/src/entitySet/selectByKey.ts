@@ -1,4 +1,4 @@
-import { ODataServiceTypes, ODataTypeName, ODataTypeRef } from "magic-odata-shared";
+import { Dict, ODataSchema, ODataTypeName, ODataTypeRef } from "magic-odata-shared";
 import { typeNameString } from "../utils.js";
 import { serialize } from "../valueSerializer.js";
 import { EntitySetData, lookupComplex, tryFindBaseType, tryFindPropertyType } from "./utils.js";
@@ -31,7 +31,7 @@ export type KeySelection<TNewEntityQuery> = {
 function findPropertyType(
     type: ODataTypeName,
     propertyName: string,
-    root: ODataServiceTypes): ODataTypeRef {
+    root: Dict<ODataSchema>): ODataTypeRef {
 
     const result = tryFindPropertyType(type, propertyName, root);
     if (!result) {
@@ -44,7 +44,7 @@ function findPropertyType(
 type KeyType = { name: string, type: ODataTypeRef }
 function tryFindKeyTypes(
     type: ODataTypeName,
-    root: ODataServiceTypes): KeyType[] {
+    root: Dict<ODataSchema>): KeyType[] {
 
     const t = lookupComplex(type, root);
     return tryFindKeyNames(t, root)
@@ -53,7 +53,7 @@ function tryFindKeyTypes(
 
 function tryFindKeyNames(
     type: ODataTypeName,
-    root: ODataServiceTypes): string[] {
+    root: Dict<ODataSchema>): string[] {
 
     const t = lookupComplex(type, root);
     if (t.keyProps) return t.keyProps;
@@ -62,7 +62,7 @@ function tryFindKeyNames(
     return (parent && tryFindKeyNames(parent, root)) || []
 }
 
-function keyExpr(keyTypes: KeyType[], key: any, keyEmbedType: WithKeyType, serviceConfig: ODataServiceTypes) {
+function keyExpr(keyTypes: KeyType[], key: any, keyEmbedType: WithKeyType, serviceConfig: Dict<ODataSchema>) {
 
     if (key === undefined) key = null;
 
@@ -148,10 +148,10 @@ export function recontextDataForKey<TFetchResult, TResult, TNewEntityQuery, TKey
     }
 
     const keyResult = key({ keyRaw, key: keyStructured } as any);
-    const keyTypes = tryFindKeyTypes(data.tools.type.collectionType, data.tools.root.types);
+    const keyTypes = tryFindKeyTypes(data.tools.type.collectionType, data.tools.root.schemaNamespaces);
     const keyPath = keyResult.raw
         ? { value: keyResult.key, appendToLatest: keyResult.key[0] === "(" }
-        : keyExpr(keyTypes, keyResult.key, keyResult.keyEmbedType, data.tools.root.types);
+        : keyExpr(keyTypes, keyResult.key, keyResult.keyEmbedType, data.tools.root.schemaNamespaces);
 
     const path = keyPath.appendToLatest
         ? [

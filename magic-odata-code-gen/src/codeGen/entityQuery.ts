@@ -34,11 +34,11 @@ function getQueryableType(type: ODataTypeRef, keywords: Keywords, settings: Code
         };
     }
 
-    if (!serviceConfig.types[type.namespace] || !serviceConfig.types[type.namespace][type.name]) {
+    if (!serviceConfig.schemaNamespaces[type.namespace] || !serviceConfig.schemaNamespaces[type.namespace].types[type.name]) {
         throw new Error(`Unknown type: ${typeNameString(type, settings)}`);
     }
 
-    if (serviceConfig.types[type.namespace][type.name].containerType === "Enum") {
+    if (serviceConfig.schemaNamespaces[type.namespace].types[type.name].containerType === "Enum") {
         const tEnum = fullyQualifiedTsType(type);
         return {
             wrapper: keywords.QueryEnum,

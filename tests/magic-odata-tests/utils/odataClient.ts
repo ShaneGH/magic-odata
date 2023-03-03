@@ -32,16 +32,17 @@ export function queryBuilder<T>(fullName: string, q: (x: QueryComplexObject<T>) 
     const dot = fullName.lastIndexOf(".");
     const namespace = dot === -1 ? "" : fullName.substring(0, dot)
     const name = dot === -1 ? fullName : fullName.substring(dot + 1)
-    const type = rootConfig.types[namespace] && rootConfig.types[namespace][name]
+    const type = rootConfig.schemaNamespaces[namespace] && rootConfig.schemaNamespaces[namespace].types[name]
     if (!type || type.containerType !== "ComplexType") {
         throw new Error(fullName);
     }
 
-    const typeRef: QueryComplexObject<T> = buildComplexTypeRef(type.type, rootConfig.types, "$it");
+    const typeRef: QueryComplexObject<T> = buildComplexTypeRef(type.type, rootConfig.schemaNamespaces, "$it");
     const env: FilterEnv = {
         buildUri: defaultUriInterceptor,
         serviceConfig: rootConfig,
-        rootContext: "$it"
+        rootContext: "$it",
+        schema: rootConfig.schemaNamespaces[namespace]
     }
 
     return buildQuery(q(typeRef), env, false)

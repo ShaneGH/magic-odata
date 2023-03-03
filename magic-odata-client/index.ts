@@ -3,6 +3,7 @@ export {
     ODataServiceConfig,
     ODataComplexType,
     ODataTypeRef,
+    ODataEntitySet,
 } from "magic-odata-shared"
 
 export {

@@ -1,5 +1,5 @@
-import { ODataEnum, ODataServiceTypes, ODataSingleTypeRef, ODataTypeRef } from "magic-odata-shared";
-import { ODataDate, ODataDuration, ODataOffset, ODataTimeOfDay, ODataDateTimeOffset } from "./edmTypes.js";
+import { Dict, ODataEnum, ODataSchema, ODataSingleTypeRef, ODataTypeRef } from "magic-odata-shared";
+import { ODataDate, ODataDuration, ODataTimeOfDay, ODataDateTimeOffset } from "./edmTypes.js";
 import { typeRefString } from "./utils.js";
 
 export function enumMemberName(enumDef: ODataEnum, value: number): string {
@@ -181,7 +181,7 @@ const warnedCollectionTypes = {} as { [k: string]: boolean }
 const warnedEnumTypes = {} as { [k: string]: boolean }
 export const rawType: ODataSingleTypeRef = { isCollection: false, namespace: "magic-odata", name: "Raw" }
 
-export function serialize(value: any, type?: ODataTypeRef, serviceConfig?: ODataServiceTypes): string {
+export function serialize(value: any, type?: ODataTypeRef, serviceConfig?: Dict<ODataSchema>): string {
 
     if (value == null) {
         return "null"
@@ -244,7 +244,7 @@ export function serialize(value: any, type?: ODataTypeRef, serviceConfig?: OData
         return basicSerialize(value);
     }
 
-    const enumType = serviceConfig[type.namespace] && serviceConfig[type.namespace][type.name]
+    const enumType = serviceConfig[type.namespace] && serviceConfig[type.namespace].types[type.name]
     if (enumType.containerType !== "Enum") {
 
         const name = typeRefString(type)

@@ -1,4 +1,4 @@
-import { ODataComplexType, ODataTypeRef, ODataServiceConfig, ODataServiceTypes, ODataSingleTypeRef, ODataEnum } from "magic-odata-shared";
+import { ODataComplexType, ODataTypeRef, ODataServiceConfig, ODataSingleTypeRef, ODataEnum, Dict, ODataSchema } from "magic-odata-shared";
 import { CodeGenConfig } from "../config.js";
 import { typeNameString } from "../utils.js";
 import { buildGetEntityFunctionsName, entitySetsName } from "../codeGen/utils.js";
@@ -36,7 +36,7 @@ type EntityTypeInfo = {
 
 export type GetTypeForSubPath = (t: ODataTypeRef) => string
 export function buildGetTypeForSubPath(
-    allTypes: ODataServiceTypes,
+    allTypes: Dict<ODataSchema>,
     fullyQualifiedTsType: FullyQualifiedTsType,
     getQueryableName: GetQueryableName,
     getCasterName: GetCasterName,
@@ -75,7 +75,7 @@ export function buildGetTypeForSubPath(
             return `${keywords.PrimitiveSubPath}<${entitySetsName(settings)}, ${tQueryable}>`;
         }
 
-        const type = allTypes[typeRef.namespace] && allTypes[typeRef.namespace][typeRef.name]
+        const type = allTypes[typeRef.namespace] && allTypes[typeRef.namespace].types[typeRef.name]
         if (!type) {
             throw new Error(`Could not find key for type ${typeNameString(typeRef, settings)}`);
         }
@@ -171,7 +171,7 @@ export function buildGetTypeForSubPath(
             };
         }
 
-        const type = allTypes[propertyType.namespace] && allTypes[propertyType.namespace][propertyType.name]
+        const type = allTypes[propertyType.namespace] && allTypes[propertyType.namespace].types[propertyType.name]
         if (!type) {
             throw new Error(`Could not find key for type ${typeNameString(propertyType, settings)}`);
         }
@@ -197,7 +197,7 @@ export function buildGetTypeForSubPath(
 }
 
 function buildGetSubPathProps(
-    allTypes: ODataServiceTypes,
+    allTypes: Dict<ODataSchema>,
     fullyQualifiedTsType: FullyQualifiedTsType,
     getQueryableName: GetQueryableName,
     getCasterName: GetCasterName,
@@ -238,8 +238,8 @@ export const buildEntitySubPath = (tab: Tab, settings: CodeGenConfig | null | un
     const getKeyBuilderName = buildGetKeyBuilderName(settings);
     const getQueryableName = buildGetQueryableName(settings);
     const functionsType = buildGetEntityFunctionsName(settings)
-    const httpClientType = buildHttpClientType(serviceConfig.types, keywords, tab, settings || null);
-    const getSubPathProps = buildGetSubPathProps(serviceConfig.types, fullyQualifiedTsType, getQueryableName,
+    const httpClientType = buildHttpClientType(serviceConfig.schemaNamespaces, keywords, tab, settings || null);
+    const getSubPathProps = buildGetSubPathProps(serviceConfig.schemaNamespaces, fullyQualifiedTsType, getQueryableName,
         getCasterName, getSubPathName, getKeyBuilderName, keywords, httpClientType, settings || null);
 
     return (type: ODataComplexType) => {

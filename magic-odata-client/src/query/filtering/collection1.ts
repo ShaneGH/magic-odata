@@ -50,7 +50,7 @@ function filterize<TArrayType>(
             $$output,
             $$filter: `[${mapper
                 ? toFilterize.map(mapper).join(",")
-                : toFilterize.map(x => serialize(x, $$output.isCollection ? $$output.collectionType : undefined, serviceConfig.types)).join(",")}]`
+                : toFilterize.map(x => serialize(x, $$output.isCollection ? $$output.collectionType : undefined, serviceConfig.schemaNamespaces)).join(",")}]`
         })))
 }
 
@@ -70,7 +70,7 @@ function filterizeSingle<TArrayType>(
             $$output,
             $$filter: mapper
                 ? mapper(toFilterize as TArrayType)
-                : serialize(toFilterize, $$output, serviceConfig.types)
+                : serialize(toFilterize, $$output, serviceConfig.schemaNamespaces)
         })))
 }
 
@@ -143,7 +143,7 @@ export function $filter<TRoot, T, TQuery extends QueryObject<T>>(collection: Que
                     throw new Error("Collections of collections are not supported");
                 }
 
-                return executeQueryBuilder<TRoot, TQuery, Filter>(x.$$output.collectionType, env.serviceConfig.types, itemFilter, "$this")
+                return executeQueryBuilder<TRoot, TQuery, Filter>(x.$$output.collectionType, env.serviceConfig.schemaNamespaces, itemFilter, "$this")
                     .mapEnv<FilterEnv>(env => ({ ...env, rootContext: "$this" }))
                     .map(({ $$filter }) => ({
                         $$output: x.$$output,

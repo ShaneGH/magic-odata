@@ -1,10 +1,40 @@
-
-
+// TYPE REFS
 export type ODataTypeName = {
     name: string,
     namespace: string
 }
 
+export type ODataCollectionTypeRef = {
+    isCollection: true,
+    collectionType: ODataTypeRef
+}
+
+export type ODataSingleTypeRef = ODataTypeName & {
+    isCollection: false
+}
+
+export type ODataTypeRef = ODataCollectionTypeRef | ODataSingleTypeRef
+
+// FUNCTIONS
+export type FunctionParam = {
+    isBindingParameter: boolean
+    name: string
+    type: ODataTypeRef
+}
+
+export type Function = {
+    namespace: string
+    name: string
+    params: FunctionParam[]
+    returnType: ODataTypeRef
+}
+
+// ENUMS
+export type ODataEnum = ODataTypeName & {
+    members: { [key: string]: number }
+}
+
+// COMPLEX TYPES
 export type ODataComplexTypeProperty = {
     nullable: boolean
     navigationProperty: boolean
@@ -20,17 +50,6 @@ export type ODataComplexType = ODataTypeName & {
     }
 }
 
-export type ODataSingleTypeRef = ODataTypeName & {
-    isCollection: false
-}
-
-export type ODataCollectionTypeRef = {
-    isCollection: true,
-    collectionType: ODataTypeRef
-}
-
-export type ODataTypeRef = ODataCollectionTypeRef | ODataSingleTypeRef
-
 export type TypeContainer<TCT extends string, T> = {
     containerType: TCT,
     type: T
@@ -39,47 +58,51 @@ export type TypeContainer<TCT extends string, T> = {
 // TODO: can this be expanded to primitives?
 export type ComplexTypeOrEnum = TypeContainer<"ComplexType", ODataComplexType> | TypeContainer<"Enum", ODataEnum>
 
-export type ODataServiceTypes = {
-    [namespace: string]: {
-        [typeName: string]: ComplexTypeOrEnum
-    }
-}
-
-export type ODataEnum = ODataTypeName & {
-    members: { [key: string]: number }
-}
-
-export type ODataServiceConfig = {
-    entitySets: ODataEntitySetNamespaces
-    unboundFunctions: Function[]
-    types: ODataServiceTypes
-}
+// AGGREGATED CONFIG
+export type Dict<T> = { [k: string]: T }
 
 export type ODataEntitySet = {
     isSingleton: boolean
     name: string,
+    /** The schema namespace */
     namespace: string,
+    /** The entity set namespace */
+    containerName: string,
     forType: ODataSingleTypeRef
     collectionFunctions: Function[]
 }
 
-export type FunctionParam = {
-    isBindingParameter: boolean
-    name: string
-    type: ODataTypeRef
+export type EntityContainer = {
+    entitySets: Dict<ODataEntitySet>
 }
 
-export type Function = {
-    namespace: string
-    name: string
-    params: FunctionParam[]
-    returnType: ODataTypeRef
+export type ODataSchema = {
+    types: Dict<ComplexTypeOrEnum>
+    entityContainers: Dict<EntityContainer>
 }
 
-export type ODataEntitySetNamespaces = {
-    [key: string]: ODataEntitySets
+export type ODataServiceConfig = {
+    schemaNamespaces: Dict<ODataSchema>
 }
 
-export type ODataEntitySets = {
-    [key: string]: ODataEntitySet
-}
+
+
+
+
+
+
+
+// // TYPE COLLECTIONS
+// export type ODataServiceTypes = {
+//     [namespace: string]: {
+//         [typeName: string]: ComplexTypeOrEnum
+//     }
+// }
+
+// export type ODataEntitySetNamespaces = {
+//     [key: string]: ODataEntitySets
+// }
+
+// export type ODataEntitySets = {
+//     [key: string]: ODataEntitySet
+// }

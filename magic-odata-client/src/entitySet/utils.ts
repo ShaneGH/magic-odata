@@ -1,4 +1,4 @@
-import { ODataComplexType, ODataEntitySet, ODataEnum, ODataServiceConfig, ODataServiceTypes, ODataTypeName, ODataTypeRef } from "magic-odata-shared"
+import { Dict, ODataComplexType, ODataEntitySet, ODataEnum, ODataSchema, ODataServiceConfig, ODataTypeName, ODataTypeRef } from "magic-odata-shared"
 import { Query } from "../queryBuilder.js"
 import { typeNameString } from "../utils.js"
 import { DefaultResponseInterceptor, RequestTools } from "./requestTools.js"
@@ -34,7 +34,7 @@ export type EntityQueryState = {
 
 export function lookupComplex(
     type: ODataTypeName,
-    root: ODataServiceTypes) {
+    root: Dict<ODataSchema>) {
 
     const result = lookup(type, root);
     if (result.flag !== "Complex") {
@@ -47,7 +47,7 @@ export function lookupComplex(
 export function tryFindPropertyType(
     type: ODataTypeName,
     propertyName: string,
-    root: ODataServiceTypes): ODataTypeRef | null {
+    root: Dict<ODataSchema>): ODataTypeRef | null {
 
     const t = lookupComplex(type, root);
     if (t.properties[propertyName]) return t.properties[propertyName].type;
@@ -65,13 +65,13 @@ export type LookupResults = LookupResult<"Complex", ODataComplexType> | LookupRe
 
 export function lookup(
     type: ODataTypeName,
-    root: ODataServiceTypes): LookupResults {
+    root: Dict<ODataSchema>): LookupResults {
 
     if (type.namespace === "Edm") {
         return { flag: "Primitive", type }
     }
 
-    const result = root[type.namespace] && root[type.namespace][type.name];
+    const result = root[type.namespace] && root[type.namespace].types[type.name];
     if (!result) {
         throw new Error(`Could not find type ${type.namespace && `${type.namespace}/`}${type.name}`)
     }
@@ -83,13 +83,13 @@ export function lookup(
 
 export function tryFindBaseType(
     type: ODataComplexType,
-    root: ODataServiceTypes) {
+    root: Dict<ODataSchema>) {
 
     if (!type.baseType) {
         return null;
     }
 
-    const result = root[type.baseType.namespace] && root[type.baseType.namespace][type.baseType.name]
+    const result = root[type.baseType.namespace] && root[type.baseType.namespace].types[type.baseType.name]
     if (!result) {
         throw new Error(`Base type ${typeNameString(type)} does not exist`);
     }

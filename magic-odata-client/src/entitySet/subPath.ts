@@ -1,4 +1,4 @@
-import { ODataComplexType, ODataServiceTypes, ODataTypeRef, Function as ODataFunction, ODataEntitySet } from "magic-odata-shared";
+import { ODataComplexType, ODataTypeRef, Function as ODataFunction, ODataEntitySet, Dict, ODataSchema } from "magic-odata-shared";
 import { serialize } from "../valueSerializer.js";
 import { Accept, EntitySetData, lookup, tryFindBaseType, tryFindPropertyType } from "./utils.js";
 
@@ -12,7 +12,7 @@ function buildSubPathProperties<TFetchResult, TResult, TSubPath>(
     // TODO: collection_functions
     if (type.isCollection) {
 
-        const functions = listAllEntitySetFunctionsGrouped(data.tools.entitySet, data.tools.root.types)
+        const functions = listAllEntitySetFunctionsGrouped(data.tools.entitySet, data.tools.root.schemaNamespaces)
             .reduce((s, x) => ({ ...s, [x[0]]: x[1] }), {} as any);
 
         return {
@@ -21,15 +21,15 @@ function buildSubPathProperties<TFetchResult, TResult, TSubPath>(
         } as any
     }
 
-    const t = lookup(type, data.tools.root.types);
+    const t = lookup(type, data.tools.root.schemaNamespaces);
     if (t.flag === "Primitive" || t.flag === "Enum") {
         return { $value } as any
     }
 
-    const props = listAllProperties(t.type, data.tools.root.types, true)
+    const props = listAllProperties(t.type, data.tools.root.schemaNamespaces, true)
         .reduce((s, x) => ({ ...s, [x]: { propertyName: x } }), {} as any);
 
-    const functions = listAllEntityFunctionsGrouped(t.type, data.tools.root.types)
+    const functions = listAllEntityFunctionsGrouped(t.type, data.tools.root.schemaNamespaces)
         .reduce((s, x) => ({ ...s, [x[0]]: x[1] }), {} as any);
 
     return {
@@ -38,7 +38,7 @@ function buildSubPathProperties<TFetchResult, TResult, TSubPath>(
     }
 }
 
-function buildFunctions(groupedFunctions: { [k: string]: ODataFunction[] }, root: ODataServiceTypes): [string, (x: any) => SubPathSelection<any>][] {
+function buildFunctions(groupedFunctions: { [k: string]: ODataFunction[] }, root: Dict<ODataSchema>): [string, (x: any) => SubPathSelection<any>][] {
 
     return Object
         .keys(groupedFunctions)
@@ -79,7 +79,7 @@ function buildFunctions(groupedFunctions: { [k: string]: ODataFunction[] }, root
 
 function listAllEntityFunctionsGrouped(
     type: ODataComplexType,
-    root: ODataServiceTypes,
+    root: Dict<ODataSchema>,
     includeParent = true): [string, (x: any) => SubPathSelection<any>][] {
 
     const groupedFunctions = groupFunctions(listAllEntityFunctionsUngrouped(type, root, includeParent))
@@ -101,7 +101,7 @@ function groupFunctions(functions: ODataFunction[]) {
 
 function listAllEntitySetFunctionsGrouped(
     entitySet: ODataEntitySet,
-    root: ODataServiceTypes): [string, (x: any) => SubPathSelection<any>][] {
+    root: Dict<ODataSchema>): [string, (x: any) => SubPathSelection<any>][] {
 
     const groupedFunctions = groupFunctions(entitySet.collectionFunctions)
     return buildFunctions(groupedFunctions, root)
@@ -109,7 +109,7 @@ function listAllEntitySetFunctionsGrouped(
 
 function listAllEntityFunctionsUngrouped(
     type: ODataComplexType,
-    root: ODataServiceTypes,
+    root: Dict<ODataSchema>,
     includeParent: boolean): ODataFunction[] {
 
     const parent = includeParent
@@ -124,7 +124,7 @@ function listAllEntityFunctionsUngrouped(
 // might return duplicates if parent and child property names clash
 function listAllProperties(
     type: ODataComplexType,
-    root: ODataServiceTypes,
+    root: Dict<ODataSchema>,
     includeParent = true): string[] {
 
     const parent = includeParent
@@ -160,7 +160,7 @@ export function recontextDataForSubPath<TFetchResult, TResult, TSubPath, TNewEnt
     } else if (newT.outputType) {
         propType = newT.outputType
     } else if (!data.tools.type.isCollection) {
-        propType = tryFindPropertyType(data.tools.type, newT.propertyName, data.tools.root.types)
+        propType = tryFindPropertyType(data.tools.type, newT.propertyName, data.tools.root.schemaNamespaces)
     }
 
     if (!propType) {

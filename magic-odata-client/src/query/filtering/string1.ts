@@ -14,7 +14,7 @@ function toFilter(x: Operable<string> | string) {
     return typeof x === "string"
         ? Reader.create<FilterEnv, FilterResult>(env => ({
             $$output: stringT,
-            $$filter: serialize(x, stringT, env.serviceConfig.types)
+            $$filter: serialize(x, stringT, env.serviceConfig.schemaNamespaces)
         }))
         : operableToFilter(x);
 }

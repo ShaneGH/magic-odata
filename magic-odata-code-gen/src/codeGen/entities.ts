@@ -1,4 +1,4 @@
-import { ODataComplexType, ODataServiceConfig, ComplexTypeOrEnum } from "magic-odata-shared"
+import { ODataServiceConfig, ComplexTypeOrEnum, Dict } from "magic-odata-shared"
 import { CodeGenConfig, SupressWarnings } from "../config.js"
 import { warn } from "../utils.js"
 import { buildEntityCasting } from "./entityCasting.js"
@@ -44,7 +44,7 @@ type NamespaceBuilder = (types: { [typeName: string]: ComplexTypeOrEnum }) => Pr
 const buildNamespaceBuilder = (settings: CodeGenConfig | null | undefined, tab: Tab, keywords: Keywords, serviceConfig: ODataServiceConfig): NamespaceBuilder => {
 
     const entityBuilder = buildEntityBuilder(settings, tab, keywords, serviceConfig);
-    return (namespace: { [typeName: string]: ComplexTypeOrEnum }) => Object
+    return (namespace: Dict<ComplexTypeOrEnum>) => Object
         .keys(namespace)
         .reduce((s, x) => ({
             ...s,
@@ -59,9 +59,9 @@ export function processServiceConfig(settings: CodeGenConfig | null | undefined,
     const sanitizeNamespace = buildSanitizeNamespace(settings);
 
     return Object
-        .keys(serviceConfig.types)
+        .keys(serviceConfig.schemaNamespaces)
         .reduce((s, x) => {
-            let namespaceData = namespaceBuilder(serviceConfig.types[x]);
+            let namespaceData = namespaceBuilder(serviceConfig.schemaNamespaces[x].types);
             const namespaceName = sanitizeNamespace(x);
             if (s[namespaceName]) {
                 const overlap = Object

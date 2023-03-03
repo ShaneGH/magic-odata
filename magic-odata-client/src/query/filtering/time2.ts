@@ -28,7 +28,7 @@ function filterize<T>(
         $$output: expected,
         $$filter: mapper
             ? mapper(toFilterize as T)
-            : serialize(toFilterize, expected, serviceConfig.types)
+            : serialize(toFilterize, expected, serviceConfig.schemaNamespaces)
     }))
 }
 

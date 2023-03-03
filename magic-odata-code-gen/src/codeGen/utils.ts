@@ -1,4 +1,4 @@
-import { ODataComplexType, ODataTypeRef, ODataServiceConfig, ODataSingleTypeRef, ComplexTypeOrEnum, ODataServiceTypes } from "magic-odata-shared";
+import { ODataComplexType, ODataTypeRef, ODataServiceConfig, ODataSingleTypeRef, ComplexTypeOrEnum, ODataSchema } from "magic-odata-shared";
 import { AngularHttpResultType, AsyncType, CodeGenConfig } from "../config.js";
 import { typeNameString } from "../utils.js";
 import { Keywords } from "./keywords.js";
@@ -84,7 +84,7 @@ export const sanitizeNamespace = (namespace: string, settings: CodeGenConfig | n
 export type LookupType = (t: ODataSingleTypeRef) => ComplexTypeOrEnum | undefined
 
 export const buildLookupType = (serviceConfig: ODataServiceConfig): LookupType => (t: ODataSingleTypeRef) => {
-    return (serviceConfig.types[t.namespace] && serviceConfig.types[t.namespace][t.name]) || undefined
+    return (serviceConfig.schemaNamespaces[t.namespace] && serviceConfig.schemaNamespaces[t.namespace].types[t.name]) || undefined
 }
 
 export type LookupComplexType = (t: ODataSingleTypeRef) => ODataComplexType | undefined
@@ -224,7 +224,7 @@ const httpClientGenericNames = ["TRoot", "TEntity", "TResult", "TKeyBuilder", "T
 const longest = httpClientGenericNames.map(x => x.length).reduce((s, x) => s > x ? s : x, -1);
 
 export type HttpClientType = (generics: HttpClientGenerics, asInterface: boolean) => string
-export function buildHttpClientType(types: ODataServiceTypes, keywords: Keywords, tab: Tab, settings: CodeGenConfig | null): HttpClientType {
+export function buildHttpClientType(types: Dict<ODataSchema>, keywords: Keywords, tab: Tab, settings: CodeGenConfig | null): HttpClientType {
 
     const angularResult = angularResultType(settings);
     const fullyQualifiedTsType = buildFullyQualifiedTsType(settings);
@@ -243,7 +243,7 @@ export function buildHttpClientType(types: ODataServiceTypes, keywords: Keywords
 
         const isEnum = !generics.tResult.isCollection
             && types[generics.tResult.namespace]
-            && types[generics.tResult.namespace][generics.tResult.name]?.containerType === "Enum"
+            && types[generics.tResult.namespace].types[generics.tResult.name]?.containerType === "Enum"
 
         const tEntity = generics.tResult.isCollection
             ? fullyQualifiedTsType(generics.tResult.collectionType)
@@ -286,10 +286,8 @@ export const buildGetUnboundFunctionsName = (settings: CodeGenConfig | null | un
     return settings?.unboundFunctionContainerTypeNameTemplate || "UnboundFunctions";
 }
 
-export type GetEntitySetFunctionsName = (forType: string) => string
-export const buildGetEntitySetFunctionsName = (settings: CodeGenConfig | null | undefined): GetEntitySetFunctionsName => (forType: string) => {
-    const qTemplate = settings?.entitySetFunctionContainerTypeNameTemplate || "{0}EntitySetFunctions";
-    return qTemplate.replace(/\{0\}/g, forType);
+export function getEntitySetFunctionsName(settings: CodeGenConfig | null | undefined) {
+    return settings?.entitySetFunctionsTypeName || "EntitySetFunctions";
 }
 
 export type GetEntityFunctionsName = (forType: string) => string

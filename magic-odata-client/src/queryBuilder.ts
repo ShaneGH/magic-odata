@@ -1,4 +1,4 @@
-import { ODataServiceConfig, ODataServiceTypes, ODataTypeRef } from "magic-odata-shared";
+import { ODataSchema, ODataServiceConfig, ODataTypeRef } from "magic-odata-shared";
 import { ODataUriParts } from "./entitySet/requestTools.js";
 import { Reader } from "./utils.js";
 
@@ -62,6 +62,7 @@ export type FilterResult = {
 export type FilterEnv = {
     buildUri: (uriParts: ODataUriParts) => string,
     serviceConfig: ODataServiceConfig
+    schema: ODataSchema
     rootContext: string
 }
 

@@ -11,6 +11,7 @@ export type Keywords = {
     QueryComplexObject: string
     QueryEnum: string
     EntitySet: string
+    ODataEntitySet: string
     IEntitySet: string
     rootConfig: string
     rootConfigExporter: string
@@ -29,6 +30,7 @@ export type Keywords = {
     QueryingOnCollectionsOfCollectionsIsNotSupported: string
     ThisItemDoesNotHaveAKey: string,
     toODataTypeRef: string,
+    toODataEntitySet: string,
     responseParser: string,
     DefaultResponseInterceptor: string
     parseAngularBlob: string
@@ -77,6 +79,7 @@ export function generateKeywords(allNamespaces: string[], rootLevelTypes: string
         DefaultResponseInterceptor: getKeyword("DefaultResponseInterceptor"),
         responseParser: getKeyword("responseParser"),
         toODataTypeRef: getKeyword("toODataTypeRef"),
+        toODataEntitySet: getKeyword("toODataEntitySet"),
         QueryEnum: getKeyword("QueryEnum"),
         WithKeyType: getKeyword("WithKeyType"),
         ODataTypeRef: getKeyword("ODataTypeRef"),
@@ -89,6 +92,7 @@ export function generateKeywords(allNamespaces: string[], rootLevelTypes: string
         SubPathSelection: getKeyword("SubPathSelection"),
         CastSelection: getKeyword("CastSelection"),
         EntitySet: getKeyword("EntitySet"),
+        ODataEntitySet: getKeyword("ODataEntitySet"),
         IEntitySet: getKeyword("IEntitySet"),
         rootConfig: getKeyword("rootConfig"),
         ODataServiceConfig: getKeyword("ODataServiceConfig"),
@@ -144,6 +148,7 @@ ${tab(importWithAlias("SubPathSelection"))},
 ${tab(importWithAlias("QueryPrimitive"))},
 ${tab(importWithAlias("QueryCollection"))},
 ${tab(importWithAlias("EntitySet"))},
+${tab(importWithAlias("ODataEntitySet"))},
 ${tab(importWithAlias("IEntitySet"))},
 ${tab(importWithAlias("QueryComplexObject"))},
 ${tab(importWithAlias("ODataCollectionResult"))},

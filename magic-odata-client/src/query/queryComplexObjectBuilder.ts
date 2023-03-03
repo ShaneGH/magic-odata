@@ -1,4 +1,4 @@
-import { ODataComplexType, ODataTypeRef, ODataServiceTypes, ODataEnum } from "magic-odata-shared";
+import { ODataComplexType, ODataTypeRef, ODataEnum, ODataSchema } from "magic-odata-shared";
 import { typeNameString, typeRefString } from "../utils.js";
 
 type Dict<T> = { [key: string]: T }
@@ -107,7 +107,7 @@ function buildArrayCount(arrayMetadata: QueryObjectMetadata): QueryPrimitive<num
     };
 }
 
-function buildPropertyTypeRef<T>(type: ODataTypeRef, root: ODataServiceTypes, rootContext: string, path: PathSegment[], queryAliases: Dict<boolean>): QueryObject<T> {
+function buildPropertyTypeRef<T>(type: ODataTypeRef, root: Dict<ODataSchema>, rootContext: string, path: PathSegment[], queryAliases: Dict<boolean>): QueryObject<T> {
 
     if (type.isCollection) {
         if (!path.length) {
@@ -143,7 +143,7 @@ function buildPropertyTypeRef<T>(type: ODataTypeRef, root: ODataServiceTypes, ro
         };
     }
 
-    const tLookup = root[type.namespace || ""] && root[type.namespace || ""][type.name];
+    const tLookup = root[type.namespace || ""] && root[type.namespace || ""].types[type.name];
     if (!tLookup) {
         throw new Error(`Could not find type ${typeNameString(type)}`);
     }
@@ -174,7 +174,7 @@ function buildPropertyTypeRef<T>(type: ODataTypeRef, root: ODataServiceTypes, ro
 
     const bLookup = complexType.baseType
         && root[complexType.baseType.namespace]
-        && root[complexType.baseType.namespace][complexType.baseType.name];
+        && root[complexType.baseType.namespace].types[complexType.baseType.name];
 
     if (complexType.baseType && !bLookup) {
         throw new Error(`Could not find base type ${typeNameString(complexType.baseType)}`);
@@ -224,7 +224,7 @@ function buildPropertyTypeRef<T>(type: ODataTypeRef, root: ODataServiceTypes, ro
         }, base) as QueryComplexObject<T>;
 }
 
-export function buildComplexTypeRef<T>(type: ODataComplexType, root: ODataServiceTypes,
+export function buildComplexTypeRef<T>(type: ODataComplexType, root: Dict<ODataSchema>,
     rootContext: string): QueryComplexObject<T> {
 
     const typeRef = buildPropertyTypeRef<T>({
@@ -240,7 +240,7 @@ export function buildComplexTypeRef<T>(type: ODataComplexType, root: ODataServic
     return typeRef;
 }
 
-export function reContext<T>(obj: QueryComplexObject<T>, root: ODataServiceTypes): QueryComplexObject<T> {
+export function reContext<T>(obj: QueryComplexObject<T>, root: Dict<ODataSchema>): QueryComplexObject<T> {
 
     if (obj.$$oDataQueryMetadata.typeRef.isCollection) {
         throw new Error("Complex object has collection type ref");
