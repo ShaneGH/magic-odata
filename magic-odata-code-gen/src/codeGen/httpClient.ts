@@ -1,10 +1,10 @@
 import { ODataEntitySet, ODataServiceConfig } from "magic-odata-shared";
 import { CodeGenConfig } from "../config.js";
-import { treeify, Node } from "../utils.js";
+import { treeify, Node, flatten, toList, mapDict, groupBy } from "../utils.js";
 import { Keywords } from "./keywords.js";
 import {
     buildFullyQualifiedTsType, buildGetCasterName, buildGetKeyBuilderName, buildGetQueryableName, getEntitySetFunctionsName,
-    buildGetSubPathName, buildSanitizeNamespace, buildHttpClientType, Tab, entitySetsName, httpClientName, Dict
+    buildGetSubPathName, buildSanitizeNamespace, buildHttpClientType, Tab, entitySetsName, httpClientName, getFetchResult
 } from "./utils.js";
 
 
@@ -49,37 +49,6 @@ ${tab(constructor)}
 
 ${tab(entitySets(false))}
 }`
-    function toList<T>(x: Dict<T>): [string, T][] {
-        return Object.keys(x).map(k => [k, x[k]])
-    }
-
-    function mapDict<T, T1>(items: Dict<T>, mapper: (x: T) => T1) {
-        return Object
-            .keys(items)
-            .reduce((s, x) => ({
-                [x]: mapper(items[x])
-            }), {} as Dict<T1>)
-    }
-
-    function groupBy<T>(x: T[], grouping: (x: T) => string): Dict<T[]> {
-        return x
-            .reduce((s, x) => {
-                const key = grouping(x)
-                return s[key]
-                    ? {
-                        ...s,
-                        [key]: s[key].concat([x])
-                    } : {
-                        ...s,
-                        [key]: [x]
-                    }
-            }, {} as Dict<T[]>)
-    }
-
-    function flatten<T>(xs: T[][]) {
-        return xs.reduce((s, x) => [...s, ...x], [])
-    }
-
     function entitySets(isForInterface: boolean) {
 
         const entitySets = flatten(flatten(
@@ -193,12 +162,13 @@ ${tab(`return new ${instanceType}(args);`)}
             name: getEntitySetFunctionsName(settings)
         }
         const functionsName = `${fullyQualifiedTsType(mockedType)}["${entitySet.containerName || ""}"]["${entitySet.name}"]`
+        const { async, fetchResponse } = getFetchResult(keywords, settings || null)
 
         return {
             tKeyBuilder,
             tQueryable,
             tCaster: `${casterType}.Collection`,
-            tSubPath: `${keywords.EntitySetSubPath}<${entitySetsName(settings)}, ${functionsName}, ${tQueryable}>`,
+            tSubPath: `${keywords.EntitySetSubPath}<${entitySetsName(settings)}, ${async}<number>, ${functionsName}, ${tQueryable}, ${async}<${fetchResponse}>>`,
             tResult: {
                 isCollection: true as true,
                 collectionType: entitySet.forType

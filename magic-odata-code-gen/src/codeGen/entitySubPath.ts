@@ -3,7 +3,11 @@ import { CodeGenConfig } from "../config.js";
 import { typeNameString } from "../utils.js";
 import { buildGetEntityFunctionsName, entitySetsName } from "../codeGen/utils.js";
 import { Keywords } from "./keywords.js";
-import { buildFullyQualifiedTsType, buildGetCasterName, buildGetKeyBuilderName, buildGetQueryableName, buildGetSubPathName, buildSanitizeNamespace, FullyQualifiedTsType, GetCasterName, GetKeyBuilderName, GetQueryableName, GetSubPathName, buildHttpClientType, Tab, HttpClientType } from "./utils.js"
+import {
+    buildFullyQualifiedTsType, buildGetCasterName, buildGetKeyBuilderName, buildGetQueryableName, buildGetSubPathName,
+    buildSanitizeNamespace, FullyQualifiedTsType, GetCasterName, GetKeyBuilderName, GetQueryableName, GetSubPathName,
+    buildHttpClientType, Tab, HttpClientType, getFetchResult
+} from "./utils.js"
 
 // TODO: duplicate_logic_key: subPath
 enum ObjectType {
@@ -67,12 +71,14 @@ export function buildGetTypeForSubPath(
     function getTSubPath(typeRef: ODataTypeRef, tQueryable: string) {
 
         if (typeRef.isCollection) {
-            return `${keywords.CollectionSubPath}<${entitySetsName(settings)}, ${tQueryable}>`;
+            const { async, fetchResponse } = getFetchResult(keywords, settings || null)
+            return `${keywords.CollectionSubPath}<${entitySetsName(settings)}, ${async}<number>, ${tQueryable}, ${async}<${fetchResponse}>>`;
         }
 
         // https://github.com/ShaneGH/magic-odata/issues/12
         if (typeRef.namespace === "Edm") {
-            return `${keywords.PrimitiveSubPath}<${entitySetsName(settings)}, ${tQueryable}>`;
+            const { async, fetchResponse } = getFetchResult(keywords, settings || null)
+            return `${keywords.PrimitiveSubPath}<${entitySetsName(settings)}, ${async}<string>, ${tQueryable}, ${async}<${fetchResponse}>>`;
         }
 
         const type = allTypes[typeRef.namespace] && allTypes[typeRef.namespace].types[typeRef.name]
@@ -82,7 +88,8 @@ export function buildGetTypeForSubPath(
 
         // https://github.com/ShaneGH/magic-odata/issues/12
         if (type.containerType === "Enum") {
-            return `${keywords.PrimitiveSubPath}<${entitySetsName(settings)}, ${tQueryable}>`;
+            const { async, fetchResponse } = getFetchResult(keywords, settings || null)
+            return `${keywords.PrimitiveSubPath}<${entitySetsName(settings)}, ${async}<string>, ${tQueryable}, ${async}<${fetchResponse}>>`;
         }
 
         return fullyQualifiedTsType(typeRef, getSubPathName)

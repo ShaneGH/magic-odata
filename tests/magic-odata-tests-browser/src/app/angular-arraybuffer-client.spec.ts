@@ -96,6 +96,7 @@ describe('Angular client with ArrayBuffer output', () => {
 
     it("Should retrieve enum as $value", async () => {
       const client = TestBed.createComponent(AppComponent).componentInstance.angularArrayBufferClient;
+
       const user = await addUser();
       const userProfileType: string = await firstValueFrom(client.Users
         .withKey(x => x.key(user.Id!))

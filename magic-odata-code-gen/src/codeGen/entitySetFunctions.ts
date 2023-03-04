@@ -19,9 +19,13 @@ function mapSchema(tab: Tab, keywords: Keywords, generate: GenerateEntitySetFunc
         })
         .join("\n\n")
 
-    return `export module ${sanitizeNamespace(namespace, settings)} {
-${tab(`export type ${getEntitySetFunctionsName(settings)} = {\n${tab(inner)}\n}`)}
+    const type = `export type ${getEntitySetFunctionsName(settings)} = {\n${tab(inner)}\n}`
+
+    return namespace
+        ? `export module ${sanitizeNamespace(namespace, settings)} {
+${tab(type)}
 }`
+        : type
 }
 
 export function entitySetFunctions(serviceConfig: ODataServiceConfig, keywords: Keywords, settings: CodeGenConfig | null | undefined, tab: Tab) {

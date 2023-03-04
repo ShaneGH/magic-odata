@@ -1,7 +1,11 @@
 import { ComplexTypeOrEnum, Dict, ODataComplexType, ODataSchema, ODataServiceConfig, ODataSingleTypeRef } from "magic-odata-shared";
 import { CodeGenConfig } from "../config.js";
 import { Keywords } from "./keywords.js";
-import { buildFullyQualifiedTsType, buildGetCasterName, buildGetKeyBuilderName, buildGetQueryableName, buildGetSubPathName, FullyQualifiedTsType, GetCasterName, GetKeyBuilderName, GetQueryableName, GetSubPathName, buildHttpClientType, Tab, HttpClientType, entitySetsName } from "./utils.js"
+import {
+    buildFullyQualifiedTsType, buildGetCasterName, buildGetKeyBuilderName, buildGetQueryableName,
+    buildGetSubPathName, FullyQualifiedTsType, GetCasterName, GetKeyBuilderName, GetQueryableName,
+    GetSubPathName, buildHttpClientType, Tab, HttpClientType, entitySetsName, getFetchResult
+} from "./utils.js"
 
 // https://github.com/ShaneGH/magic-odata/issues/4
 function buildGetComplexCasterProps(
@@ -49,12 +53,13 @@ function buildGetComplexCasterProps(
                 const subProps = fullyQualifiedTsType(typeRef, getSubPathName)
                 const keyProp = fullyQualifiedTsType(typeRef, getKeyBuilderName);
                 const tQueryable = fullyQualifiedTsType(typeRef, getQueryableName)
+                const { async, fetchResponse } = getFetchResult(keywords, settings || null)
 
                 const generics = {
                     tKeyBuilder: keyProp,
                     tQueryable,
                     tCaster: `${caster}.${casterType}`,
-                    tSubPath: singleCasterType ? subProps : `${keywords.CollectionSubPath}<${entitySetsName(settings)}, ${tQueryable}>`,
+                    tSubPath: singleCasterType ? subProps : `${keywords.CollectionSubPath}<${entitySetsName(settings)}, ${async}<number>, ${tQueryable}, ${async}<${fetchResponse}>>`,
                     tResult: collectionResult
                         ? { isCollection: true as true, collectionType: typeRef }
                         : typeRef

@@ -223,14 +223,18 @@ export function angularResultType(settings: CodeGenConfig | null): string | null
 const httpClientGenericNames = ["TRoot", "TEntity", "TResult", "TKeyBuilder", "TQueryable", "TCaster", "TSubPath", "TFetchResult"]
 const longest = httpClientGenericNames.map(x => x.length).reduce((s, x) => s > x ? s : x, -1);
 
+export function getFetchResult(keywords: Keywords, settings: CodeGenConfig | null) {
+    const angularResult = angularResultType(settings);
+    return settings?.angularMode || settings?.asyncType === AsyncType.RxJs
+        ? { async: keywords.Observable, fetchResponse: `${keywords.AngularHttpResponse}<${angularResult}>` }
+        : { async: "Promise", fetchResponse: "Response" };
+}
+
 export type HttpClientType = (generics: HttpClientGenerics, asInterface: boolean) => string
 export function buildHttpClientType(types: Dict<ODataSchema>, keywords: Keywords, tab: Tab, settings: CodeGenConfig | null): HttpClientType {
 
-    const angularResult = angularResultType(settings);
     const fullyQualifiedTsType = buildFullyQualifiedTsType(settings);
-    const { async, fetchResponse } = settings?.angularMode || settings?.asyncType === AsyncType.RxJs
-        ? { async: keywords.Observable, fetchResponse: `${keywords.AngularHttpResponse}<${angularResult}>` }
-        : { async: "Promise", fetchResponse: "Response" };
+    const { async, fetchResponse } = getFetchResult(keywords, settings)
 
     function addType(name: string, i: number) {
         const gType = httpClientGenericNames[i] || ""

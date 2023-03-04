@@ -49,28 +49,28 @@ export type ThisItemDoesNotHaveAKey = never
  */
 export type $ValueAnd$CountTypesCanNotBeOperatedOn = never
 
-export type PrimitiveSubPath<TRoot, TQueryable> = {
+export type PrimitiveSubPath<TRoot, TValueResult, TQueryable, TFetchResult> = {
   $value: SubPathSelection<IEntitySet<
       /* TRoot */        TRoot,
       /* TEntity */      string,
-      /* TResult */      Promise<string>,
+      /* TResult */      TValueResult,
       /* TKeyBuilder */  ThisItemDoesNotHaveAKey,
       /* TQueryable */   TQueryable,
       /* TCaster */      $ValueAnd$CountTypesCanNotBeOperatedOn,
       /* TSubPath */     $ValueAnd$CountTypesCanNotBeOperatedOn,
-      /* TFetchResult */ Promise<Response>>>
+      /* TFetchResult */ TFetchResult>>
 }
 
-export type CollectionSubPath<TRoot, TQueryable> = {
+export type CollectionSubPath<TRoot, TCountResult, TQueryable, TFetchResult> = {
   $count: SubPathSelection<IEntitySet<
       /* TRoot */        TRoot,
       /* TEntity */      number,
-      /* TResult */      Promise<number>,
+      /* TResult */      TCountResult,
       /* TKeyBuilder */  ThisItemDoesNotHaveAKey,
       /* TQueryable */   TQueryable,
       /* TCaster */      $ValueAnd$CountTypesCanNotBeOperatedOn,
       /* TSubPath */     $ValueAnd$CountTypesCanNotBeOperatedOn,
-      /* TFetchResult */ Promise<Response>>>
+      /* TFetchResult */ TFetchResult>>
 }
 
-export type EntitySetSubPath<TRoot, TFunctions, TQueryable> = TFunctions & CollectionSubPath<TRoot, TQueryable>
+export type EntitySetSubPath<TRoot, TCountResult, TFunctions, TQueryable, TFetchResult> = TFunctions & CollectionSubPath<TRoot, TCountResult, TQueryable, TFetchResult>
