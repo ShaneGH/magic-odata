@@ -74,6 +74,7 @@ export type ODataEntitySet = {
 
 export type EntityContainer = {
     entitySets: Dict<ODataEntitySet>
+    unboundFunctions: Function[]
 }
 
 export type ODataSchema = {
@@ -84,25 +85,3 @@ export type ODataSchema = {
 export type ODataServiceConfig = {
     schemaNamespaces: Dict<ODataSchema>
 }
-
-
-
-
-
-
-
-
-// // TYPE COLLECTIONS
-// export type ODataServiceTypes = {
-//     [namespace: string]: {
-//         [typeName: string]: ComplexTypeOrEnum
-//     }
-// }
-
-// export type ODataEntitySetNamespaces = {
-//     [key: string]: ODataEntitySets
-// }
-
-// export type ODataEntitySets = {
-//     [key: string]: ODataEntitySet
-// }

@@ -1,14 +1,14 @@
-import { Dict, EntityContainer, ODataEntitySet, ODataServiceConfig } from "magic-odata-shared";
-import { EntitySet, IEntitySet } from "../entitySet.js";
+import { Dict, ODataEntitySet, ODataServiceConfig } from "magic-odata-shared";
+import { EntitySet, IUriBuilder } from "../entitySet.js";
 import { EntitySetTools } from "../entitySet/utils.js";
 import { FilterEnv, FilterResult } from "../queryBuilder.js";
 import { Reader } from "../utils.js";
 
 type ESet = EntitySet<any, any, any, any, any, any, any, any>
 
-export type RootQuery<TRoot> = (filter: TRoot) => IEntitySet<any, any, any, any, any, any, any, any>
+export type RootQuery<TRoot, TResult> = (filter: TRoot) => IUriBuilder<TResult>
 
-export function $root(filter: (root: any) => IEntitySet<any, any, any, any, any, any, any, any>) {
+export function $root<TResult>(filter: (root: any) => IUriBuilder<TResult>) {
 
     return Reader.create<FilterEnv, FilterResult>(env => {
 

@@ -548,5 +548,15 @@ describe("SubPath", function () {
                 expect(uris.relativePath).toBe("Users('123')/FavouriteBlog()/WordCount()");
             });
         });
+
+        // describe("Unbound", () => {
+        //     it("Should call a function with no inputs", async () => {
+        //         const calculation = await oDataClient
+        //             .functions(f => f.Calculator(1, 2))
+        //             .get();
+
+        //         expect(calculation).toBe(3);
+        //     });
+        // });
     })
 });

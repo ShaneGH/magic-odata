@@ -1,6 +1,6 @@
-import { ODataEntitySet, ODataSchema, ODataServiceConfig } from "magic-odata-shared";
+import { ODataEntitySet, ODataSchema, ODataServiceConfig, Function } from "magic-odata-shared";
 import { CodeGenConfig } from "../config.js";
-import { treeify, Node, flatten, toList, mapDict, groupBy } from "../utils.js";
+import { treeify, Node, flatten, toList, mapDict, groupBy, removeNulls, removeNullNulls } from "../utils.js";
 import { Keywords } from "./keywords.js";
 import {
     buildFullyQualifiedTsType, buildGetCasterName, buildGetKeyBuilderName, buildGetQueryableName, getEntitySetFunctionsName,
@@ -52,6 +52,12 @@ ${tab(parseResponseFunctionBody)}
     }
 }
 
+type CollectionItem = { type: "EntitySet", value: ODataEntitySet } | { type: "Function", containerName: string, value: Function }
+
+function containerName(x: CollectionItem) {
+    return x.type === "EntitySet" ? x.value.containerName : x.containerName
+}
+
 // TOOD: duplicate_logic HttpClient
 function httpClientForSchema(
     schemaName: string,
@@ -100,10 +106,15 @@ export module ${sanitizeNamespace(schemaName)} {\n${tab(module)}\n}`
         const entitySets = flatten(
             toList(serviceConfig.schemaNamespaces[schemaName].entityContainers)
                 .map(([_, ctr]) => toList(ctr.entitySets)
-                    .map(([_, x]) => x)))
+                    .map(([_, x]) => ({ type: "EntitySet", value: x } as CollectionItem))))
 
-        const entitySetsPerContainer = mapDict(groupBy(entitySets, x => x.namespace), es =>
-            treeify(es.map(e => [sanitizeNamespace(e.containerName).split(".").filter(x => !!x), e])))
+        const functions = flatten(
+            toList(serviceConfig.schemaNamespaces[schemaName].entityContainers)
+                .map(([containerName, ctr]) => ctr.unboundFunctions
+                    .map(x => ({ type: "Function", containerName, value: x } as CollectionItem))))
+
+        const entitySetsPerContainer = mapDict(groupBy(entitySets.concat(functions), x => x.value.namespace), es =>
+            treeify(es.map(e => [sanitizeNamespace(containerName(e)).split(".").filter(x => !!x), e])))
 
 
         return methodsForEntitySetNamespace(isForInterface, entitySetsPerContainer[Object.keys(entitySetsPerContainer)[0]])
@@ -111,10 +122,19 @@ export module ${sanitizeNamespace(schemaName)} {\n${tab(module)}\n}`
 
     function methodsForEntitySetNamespace(
         isForInterface: boolean,
-        entitySets: Node<ODataEntitySet[]>,
+        entitySets: Node<CollectionItem[]>,
         first = true): string {
 
-        const methods = entitySets.value?.map(x => methodForEntitySet(isForInterface, x, first)).filter(x => !!x) || []
+        const es = removeNullNulls(entitySets.value
+            ?.map(x => x.type === "EntitySet" ? x.value : undefined))
+            ?.map(x => methodForEntitySet(isForInterface, x, first))
+            .filter(x => !!x) || []
+
+        const functions = "/* TODO: placeholder for unbound functions */"
+        // removeNullNulls(entitySets.value
+        //     ?.map(x => x.type === "Function" ? x.value : undefined))
+        //     ?.map(x => methodForFunction(isForInterface, x, first))
+        //     .filter(x => !!x) || []
 
         const cacheArgs = !isForInterface && first
             // TODO: weird error. If I remove the ";" from this.${keywords._httpClientArgs};, the last letter of 
@@ -135,9 +155,14 @@ ${tab(methodsForEntitySetNamespace(isForInterface, entitySets.children[c], false
 }`)
 
         return [
-            ...methods,
+            //functions,
+            ...es,
             ...subPaths
         ].join(first || isForInterface ? "\n\n" : ",\n\n")
+    }
+
+    function methodForFunction(isForInterface: boolean, fn: Function, hasThisContext: boolean): string | undefined {
+        return `${fn.name}: {}`
     }
 
     function methodForEntitySet(isForInterface: boolean, entitySet: ODataEntitySet, hasThisContext: boolean): string | undefined {

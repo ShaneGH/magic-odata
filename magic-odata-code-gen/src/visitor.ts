@@ -247,9 +247,24 @@ export function visit<TWriter extends { concat: (x: TWriter) => TWriter }>(confi
         const entitySets = removeDictNulls(
             mapDict(container.entitySets, visitEntitySet))
 
-        return Object.keys(entitySets).length
-            ? traverseWriterDict(entitySets, zero).map(entitySets => ({ entitySets }))
-            : undefined
+        const unboundFunctions = removeNulls(container.unboundFunctions
+            .map(visitFunction))
+
+        if (!Object.keys(entitySets).length && !unboundFunctions.length)
+            return undefined
+
+        return traverseWriter(unboundFunctions, zero)
+            .apply(traverseWriterDict(entitySets, zero)
+                .apply(Writer.create(mapOutput, zero)))
+            .map(f => f());
+
+        function mapOutput(entitySets: Dict<ODataEntitySet>, unboundFunctions: Function[]): EntityContainer {
+
+            return {
+                entitySets,
+                unboundFunctions
+            }
+        }
     }
 
     function visitSchema(schema: ODataSchema, schemaNamespace: string): Writer<ODataSchema, TWriter> | undefined {

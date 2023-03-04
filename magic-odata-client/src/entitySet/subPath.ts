@@ -9,7 +9,6 @@ function buildSubPathProperties<TFetchResult, TResult, TSubPath>(
     data: EntitySetData<TFetchResult, TResult>,
     type: ODataTypeRef): TSubPath {
 
-    // TODO: collection_functions
     if (type.isCollection) {
 
         const functions = listAllEntitySetFunctionsGrouped(data.tools.entitySet, data.tools.root.schemaNamespaces)

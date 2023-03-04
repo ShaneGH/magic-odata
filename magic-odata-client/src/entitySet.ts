@@ -5,7 +5,7 @@ import { ODataUriParts, RequestTools } from "./entitySet/requestTools.js";
 import { KeySelection, recontextDataForKey } from "./entitySet/selectByKey.js";
 import { recontextDataForRootQuery } from "./entitySet/addQuery.js";
 import { CastSelection, recontextDataForCasting } from "./entitySet/cast.js";
-import { recontextDataForSubPath, SubPathSelection } from "./entitySet/subPath.js";
+import { Params, recontextDataForSubPath, SubPathSelection } from "./entitySet/subPath.js";
 import { buildUri, executeRequest } from "./entitySet/executeRequest.js";
 import { Accept } from "./entitySet/utils.js";
 import { ODataTypeRef } from "../index.js";
@@ -28,10 +28,24 @@ export type ODataResult<T> = ODataResultMetadata & T
  */
 export type OperationIsNotPossibleAfterQuery = never
 
+export interface IUriBuilder<TOutput> {
+
+    /**
+     * Return the inner workings of an OData query
+     * @param encodeUri Specify whether to encode the query parts. Default: the value specifed in withQuery(...)
+     */
+    uri(encodeQueryParts?: boolean): ODataUriParts
+
+    /**
+     * Get type info about the values returned from this query
+     */
+    getOutputType(): ODataTypeRef
+}
+
 /**
  * Path and query utils on an entity set or sub path
  */
-export interface IEntitySet<TRoot, TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSubPath, TFetchResult> {
+export interface IEntitySet<TRoot, TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSubPath, TFetchResult> extends IUriBuilder<TEntity> {
 
     /**
      * Create a new EntitySet scoped to a single entity
@@ -48,7 +62,7 @@ export interface IEntitySet<TRoot, TEntity, TResult, TKeyBuilder, TQueryable, TC
      * Create a new EntitySet of entites at the sub path defined
      */
     subPath<TNewEntityQuery>(
-        selector: (entity: TSubPath) => SubPathSelection<TNewEntityQuery> | string): TNewEntityQuery;
+        selector: (entity: TSubPath, params: Params<TRoot>) => SubPathSelection<TNewEntityQuery> | string): TNewEntityQuery;
 
     /**
      * Create a new EntitySet with the defined query attached
@@ -75,17 +89,6 @@ export interface IEntitySet<TRoot, TEntity, TResult, TKeyBuilder, TQueryable, TC
      * @param overrideRequestTools Override any request tools needed
      */
     get<TOverrideFetchResult, TOverrideResultType>(overrideRequestTools?: Partial<RequestTools<TOverrideFetchResult, TOverrideResultType>>): TOverrideResultType;
-
-    /**
-     * Return the inner workings of an OData query
-     * @param encodeUri Specify whether to encode the query parts. Default: the value specifed in withQuery(...)
-     */
-    uri(encodeQueryParts?: boolean): ODataUriParts
-
-    /**
-     * Get type info about the values returned from this query
-     */
-    getOutputType(): ODataTypeRef
 }
 
 export class EntitySet<TRoot, TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSubPath, TFetchResult>
@@ -127,7 +130,7 @@ export class EntitySet<TRoot, TEntity, TResult, TKeyBuilder, TQueryable, TCaster
     }
 
     subPath<TNewEntityQuery>(
-        selector: (entity: TSubPath) => SubPathSelection<TNewEntityQuery>): TNewEntityQuery {
+        selector: (entity: TSubPath, params: Params<TRoot>) => SubPathSelection<TNewEntityQuery>): TNewEntityQuery {
 
         const { state, tools } = recontextDataForSubPath(this.state, selector)
         return new EntitySet<TRoot, any, any, any, any, any, any, any>(tools, state, this.disableHttp) as TNewEntityQuery;

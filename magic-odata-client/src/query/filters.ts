@@ -9,7 +9,6 @@ import {
     endsWith as endsWithString, indexOf as indexOfString, length as lengthString, subString, matchesPattern, toLower, toUpper, trim
 } from "./filtering/string1.js";
 import { and, eq, ge, group, gt, isIn, le, logicalInfixOp, lt, ne, not, or } from "./filtering/logical2.js";
-//import { FilterablePaths, FilterableProps, filterRaw } from "./filtering/op1.js";
 import { Operable } from "./filtering/operable0.js";
 import { IntegerTypes, OutputTypes, RealNumberTypes } from "./filtering/queryPrimitiveTypes0.js";
 import { Filter } from "../queryBuilder.js";
@@ -17,7 +16,7 @@ import { EdmDate, EdmDateTimeOffset, EdmDuration, EdmTimeOfDay } from "../edmTyp
 import { addDate, addDateTimeOffset, addDuration, date, day, divByDuration, divDuration, fractionalSeconds, hour, maxDateTime, minDateTime, minute, month, mulDuration, now, second, subDate, subDateTimeOffset, subDuration, time, totalOffsetMinutes, totalSeconds, year } from "./filtering/time2.js";
 import { caseExpression } from "./filtering/case2.js";
 import { FilterablePaths, FilterableProps, filterRaw } from "./filtering/op1.js";
-import { IEntitySet } from "../entitySet.js";
+import { IEntitySet, IUriBuilder } from "../entitySet.js";
 import { $root } from "./root.js";
 
 /**
@@ -642,7 +641,7 @@ export type FilterUtils<TRoot> = {
      *
      * @example eq(x.bandName, $root(root => root.bands.withKey(k => k.key("TheBeatles")).subPath(u => u.badName))
      */
-    $root(filter: (root: TRoot) => IEntitySet<any, any, any, any, any, any, any, any>): Filter
+    $root<T>(filter: (root: TRoot) => IUriBuilder<T>): Filter
 }
 
 export function newUtils<TRoot>(): FilterUtils<TRoot> {

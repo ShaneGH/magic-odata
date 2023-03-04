@@ -138,6 +138,7 @@ function processSchemaNamespaces(warningConfig: SupressWarnings, config: Documen
 }
 
 function processSchemaNamespace(warningConfig: SupressWarnings, schema: Element): ODataSchema {
+
     return {
         types: processTypes(warningConfig, schema),
         entityContainers: processEntityContainers(warningConfig, schema)
@@ -162,8 +163,6 @@ function mapEntityContainer(warningConfig: SupressWarnings, entityContainer: Ele
     }
 
     const containerName = containerNames[0]?.value || "";
-    // TODO: unbound functions
-    //const unboundFunctions = getUnboundFunctions(entityContainer, warningConfig)
 
     const entitySets = nsLookup<Element>(entityContainer, "edm:EntitySet")
         .map(node => mapEntitySet(warningConfig, containerName, node))
@@ -174,35 +173,35 @@ function mapEntityContainer(warningConfig: SupressWarnings, entityContainer: Ele
             [x.name]: x
         }), {} as Dict<ODataEntitySet>);
 
-    return [containerName, { entitySets }]
+    const unboundFunctions = getUnboundFunctions(entityContainer, warningConfig)
+    return [containerName, { entitySets, unboundFunctions }]
 }
 
-// TODO: unbound functions
-// function getUnboundFunctions(entityContainer: Element, warningConfig: SupressWarnings): Function[] {
-//     const functionImports = nsLookup<Element>(entityContainer, "edm:FunctionImport")
-//     if (!functionImports.length) return []
+function getUnboundFunctions(entityContainer: Element, warningConfig: SupressWarnings): Function[] {
+    const functionImports = nsLookup<Element>(entityContainer, "edm:FunctionImport")
+    if (!functionImports.length) return []
 
-//     const unboundFunctions = processUnboundFunctions(warningConfig, entityContainer.ownerDocument!)
-//     const output = functionImports
-//         .map(fImport => {
-//             const functionName = nsLookup<Attr>(fImport, "@Function")[0]?.value
-//             if (!functionName) {
-//                 warn(warningConfig, "suppressInvalidFunctionConfiguration", "Found FunctionImport node with no Function attribute. Ignoring")
-//                 return null
-//             }
+    const unboundFunctions = processUnboundFunctions(warningConfig, entityContainer.ownerDocument!)
+    const output = functionImports
+        .map(fImport => {
+            const functionName = nsLookup<Attr>(fImport, "@Function")[0]?.value
+            if (!functionName) {
+                warn(warningConfig, "suppressInvalidFunctionConfiguration", "Found FunctionImport node with no Function attribute. Ignoring")
+                return null
+            }
 
-//             const f = unboundFunctions.filter(x => `${x.namespace && `${x.namespace}.`}${x.name}` === functionName)[0]
-//             if (!f) {
-//                 warn(warningConfig, "suppressInvalidFunctionConfiguration", `Could not find function definition for unboudn function ${functionName}. Ignoring`)
-//                 return null
-//             }
+            const f = unboundFunctions.filter(x => `${x.namespace && `${x.namespace}.`}${x.name}` === functionName)[0]
+            if (!f) {
+                warn(warningConfig, "suppressInvalidFunctionConfiguration", `Could not find function definition for unboudn function ${functionName}. Ignoring`)
+                return null
+            }
 
-//             return f!
-//         })
-//         .filter(x => !!x)
+            return f!
+        })
+        .filter(x => !!x)
 
-//     return output as Function[]
-// }
+    return output as Function[]
+}
 
 function processEntitySetFunctions(warningConfig: SupressWarnings, config: Document, forType: ODataSingleTypeRef) {
     return processFunctions(warningConfig, config, x => {

@@ -103,6 +103,11 @@ export function removeNulls<T>(items: (T | null | undefined)[]): T[] {
     return items.filter(x => x != null) as any
 }
 
+export function removeNullNulls<T>(items: (T | null | undefined)[] | undefined): T[] | undefined {
+    if (!items) return undefined
+    return items.filter(x => x != null) as any
+}
+
 export function flatten<T>(xs: T[][]) {
     return xs.reduce((s, x) => [...s, ...x], [])
 }
