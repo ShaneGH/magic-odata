@@ -189,7 +189,7 @@ Execute a query by chaining optional odata operations (e.g. path, key lookup, qu
 
 ```typescript
 // get all users
-const users = new MyOdataCliet({...})
+const users = new MyOdataClient({...})
     .Users
     .get()
 ```
@@ -200,7 +200,7 @@ You can also use the client to build a URI without executing a HTTP request
 
 ```typescript
 // get all users
-const userUriComponents = new MyOdataCliet({...})
+const userUriComponents = new MyOdataClient({...})
     .Users
     .withQuery((user, { $filter: { eq } }) => eq(user.Id, '123'))
     // the argument specifies whether to encode uri componentes or not
@@ -210,13 +210,13 @@ const userUriComponents = new MyOdataCliet({...})
 # Key Lookup
 
 ```typescript
-const user = new MyOdataCliet({...})
+const user = new MyOdataClient({...})
     .Users
     .withKey(x => x.key(user.Id))
     .get()
 
 // use a lookup without type safety
-const userName = new MyOdataCliet({...})
+const userName = new MyOdataClient({...})
     .Users
     .withKey(k => k.keyRaw("'123'"))
     .get()
@@ -226,7 +226,7 @@ const userName = new MyOdataCliet({...})
 
 ```typescript
 // use a type safe lookup
-const userName = new MyOdataCliet({...})
+const userName = new MyOdataClient({...})
     .Users
     .withKey(k => k.key(user.Id))
     .subPath(user => user.Name)
@@ -238,7 +238,7 @@ const userName = new MyOdataCliet({...})
 The $value path allows you to get a primitive value as a string
 
 ```typescript
-const userName = new MyOdataCliet({...})
+const userName = new MyOdataClient({...})
     .User
     .withKey(k => k.key(user.Id))
     .subPath(user => user.Name)
@@ -249,7 +249,7 @@ const userName = new MyOdataCliet({...})
 The $count path allows you to get a raw count of items as a number
 
 ```typescript
-const userName = new MyOdataCliet({...})
+const userName = new MyOdataClient({...})
     .User
     .subPath(user => user.$count)
     .get();
@@ -261,7 +261,7 @@ Use the `withQuery` function to add query params to a request. Query tools can b
 
 ```typescript
 // combine $filter, $orderby, $skip and $top query params
-const users = new MyOdataCliet({...})
+const users = new MyOdataClient({...})
     .User
     .withQuery((user, {
         $filter: {containsString},
@@ -283,20 +283,20 @@ See [FilterUtils](https://github.com/ShaneGH/magic-odata/blob/main/magic-odata-c
 
 ```typescript
 // use the inbult eq filter
-const myUser = new MyOdataCliet({...})
+const myUser = new MyOdataClient({...})
     .Users
     .withQuery((user, { $filter: { eq } }) => eq(user.Id, '123'))
     .get()
 
 // use a custom filter with property paths
-const myUser = new MyOdataCliet({...})
+const myUser = new MyOdataClient({...})
     .Users
     .withQuery((user, { $filter: { filterRaw } }) => 
         filterRaw({id: user.Id}, props => `${props.id} eq '123'`))
     .get()
 
 // use a custom filter
-const myUser = new MyOdataCliet({...})
+const myUser = new MyOdataClient({...})
     .Users
     .withQuery((user, { $filter: { filterRaw } }) => filterRaw("Id eq '123'"))
     .get()
@@ -308,13 +308,13 @@ See [SelectUtils](https://github.com/ShaneGH/magic-odata/blob/main/magic-odata-c
 
 ```typescript
 // use an inbuilt select
-const myUser = new MyOdataCliet({...})
+const myUser = new MyOdataClient({...})
     .Users
     .withQuery((user, { $select: { select } }) => select(user.Name))
     .get()
     
 // use a raw select
-const myUser = new MyOdataCliet({...})
+const myUser = new MyOdataClient({...})
     .Users
     .withQuery((user, { $select: { selectRaw } }) => selectRaw("Id,Name"))
     .get()
@@ -326,45 +326,45 @@ See [ExpandUtils](https://github.com/ShaneGH/magic-odata/blob/main/magic-odata-c
 
 ```typescript
 // simple expand clause
-const myUser = new MyOdataCliet({...})
+const myUser = new MyOdataClient({...})
     .Users
     .withQuery((user, { $expand: { expand } }) => expand(user.Friends))
     .get()
     
 // complex expand clause
-const myUser = new MyOdataCliet({...})
+const myUser = new MyOdataClient({...})
     .Users
     .withQuery((user, { $expand: { expand }, { $select: { select } }) => 
         expand(user.Friends, f => select(f.name)))
     .get()
 
 // expand *
-const myUser = new MyOdataCliet({...})
+const myUser = new MyOdataClient({...})
     .Users
     .withQuery((user, { $expand: { expandAll } }) => expandAll())
     .get()
 
 // expand $ref
-const myUser = new MyOdataCliet({...})
+const myUser = new MyOdataClient({...})
     .Users
     .withQuery((user, { $expand: { expandRef } }) => expandRef())
     .get()
 
 // expand $count
-const myUser = new MyOdataCliet({...})
+const myUser = new MyOdataClient({...})
     .Users
     .withQuery((user, { $expand: { expandCount } }) => expandCount(user.friends))
     .get()
 
 // expand clause with nested query
-const myUser = new MyOdataCliet({...})
+const myUser = new MyOdataClient({...})
     .Users
     .withQuery((user, { $expand: { expand } }, { $filter: { eq } }) =>
         expand(user.Friends, friend => eq(friend.Id, 123)))
     .get()
 
 // custom expand clause
-const myUser = new MyOdataCliet({...})
+const myUser = new MyOdataClient({...})
     .Users
     .withQuery((user, { $expand: { expandRaw } }) => expandRaw("Friends"))
     .get()
@@ -376,13 +376,13 @@ See [OrderingUtils](https://github.com/ShaneGH/magic-odata/blob/main/magic-odata
 
 ```typescript
 // simple orderby clause
-const myUser = new MyOdataCliet({...})
+const myUser = new MyOdataClient({...})
     .Users
     .withQuery((user, { $orderBy: { orderBy } }) => orderBy(user.Name))
     .get()
     
 // custom orderby clause
-const myUser = new MyOdataCliet({...})
+const myUser = new MyOdataClient({...})
     .Users
     .withQuery((user, { $orderBy: { orderByRaw } }) => orderByRaw("Name"))
     .get()
@@ -394,13 +394,13 @@ See [SearchUtils](https://github.com/ShaneGH/magic-odata/blob/main/magic-odata-c
 
 ```typescript
 // inbuilt search clause
-const myUser = new MyOdataCliet({...})
+const myUser = new MyOdataClient({...})
     .Users
     .withQuery((user, { $search: {term} }) => term("Search term1"))
     .get()
     
 // custom search clause
-const myUser = new MyOdataCliet({...})
+const myUser = new MyOdataClient({...})
     .Users
     .withQuery((user, { $search: { searchRaw } }) => searchRaw('"John" OR "Bob"'))
     .get()
@@ -411,7 +411,7 @@ const myUser = new MyOdataCliet({...})
 For a raw `$count` of entities or values, see [$value and $count](#value-and-count)
 
 ```typescript
-const users = new MyOdataCliet({...})
+const users = new MyOdataClient({...})
     .User
     .withQuery((user, {
         $skip,
@@ -431,7 +431,7 @@ The OData [$root](http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part2
 
 ```typescript
 // find the User for Blog with id "blog_id"
-const users = new MyOdataCliet({...})
+const users = new MyOdataClient({...})
     .User
     .withQuery((u, { $filter: { eq, $root } }) => eq(
         u.id,
@@ -447,7 +447,7 @@ const users = new MyOdataCliet({...})
 The custom operator allows to you add anything as a URL parameter
 
 ```typescript
-const users = new MyOdataCliet({...})
+const users = new MyOdataClient({...})
     .User
     .withQuery((user, {custom}) => [
         custom("$skip", 10),
@@ -460,7 +460,7 @@ const users = new MyOdataCliet({...})
 # Casting
 
 ```typescript
-const admins = new MyOdataCliet({...})
+const admins = new MyOdataClient({...})
     .Users
     .cast(user => user.Admin())
     .get()
