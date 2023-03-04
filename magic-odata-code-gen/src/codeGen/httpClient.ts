@@ -73,14 +73,14 @@ function httpClientForSchema(
     const name = httpClientName(settings)
 
     const module = `/**
- * A description of all of the entity in an OData model
+ * A description of all of the entity sets in the ${schemaName && `${schemaName} `}OData schema
  */
 export interface ${entitySetsName(settings)} {
 ${tab(entitySets(true))}
 }
 
 /**
- * The http client which serves as an entry point to OData
+ * The http client which serves as an entry point to the ${schemaName && `${schemaName} `}OData schema
  */
 export class ${name} implements ${entitySetsName(settings)} {
 ${tab(constructor)}
@@ -89,7 +89,10 @@ ${tab(entitySets(false))}
 }`
 
     return settings?.addODataClientToNamespace
-        ? `export module ${sanitizeNamespace(schemaName)} {\n${tab(module)}\n}`
+        ? `/**
+ * Http client for all of the entity sets in the ${schemaName && `${schemaName} `}OData schema
+ */
+export module ${sanitizeNamespace(schemaName)} {\n${tab(module)}\n}`
         : module
 
     function entitySets(isForInterface: boolean) {
