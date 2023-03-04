@@ -1,4 +1,4 @@
-import { ODataEntitySet, ODataServiceConfig } from "magic-odata-shared";
+import { ODataEntitySet, ODataSchema, ODataServiceConfig } from "magic-odata-shared";
 import { CodeGenConfig } from "../config.js";
 import { treeify, Node, flatten, toList, mapDict, groupBy } from "../utils.js";
 import { Keywords } from "./keywords.js";
@@ -17,52 +17,18 @@ export function httpClient(
     parseResponseFunctionBody: string,
     settings: CodeGenConfig | null | undefined) {
 
-    const fullyQualifiedTsType = buildFullyQualifiedTsType(settings);
-    const sanitizeNamespace = buildSanitizeNamespace(settings);
-    const getKeyBuilderName = buildGetKeyBuilderName(settings);
+    const schemas = Object
+        .keys(serviceConfig.schemaNamespaces)
+        .map(x => httpClientForSchema(x, serviceConfig, tab, keywords, requestToolsGenerics, settings))
+        .join("\n\n")
 
-    const getQueryableName = buildGetQueryableName(settings);
-    const getCasterName = buildGetCasterName(settings)
-    const getSubPathName = buildGetSubPathName(settings)
-    const httpClientType = buildHttpClientType(serviceConfig.schemaNamespaces, keywords, tab, settings || null);
-    const constructor = `constructor(private ${keywords._httpClientArgs}: ${keywords.RequestTools}<${requestToolsGenerics.join(", ")}>) { }`;
-
-    return `
-${parseResponse()}
+    return `${parseResponse()}
 
 ${toODataTypeRef()}
 
 ${toODataEntitySet()}
 
-/**
- * A description of all of the entity in an OData model
- */
-export interface ${entitySetsName(settings)} {
-${tab(entitySets(true))}
-}
-
-/**
- * The http client which serves as an entry point to OData
- */
-export class ${httpClientName(settings)} implements ${entitySetsName(settings)} {
-${tab(constructor)}
-
-${tab(entitySets(false))}
-}`
-    function entitySets(isForInterface: boolean) {
-
-        const entitySets = flatten(flatten(
-            toList(serviceConfig.schemaNamespaces)
-                .map(([_, ns]) => toList(ns.entityContainers)
-                    .map(([_, ctr]) => toList(ctr.entitySets)
-                        .map(([_, x]) => x)))))
-
-        const entitySetsPerContainer = mapDict(groupBy(entitySets, x => x.namespace), es =>
-            treeify(es.map(e => [sanitizeNamespace(e.containerName).split(".").filter(x => !!x), e])))
-
-
-        return methodsForEntitySetNamespace(isForInterface, entitySetsPerContainer[Object.keys(entitySetsPerContainer)[0]])
-    }
+${schemas}`
 
     function toODataTypeRef() {
         return `function ${keywords.toODataTypeRef}(collection: boolean, namespace: string, name: string): ${keywords.ODataTypeRef} {
@@ -83,6 +49,61 @@ ${tab(`return ${keywords.rootConfig}.schemaNamespaces[namespace || ""].entityCon
 
 ${tab(parseResponseFunctionBody)}
 }`
+    }
+}
+
+// TOOD: duplicate_logic HttpClient
+function httpClientForSchema(
+    schemaName: string,
+    serviceConfig: ODataServiceConfig,
+    tab: Tab,
+    keywords: Keywords,
+    requestToolsGenerics: [string, string],
+    settings: CodeGenConfig | null | undefined) {
+
+    const fullyQualifiedTsType = buildFullyQualifiedTsType(settings);
+    const sanitizeNamespace = buildSanitizeNamespace(settings);
+    const getKeyBuilderName = buildGetKeyBuilderName(settings);
+
+    const getQueryableName = buildGetQueryableName(settings);
+    const getCasterName = buildGetCasterName(settings)
+    const getSubPathName = buildGetSubPathName(settings)
+    const httpClientType = buildHttpClientType(serviceConfig.schemaNamespaces, keywords, tab, settings || null);
+    const constructor = `constructor(private ${keywords._httpClientArgs}: ${keywords.RequestTools}<${requestToolsGenerics.join(", ")}>) { }`;
+    const name = httpClientName(settings)
+
+    const module = `/**
+ * A description of all of the entity in an OData model
+ */
+export interface ${entitySetsName(settings)} {
+${tab(entitySets(true))}
+}
+
+/**
+ * The http client which serves as an entry point to OData
+ */
+export class ${name} implements ${entitySetsName(settings)} {
+${tab(constructor)}
+
+${tab(entitySets(false))}
+}`
+
+    return settings?.addODataClientToNamespace
+        ? `export module ${sanitizeNamespace(schemaName)} {\n${tab(module)}\n}`
+        : module
+
+    function entitySets(isForInterface: boolean) {
+
+        const entitySets = flatten(
+            toList(serviceConfig.schemaNamespaces[schemaName].entityContainers)
+                .map(([_, ctr]) => toList(ctr.entitySets)
+                    .map(([_, x]) => x)))
+
+        const entitySetsPerContainer = mapDict(groupBy(entitySets, x => x.namespace), es =>
+            treeify(es.map(e => [sanitizeNamespace(e.containerName).split(".").filter(x => !!x), e])))
+
+
+        return methodsForEntitySetNamespace(isForInterface, entitySetsPerContainer[Object.keys(entitySetsPerContainer)[0]])
     }
 
     function methodsForEntitySetNamespace(
