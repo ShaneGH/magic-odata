@@ -16,8 +16,8 @@ import { EdmDate, EdmDateTimeOffset, EdmDuration, EdmTimeOfDay } from "../edmTyp
 import { addDate, addDateTimeOffset, addDuration, date, day, divByDuration, divDuration, fractionalSeconds, hour, maxDateTime, minDateTime, minute, month, mulDuration, now, second, subDate, subDateTimeOffset, subDuration, time, totalOffsetMinutes, totalSeconds, year } from "./filtering/time2.js";
 import { caseExpression } from "./filtering/case2.js";
 import { FilterablePaths, FilterableProps, filterRaw } from "./filtering/op1.js";
-import { IEntitySet, IUriBuilder } from "../entitySet.js";
 import { $root } from "./root.js";
+import { IUriBuilder } from "../entitySetInterfaces.js";
 
 /**
  * This IEntitySet is made to generate a uri. It does not have the ability to query
@@ -641,7 +641,7 @@ export type FilterUtils<TRoot> = {
      *
      * @example eq(x.bandName, $root(root => root.bands.withKey(k => k.key("TheBeatles")).subPath(u => u.badName))
      */
-    $root<T>(filter: (root: TRoot) => IUriBuilder<T>): Filter
+    $root(filter: (root: TRoot) => IUriBuilder): Filter
 }
 
 export function newUtils<TRoot>(): FilterUtils<TRoot> {

@@ -361,7 +361,6 @@ describe("SubPath", function () {
                 .withKey(x => x.key(user.blogPost.Id!))
                 .subPath(x => x.Likes)
                 .subPath(x => x.$value)
-
                 .get();
 
             expect(typeof likes).toBe("string");
@@ -548,6 +547,7 @@ describe("SubPath", function () {
                 expect(uris.relativePath).toBe("Users('123')/FavouriteBlog()/WordCount()");
             });
         });
+
 
         // describe("Unbound", () => {
         //     it("Should call a function with no inputs", async () => {

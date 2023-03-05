@@ -1,12 +1,13 @@
-import { Filter, FilterEnv, FilterResult } from "../../queryBuilder.js";
-import { QueryCollection, QueryObject, QueryObjectType, QueryPrimitive } from "../queryComplexObjectBuilder.js";
+import { Filter, FilterEnv, FilterResult, QbEmit } from "../../queryBuilder.js";
+import { QueryCollection, QueryObject, QueryPrimitive } from "../queryComplexObjectBuilder.js";
 import { serialize } from "../../valueSerializer.js";
 import { asOperable, combineFilterStrings, Operable, operableToFilter } from "./operable0.js";
 import { IntegerTypes, NonNumericTypes, resolveOutputType } from "./queryPrimitiveTypes0.js";
 import { ODataTypeRef } from "../../../index.js";
-import { Reader } from "../../utils.js";
+import { ReaderWriter } from "../../utils.js";
 import { functionCall } from "./op1.js";
 import { executeQueryBuilder } from "../../entitySet/addQuery.js";
+import { params } from "../../entitySet/params.js";
 
 export type OperableCollection<T> = QueryCollection<QueryObject<T>, T> | Filter
 
@@ -46,12 +47,14 @@ function filterize<TArrayType>(
     }
 
     return operableToFilter(supplimentary)
-        .bind(({ $$output }) => Reader.create<FilterEnv, FilterResult>(({ serviceConfig }) => ({
-            $$output,
-            $$filter: `[${mapper
-                ? toFilterize.map(mapper).join(",")
-                : toFilterize.map(x => serialize(x, $$output.isCollection ? $$output.collectionType : undefined, serviceConfig.schemaNamespaces)).join(",")}]`
-        })))
+        .bind(({ $$output }) => ReaderWriter.create<FilterEnv, FilterResult, QbEmit>(({ serviceConfig }) => [
+            QbEmit.zero,
+            {
+                $$output,
+                $$filter: `[${mapper
+                    ? toFilterize.map(mapper).join(",")
+                    : toFilterize.map(x => serialize(x, $$output.isCollection ? $$output.collectionType : undefined, serviceConfig.schemaNamespaces)).join(",")}]`
+            }]))
 }
 
 function filterizeSingle<TArrayType>(
@@ -65,13 +68,17 @@ function filterizeSingle<TArrayType>(
     }
 
     return operableToFilter(supplimentary)
-        .map(({ $$output }) => ($$output.isCollection && $$output.collectionType) || $$output)
-        .bind($$output => Reader.create<FilterEnv, FilterResult>(({ serviceConfig }) => ({
-            $$output,
-            $$filter: mapper
-                ? mapper(toFilterize as TArrayType)
-                : serialize(toFilterize, $$output, serviceConfig.schemaNamespaces)
-        })))
+        .map(({ $$output }) => ({
+            $$output: ($$output.isCollection && $$output.collectionType) || $$output
+        }))
+        .bind(({ $$output }) => ReaderWriter.create<FilterEnv, FilterResult, QbEmit>(({ serviceConfig }) => [
+            QbEmit.zero,
+            {
+                $$output,
+                $$filter: mapper
+                    ? mapper(toFilterize as TArrayType)
+                    : serialize(toFilterize, $$output, serviceConfig.schemaNamespaces)
+            }]))
 }
 
 function _collectionFunction<TArrayType>(
@@ -99,7 +106,7 @@ function _collectionFunction<TArrayType>(
 
     const _collection = operableToFilter(collection)
     const _values = operableToFilter(values)
-    const inputs = Reader.traverse(_collection, _values) as Reader<FilterEnv, [FilterResult, FilterResult]>
+    const inputs = ReaderWriter.traverse([_collection, _values], QbEmit.zero) as ReaderWriter<FilterEnv, [FilterResult, FilterResult], QbEmit>
 
     return inputs.bind(is =>
         functionCall(functionName, [_collection, _values], output(is)));
@@ -129,9 +136,9 @@ export function count<T>(collection: OperableCollection<T>, countUnit = IntegerT
 
 export function $filter<TRoot, T, TQuery extends QueryObject<T>>(collection: QueryCollection<TQuery, T> | Filter, itemFilter: (item: TQuery) => Filter): Filter {
 
-    const output = operableToFilter(collection)
-        .bind(x => Reader
-            .create<FilterEnv, Filter>(env => {
+    return operableToFilter(collection)
+        .bind(x => ReaderWriter
+            .create<FilterEnv, Filter, QbEmit>(env => {
 
                 if (!x.$$output.isCollection) {
                     throw new Error(`$filter can only be done on collections. `
@@ -143,15 +150,18 @@ export function $filter<TRoot, T, TQuery extends QueryObject<T>>(collection: Que
                     throw new Error("Collections of collections are not supported");
                 }
 
-                return executeQueryBuilder<TRoot, TQuery, Filter>(x.$$output.collectionType, env.serviceConfig.schemaNamespaces, itemFilter, "$this")
-                    .mapEnv<FilterEnv>(env => ({ ...env, rootContext: "$this" }))
-                    .map(({ $$filter }) => ({
-                        $$output: x.$$output,
-                        $$filter: `${x.$$filter}/$filter(${$$filter})`
-                    }))
-            }));
-
-    return Reader.create<FilterEnv, FilterResult>(env => output.apply(env).apply(env))
+                const [mutableParamDefinitions, paramsBuilder] = params<TRoot>(env.rootUri, env.serviceConfig, env.schema);
+                return [
+                    new QbEmit([mutableParamDefinitions]),
+                    executeQueryBuilder<TRoot, TQuery, Filter>(x.$$output.collectionType, env.serviceConfig.schemaNamespaces, itemFilter, "$this", paramsBuilder)
+                        .mapEnv<FilterEnv>(env => ({ ...env, rootContext: "$this" }))
+                        .map(({ $$filter }) => ({
+                            $$output: x.$$output,
+                            $$filter: `${x.$$filter}/$filter(${$$filter})`
+                        }))
+                ]
+            }))
+        .bind(x => x)
 }
 
 export function hasSubset<TArrayType>(

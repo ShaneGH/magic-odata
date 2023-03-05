@@ -1,4 +1,6 @@
-import { buildQuery, Expand, FilterEnv, Query } from "../queryBuilder.js"
+import { ParameterDefinition } from "../entitySet/params.js";
+import { buildPartialQuery, buildQuery, Expand, ExpandResult, FilterEnv, Query } from "../queryBuilder.js"
+import { Dict, ReaderWriter, Writer } from "../utils.js";
 import { PathSegment, QueryCollection, QueryComplexObject, QueryObjectType, reContext } from "./queryComplexObjectBuilder.js"
 
 export type ExpandUtils = {
@@ -55,21 +57,21 @@ function expandRaw(expand: string): Expand {
 
     return {
         $$oDataQueryObjectType: "Expand",
-        $$expand: _ => expand
+        $$expand: _ => Writer.create(expand, [])
     }
 }
 
 function expandAll(): Expand {
     return {
         $$oDataQueryObjectType: "Expand",
-        $$expand: _ => "*"
+        $$expand: _ => Writer.create("*", [])
     }
 }
 
 function expandRef(): Expand {
     return {
         $$oDataQueryObjectType: "Expand",
-        $$expand: _ => "*/$ref"
+        $$expand: _ => Writer.create("*/$ref", [])
     }
 }
 
@@ -91,18 +93,22 @@ function _expand<T>(
     return {
         $$oDataQueryObjectType: "Expand",
         $$expand: filterEnv => {
-            const innerExpand = and && addPath
-                ? `${addPath}(${innerBit(filterEnv, obj, and)})`
-                : and
-                    ? `(${innerBit(filterEnv, obj, and)})`
-                    : addPath;
+            const inner = (and && innerBit(filterEnv, obj, and)) || Writer.create(null as string | null, [] as ParameterDefinition[][])
+            return inner.map(inner => {
 
-            const $$expand = expandString(obj.$$oDataQueryMetadata.path, innerExpand);
-            if (!$$expand) {
-                throw new Error("Object cannot be expanded");
-            }
+                const innerExpand = inner && addPath
+                    ? `${addPath}(${inner})`
+                    : inner
+                        ? `(${inner})`
+                        : addPath;
 
-            return $$expand
+                const result = expandString(obj.$$oDataQueryMetadata.path, innerExpand);
+                if (!result) {
+                    throw new Error("Object cannot be expanded");
+                }
+
+                return result
+            })
         }
     }
 }
@@ -121,13 +127,11 @@ function innerBit<T>(
         rootContext: reContexted.$$oDataQueryMetadata.rootContext
     }
 
-    const innerQ = buildQuery(and(reContexted), filterEnv, false);
-    const inner = Object
-        .keys(innerQ)
-        .map(k => `${k}=${innerQ[k]}`)
-        .join(";")
-
-    return inner
+    return buildPartialQuery(and(reContexted), filterEnv, false)
+        .map(innerQ => Object
+            .keys(innerQ)
+            .map(k => `${k}=${innerQ[k]}`)
+            .join(";"));
 }
 
 function expandString(pathSegment: PathSegment[], addPath: string | null): string | null {
@@ -148,7 +152,9 @@ function expandString(pathSegment: PathSegment[], addPath: string | null): strin
 function combine(...expansions: Expand[]): Expand {
     return {
         $$oDataQueryObjectType: "Expand",
-        $$expand: env => expansions.map(x => x.$$expand(env)).join(",")
+        $$expand: env => Writer.traverse(expansions
+            .map(x => x.$$expand(env)), [])
+            .map(x => x.join(","))
     }
 }
 

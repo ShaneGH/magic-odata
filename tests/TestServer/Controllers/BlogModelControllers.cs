@@ -388,6 +388,39 @@ public class UsersController : ODataControllerBase<User>
             .AsSingleResult();
     }
 
+    [HttpGet("Users({key})/HasBlog(blog={blog})")]
+    [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
+    public SingleResult<bool> HasBlog([FromODataUri] string key, [FromODataUri] Blog blog)
+    {
+        var any = _inMemoryDb.Blogs
+            .Where(b => b.Id == blog.Id && b.UserId == key)
+            .Any();
+
+        return new[] { any }.AsQueryable().AsSingleResult();
+    }
+
+    [HttpGet("Users({key})/IsType(userType={userType})")]
+    [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
+    public SingleResult<bool> IsType([FromODataUri] string key, [FromODataUri] UserType userType)
+    {
+        var any = _inMemoryDb.Users
+            .Where(u => u.Id == key && u.UserType == userType)
+            .Any();
+
+        return new[] { any }.AsQueryable().AsSingleResult();
+    }
+
+    [HttpGet("Users({key})/IsType(userType={userProfileType})")]
+    [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
+    public SingleResult<bool> IsProfileType([FromODataUri] string key, [FromODataUri] UserProfileType userProfileType)
+    {
+        var any = _inMemoryDb.Users
+            .Where(u => u.Id == key && u.UserProfileType == userProfileType)
+            .Any();
+
+        return new[] { any }.AsQueryable().AsSingleResult();
+    }
+
     [HttpGet("Users({key})/FavouriteBlog()")]
     [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
     public SingleResult<Blog> GetFavouriteBlog([FromRoute] string key)
@@ -810,6 +843,14 @@ public class CommentsController : ODataControllerBase<Comment>
 
     protected override IQueryable<Comment> AllEntities(EntityDbContext db) => db.Comments;
 
+    [HttpGet("Comments/GetCommentsByTag(commentsByTag={commentsByTag})")]
+    [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
+    public IQueryable<Comment> GetCommentsByTag([FromODataUri] CbtInput input)
+    {
+        return _inMemoryDb.Comments
+           .Where(x => x.Tags.Any(t => t.Tag == input.Tag.Tag));
+    }
+
     [HttpGet("Comments({key})/Tags")]
     [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
     public IQueryable<CommentTag> GetCommentTags([FromRoute] string key)
@@ -827,6 +868,11 @@ public class CommentsController : ODataControllerBase<Comment>
             .Where(x => x.Id == key)
             .AsSingleResult();
     }
+}
+
+public class CbtInput
+{
+    public CommentTag Tag { get; set; }
 }
 
 public static class Utils

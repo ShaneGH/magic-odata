@@ -1,6 +1,7 @@
 import { ODataTypeRef } from "../../../index.js";
-import { Filter, FilterEnv, FilterResult } from "../../queryBuilder.js";
-import { Reader } from "../../utils.js";
+import { ParameterDefinition } from "../../entitySet/params.js";
+import { Filter, FilterEnv, FilterResult, QbEmit } from "../../queryBuilder.js";
+import { ReaderWriter } from "../../utils.js";
 import { rawType } from "../../valueSerializer.js";
 import { Operable, operableToFilter } from "./operable0.js";
 import { OutputTypes, resolveOutputType } from "./queryPrimitiveTypes0.js";
@@ -21,24 +22,21 @@ export function filterRaw(arg1: string | FilterableProps, arg2?: ((path: Filtera
             throw new Error("Invalid method overload");
         }
 
-        return Reader.create<FilterEnv, FilterResult>(_ => ({
+        return ReaderWriter.retn(QbEmit.zero, {
             $$filter: arg1,
             $$output: (arg2 && resolveOutputType(arg2)) || rawType
-        }))
+        })
     }
 
     if (typeof arg2 !== "function") {
         throw new Error("Invalid method overload");
     }
 
-    const paths = Reader.create<FilterEnv, FilterablePaths>(env => Object
+    return ReaderWriter.traverse(Object
         .keys(arg1)
-        .reduce((s, x) => ({
-            ...s,
-            [x]: operableToFilter(arg1[x]).apply(env).$$filter
-        }), {} as FilterablePaths));
-
-    return paths
+        .map(name => operableToFilter(arg1[name])
+            .map(filterResult => ({ name, filterResult }))), QbEmit.zero)
+        .map(results => results.reduce((s, x) => ({ ...s, [x.name]: x.filterResult.$$filter }), {} as FilterablePaths))
         .map(arg2)
         .map(paths => ({
             $$filter: paths,
@@ -63,8 +61,8 @@ export function infixOp(lhs: Filter, op: string, rhs: Filter, outputType: ODataT
 }
 
 export function functionCall(functionName: string, args: Filter[], outputType: ODataTypeRef | OutputTypes): Filter {
-    return Reader
-        .traverse(...args)
+    return ReaderWriter
+        .traverse(args, QbEmit.zero)
         .map(r => ({
             $$output: toTypeRef(outputType),
             $$filter: `${functionName}(${r.map(x => x.$$filter).join(",")})`

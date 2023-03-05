@@ -1,5 +1,7 @@
 import { ODataComplexType, ODataTypeRef, Function as ODataFunction, ODataEntitySet, Dict, ODataSchema } from "magic-odata-shared";
+import { Params } from "../entitySetInterfaces.js";
 import { serialize } from "../valueSerializer.js";
+import { params } from "./params.js";
 import { Accept, EntitySetData, lookup, tryFindBaseType, tryFindPropertyType } from "./utils.js";
 
 const $count = {};
@@ -7,11 +9,12 @@ const $value = {};
 
 function buildSubPathProperties<TFetchResult, TResult, TSubPath>(
     data: EntitySetData<TFetchResult, TResult>,
-    type: ODataTypeRef): TSubPath {
+    type: ODataTypeRef,
+    encodeUri: boolean): TSubPath {
 
     if (type.isCollection) {
 
-        const functions = listAllEntitySetFunctionsGrouped(data.tools.entitySet, data.tools.root.schemaNamespaces)
+        const functions = listAllEntitySetFunctionsGrouped(data.tools.entitySet, data.tools.root.schemaNamespaces, encodeUri)
             .reduce((s, x) => ({ ...s, [x[0]]: x[1] }), {} as any);
 
         return {
@@ -28,7 +31,7 @@ function buildSubPathProperties<TFetchResult, TResult, TSubPath>(
     const props = listAllProperties(t.type, data.tools.root.schemaNamespaces, true)
         .reduce((s, x) => ({ ...s, [x]: { propertyName: x } }), {} as any);
 
-    const functions = listAllEntityFunctionsGrouped(t.type, data.tools.root.schemaNamespaces)
+    const functions = listAllEntityFunctionsGrouped(t.type, data.tools.root.schemaNamespaces, encodeUri)
         .reduce((s, x) => ({ ...s, [x[0]]: x[1] }), {} as any);
 
     return {
@@ -37,7 +40,7 @@ function buildSubPathProperties<TFetchResult, TResult, TSubPath>(
     }
 }
 
-function buildFunctions(groupedFunctions: { [k: string]: ODataFunction[] }, root: Dict<ODataSchema>): [string, (x: any) => SubPathSelection<any>][] {
+function buildFunctions(groupedFunctions: { [k: string]: ODataFunction[] }, root: Dict<ODataSchema>, encodeUri: boolean): [string, (x: any) => SubPathSelection<any>][] {
 
     return Object
         .keys(groupedFunctions)
@@ -65,9 +68,13 @@ function buildFunctions(groupedFunctions: { [k: string]: ODataFunction[] }, root
                     throw new Error(`Unknown function args for function ${key}(${(x && Object.keys(x)) || ""})`);
                 }
 
+                const _serialize: typeof serialize = encodeUri
+                    ? (x, y, z) => encodeURIComponent(serialize(x, y, z))
+                    : (x, y, z) => serialize(x, y, z)
+
                 const params = fn.params
                     .filter(x => !x.isBindingParameter)
-                    .map(param => `${param.name}=${serialize(x[param.name], param.type, root)}`)
+                    .map(param => `${param.name}=${_serialize(x[param.name], param.type, root)}`)
                     .join(",");
 
                 const output: SubPathSelection<any> = { propertyName: `${key}(${params})`, outputType: fn.returnType }
@@ -79,10 +86,11 @@ function buildFunctions(groupedFunctions: { [k: string]: ODataFunction[] }, root
 function listAllEntityFunctionsGrouped(
     type: ODataComplexType,
     root: Dict<ODataSchema>,
+    encodeUri: boolean,
     includeParent = true): [string, (x: any) => SubPathSelection<any>][] {
 
     const groupedFunctions = groupFunctions(listAllEntityFunctionsUngrouped(type, root, includeParent))
-    return buildFunctions(groupedFunctions, root)
+    return buildFunctions(groupedFunctions, root, encodeUri)
 }
 
 function groupFunctions(functions: ODataFunction[]) {
@@ -100,10 +108,11 @@ function groupFunctions(functions: ODataFunction[]) {
 
 function listAllEntitySetFunctionsGrouped(
     entitySet: ODataEntitySet,
-    root: Dict<ODataSchema>): [string, (x: any) => SubPathSelection<any>][] {
+    root: Dict<ODataSchema>,
+    encodeUri: boolean): [string, (x: any) => SubPathSelection<any>][] {
 
     const groupedFunctions = groupFunctions(entitySet.collectionFunctions)
-    return buildFunctions(groupedFunctions, root)
+    return buildFunctions(groupedFunctions, root, encodeUri)
 }
 
 function listAllEntityFunctionsUngrouped(
@@ -142,16 +151,18 @@ export type SubPathSelection<TNewEntityQuery> = {
     outputType?: ODataTypeRef
 }
 
-export function recontextDataForSubPath<TFetchResult, TResult, TSubPath, TNewEntityQuery>(
+export function recontextDataForSubPath<TRoot, TFetchResult, TResult, TSubPath, TNewEntityQuery>(
     data: EntitySetData<TFetchResult, TResult>,
-    subPath: (pathSelector: TSubPath) => SubPathSelection<TNewEntityQuery>) {
+    subPath: (pathSelector: TSubPath, params: Params<TRoot>) => SubPathSelection<TNewEntityQuery>): EntitySetData<TFetchResult, TResult> {
 
-    if (data.state.query) {
+    if (data.state.query.query.length) {
         throw new Error("You cannot add query components before navigating a sub path");
     }
 
     let propType: ODataTypeRef | null = null
-    const newT = subPath(buildSubPathProperties(data, data.tools.type));
+    const [mutableParamDefinitions, paramsBuilder] = params<TRoot>(data.tools.requestTools.uriRoot,
+        data.tools.root, data.tools.root.schemaNamespaces[data.tools.entitySet.namespace]);
+    const newT = subPath(buildSubPathProperties(data, data.tools.type, true), paramsBuilder);
     if (newT === $value) {
         propType = data.tools.type
     } else if (newT === $count && data.tools.type.isCollection) {
@@ -179,11 +190,12 @@ export function recontextDataForSubPath<TFetchResult, TResult, TSubPath, TNewEnt
         state: {
             ...data.state,
             path,
+            mutableDataParams: [...data.state.mutableDataParams, mutableParamDefinitions],
             accept: newT === $value
                 ? Accept.Raw
                 : newT === $count
                     ? Accept.Integer
-                    : data.state.accept
+                    : data.state.accept,
         }
     }
 }

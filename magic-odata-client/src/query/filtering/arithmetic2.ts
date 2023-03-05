@@ -1,6 +1,6 @@
 import { EdmDuration } from "../../edmTypes.js";
-import { Filter, FilterEnv } from "../../queryBuilder.js";
-import { Reader } from "../../utils.js";
+import { Filter, FilterEnv, QbEmit } from "../../queryBuilder.js";
+import { ReaderWriter } from "../../utils.js";
 import { serialize } from "../../valueSerializer.js";
 import { functionCall, infixOp } from "./op1.js";
 import { Operable, operableToFilter } from "./operable0.js";
@@ -14,7 +14,7 @@ const integerTypes = Object.keys(IntegerTypes);
 function isInteger(item: Operable<number> | number) {
 
     if (typeof item === "number") {
-        return Reader.retn<boolean>(Number.isInteger(item));
+        return ReaderWriter.retn(QbEmit.zero, Number.isInteger(item));
     }
 
     return operableToFilter(item)
@@ -25,10 +25,10 @@ function isInteger(item: Operable<number> | number) {
 }
 
 function guessAritmeticOutputType(
-    lhs: Operable<number> | number, operator: string, rhs: Operable<number> | number): Reader<FilterEnv, RealNumberTypes> {
+    lhs: Operable<number> | number, operator: string, rhs: Operable<number> | number): ReaderWriter<FilterEnv, RealNumberTypes, QbEmit> {
 
     if (operator === "div" || operator === "divby") {
-        return Reader.retn(DecimalNumberTypes.Double)
+        return ReaderWriter.retn(QbEmit.zero, DecimalNumberTypes.Double)
     }
 
     return isInteger(lhs)
@@ -50,7 +50,7 @@ function toFilter(lhs: Operable<number> | number): Filter {
         return operableToFilter(lhs)
     }
 
-    return Reader.retn({
+    return ReaderWriter.retn(QbEmit.zero, {
         $$filter: lhs == null ? "null" : serialize(lhs),
         $$output: Number.isInteger(lhs) ? int64T : doubleT
     })
@@ -65,7 +65,7 @@ function arithmeticInfixOp(
     rhs: Operable<number> | number,
     result: RealNumberTypes | undefined): Filter {
 
-    const r = (result && Reader.retn(result)) || guessAritmeticOutputType(lhs, operator, rhs)
+    const r = (result && ReaderWriter.retn(QbEmit.zero, result)) || guessAritmeticOutputType(lhs, operator, rhs)
 
     return r
         .bind(r => infixOp(toFilter(lhs), ` ${operator} `, toFilter(rhs), r))

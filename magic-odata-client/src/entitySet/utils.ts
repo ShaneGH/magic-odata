@@ -1,6 +1,7 @@
 import { Dict, ODataComplexType, ODataEntitySet, ODataEnum, ODataSchema, ODataServiceConfig, ODataTypeName, ODataTypeRef } from "magic-odata-shared"
 import { Query } from "../queryBuilder.js"
 import { typeNameString } from "../utils.js"
+import { ParameterDefinition } from "./params.js"
 import { DefaultResponseInterceptor, RequestTools } from "./requestTools.js"
 
 
@@ -26,8 +27,12 @@ export enum Accept {
 export type EntityQueryState = {
     path: string[]
     accept: Accept
-    query?: {
-        query: Query | Query[]
+    /** This dataParams contains arrays that might mutate. Make sure to use it after all
+     * other operations are complete
+     */
+    mutableDataParams: ParameterDefinition[][]
+    query: {
+        query: Query[]
         urlEncode: boolean
     }
 }

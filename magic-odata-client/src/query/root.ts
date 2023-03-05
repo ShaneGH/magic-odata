@@ -1,34 +1,44 @@
-import { Dict, ODataEntitySet, ODataServiceConfig } from "magic-odata-shared";
-import { EntitySet, IUriBuilder } from "../entitySet.js";
+import { Dict, ODataEntitySet, ODataSchema, ODataServiceConfig } from "magic-odata-shared";
+import { EntitySet } from "../entitySet.js";
 import { EntitySetTools } from "../entitySet/utils.js";
-import { FilterEnv, FilterResult } from "../queryBuilder.js";
-import { Reader } from "../utils.js";
+import { IUriBuilder } from "../entitySetInterfaces.js";
+import { FilterEnv, FilterResult, QbEmit } from "../queryBuilder.js";
+import { ReaderWriter } from "../utils.js";
 
 type ESet = EntitySet<any, any, any, any, any, any, any, any>
 
-export type RootQuery<TRoot, TResult> = (filter: TRoot) => IUriBuilder<TResult>
+export type RootQuery<TRoot> = (filter: TRoot) => IUriBuilder
 
-export function $root<TResult>(filter: (root: any) => IUriBuilder<TResult>) {
+// TODO: this (+ deps) should not really be in $root anymore. It is used by a few different things
+export function buildUriBuilderRoot(uriRoot: string, serviceConfig: ODataServiceConfig, schema: ODataSchema) {
 
-    return Reader.create<FilterEnv, FilterResult>(env => {
+    const entitySetTree = Object
+        .keys(schema.entityContainers)
+        .map(ns => methodsForEntitySetNamespace(
+            uriRoot,
+            serviceConfig,
+            ns.replace(/[^a-zA-Z0-9$._]/g, ".").split("."),
+            schema.entityContainers[ns].entitySets))
+        .reduce((s, x) => {
+            if (!s) return x
+            return merge(s, x, "root")
+        }, null as Node | null);
 
-        const entitySetTree = Object
-            .keys(env.schema.entityContainers)
-            .map(ns => methodsForEntitySetNamespace(
-                env.serviceConfig,
-                ns.replace(/[^a-zA-Z0-9$._]/g, ".").split("."),
-                env.schema.entityContainers[ns].entitySets))
-            .reduce((s, x) => {
-                if (!s) return x
-                return merge(s, x, "root")
-            }, null as Node | null);
+    return (entitySetTree && stripSumType(entitySetTree)) || {} as any
+}
 
-        const entitySets = (entitySetTree && stripSumType(entitySetTree)) || {}
+export function $root(filter: (root: any) => IUriBuilder) {
+
+    return ReaderWriter.create<FilterEnv, FilterResult, QbEmit>(env => {
+
+        const entitySets = buildUriBuilderRoot("$root/", env.serviceConfig, env.schema)
         const entitySet = filter(entitySets)
-        return {
-            $$output: entitySet.getOutputType(),
-            $$filter: env.buildUri(entitySet.uri(false))
-        }
+        return [
+            QbEmit.zero,
+            {
+                $$output: entitySet.getOutputType(),
+                $$filter: env.buildUri(entitySet.uri(false))
+            }]
     });
 }
 
@@ -111,6 +121,7 @@ type Node =
     | { t: "Namespace", data: Namespace }
 
 function methodsForEntitySetNamespace(
+    uriRoot: string,
     serviceConfig: ODataServiceConfig,
     entitySetNamespaceParts: string[],
     entitySets: Dict<ODataEntitySet>): Node {
@@ -129,7 +140,7 @@ function methodsForEntitySetNamespace(
                 const tools: EntitySetTools<any, any> = {
                     requestTools: {
                         request() { throw new Error("This entity set has http requests disabled") },
-                        uriRoot: "$root/"
+                        uriRoot: uriRoot
                     },
                     defaultResponseInterceptor: () => { throw new Error("This entity set has http requests disabled") },
                     type: entitySets[key].isSingleton
@@ -155,7 +166,7 @@ function methodsForEntitySetNamespace(
     return {
         t: "Namespace",
         data: {
-            [entitySetNamespaceParts[0]]: methodsForEntitySetNamespace(serviceConfig, entitySetNamespaceParts.slice(1), entitySets)
+            [entitySetNamespaceParts[0]]: methodsForEntitySetNamespace(uriRoot, serviceConfig, entitySetNamespaceParts.slice(1), entitySets)
         }
     }
 }

@@ -1,6 +1,8 @@
 import { Dict, ODataSchema, ODataTypeName, ODataTypeRef } from "magic-odata-shared";
+import { Params } from "../entitySetInterfaces.js";
 import { typeNameString } from "../utils.js";
 import { serialize } from "../valueSerializer.js";
+import { params } from "./params.js";
 import { EntitySetData, lookupComplex, tryFindBaseType, tryFindPropertyType } from "./utils.js";
 
 /**
@@ -79,6 +81,7 @@ function keyExpr(keyTypes: KeyType[], key: any, keyEmbedType: WithKeyType, servi
 
         return {
             ...result,
+            // TODO: should not be always encoded???  
             value: encodeURIComponent(result.value)
         }
     }
@@ -105,6 +108,7 @@ function keyExpr(keyTypes: KeyType[], key: any, keyEmbedType: WithKeyType, servi
 
     return {
         appendToLatest: true,
+        // TODO: should not be always encoded???
         value: `(${encodeURIComponent(value)})`
     }
 }
@@ -127,11 +131,11 @@ function keyStructured(key: any, keyEmbedType?: WithKeyType.FunctionCall): KeySe
     }
 }
 
-export function recontextDataForKey<TFetchResult, TResult, TNewEntityQuery, TKeyBuilder>(
+export function recontextDataForKey<TRoot, TFetchResult, TResult, TNewEntityQuery, TKeyBuilder>(
     data: EntitySetData<TFetchResult, TResult>,
-    key: (builder: TKeyBuilder) => KeySelection<TNewEntityQuery>) {
+    key: (builder: TKeyBuilder, params: Params<TRoot>) => KeySelection<TNewEntityQuery>): EntitySetData<TFetchResult, TResult> {
 
-    if (data.state.query) {
+    if (data.state.query.query.length) {
         throw new Error("You cannot add query components before doing a key lookup");
     }
 
@@ -147,7 +151,9 @@ export function recontextDataForKey<TFetchResult, TResult, TNewEntityQuery, TKey
         throw new Error("Cannot search a collection of collections by key. You must search a collection instead");
     }
 
-    const keyResult = key({ keyRaw, key: keyStructured } as any);
+    const [mutableParamDefinitions, paramsBuilder] = params<TRoot>(data.tools.requestTools.uriRoot,
+        data.tools.root, data.tools.root.schemaNamespaces[data.tools.entitySet.namespace]);
+    const keyResult = key({ keyRaw, key: keyStructured } as any, paramsBuilder);
     const keyTypes = tryFindKeyTypes(data.tools.type.collectionType, data.tools.root.schemaNamespaces);
     const keyPath = keyResult.raw
         ? { value: keyResult.key, appendToLatest: keyResult.key[0] === "(" }
@@ -170,6 +176,7 @@ export function recontextDataForKey<TFetchResult, TResult, TNewEntityQuery, TKey
         },
         state: {
             ...data.state,
+            mutableDataParams: [...data.state.mutableDataParams, mutableParamDefinitions],
             path
         }
     }

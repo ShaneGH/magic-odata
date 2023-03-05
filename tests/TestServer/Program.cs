@@ -183,6 +183,36 @@ public class Program
             .Function("FavouriteBlog")
             .Returns<Blog>();
 
+        var hasBlog = builder
+            .EntityType<User>()
+            .Function("HasBlog");
+
+        hasBlog
+            .Returns<bool>();
+
+        hasBlog
+            .Parameter<Blog>("blog");
+
+        var isType = builder
+            .EntityType<User>()
+            .Function("IsType");
+
+        isType
+            .Returns<bool>();
+
+        isType
+            .Parameter<UserType>("userType");
+
+        var isProfileType = builder
+            .EntityType<User>()
+            .Function("IsProfileType");
+
+        isProfileType
+            .Returns<bool>();
+
+        isProfileType
+            .Parameter<UserProfileType>("userProfileType");
+
         var wordCount1 = builder
             .EntityType<Blog>()
             .Function("WordCount");
@@ -198,6 +228,15 @@ public class Program
             .EntityType<Blog>()
             .Collection.Function("Top10BlogsByName")
             .ReturnsCollection<Blog>();
+
+        var commentsByTag = builder
+            .EntityType<Comment>()
+            .Collection.Function("GetCommentsByTag");
+
+        commentsByTag
+            .ReturnsCollection<Comment>();
+
+        commentsByTag.Parameter<CbtInput>("input");
 
         builder.EntitySet<CompositeKeyItem>("CompositeKeyItems");
         builder.EntitySet<OneOfEverything>("OneOfEverythings");

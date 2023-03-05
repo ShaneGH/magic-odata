@@ -1,6 +1,14 @@
-import { Dict, ODataEnum, ODataSchema, ODataSingleTypeRef, ODataTypeRef } from "magic-odata-shared";
+import { ComplexTypeOrEnum, Dict, ODataEnum, ODataSchema, ODataSingleTypeRef, ODataTypeRef } from "magic-odata-shared";
 import { ODataDate, ODataDuration, ODataTimeOfDay, ODataDateTimeOffset } from "./edmTypes.js";
 import { typeRefString } from "./utils.js";
+
+export class AtParam {
+    constructor(public readonly name: string) {
+        if (!name.length || name[0] !== "@") {
+            throw new Error(`Parameters must begin with @: "${name}"`);
+        }
+    }
+}
 
 export function enumMemberName(enumDef: ODataEnum, value: number): string {
     const name = Object
@@ -187,6 +195,10 @@ export function serialize(value: any, type?: ODataTypeRef, serviceConfig?: Dict<
         return "null"
     }
 
+    if (value instanceof AtParam) {
+        return value.name
+    }
+
     if (Array.isArray(value)) {
         type = type?.isCollection ? type.collectionType : type
         return `[${value.map(x => serialize(x, type, serviceConfig))}]`
@@ -244,8 +256,8 @@ export function serialize(value: any, type?: ODataTypeRef, serviceConfig?: Dict<
         return basicSerialize(value);
     }
 
-    const enumType = serviceConfig[type.namespace] && serviceConfig[type.namespace].types[type.name]
-    if (enumType.containerType !== "Enum") {
+    const enumType: ComplexTypeOrEnum | undefined = serviceConfig[type.namespace] && serviceConfig[type.namespace].types[type.name]
+    if (!enumType || enumType.containerType !== "Enum") {
 
         const name = typeRefString(type)
         if (!warnedEnumTypes[name]) {

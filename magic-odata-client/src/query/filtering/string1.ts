@@ -1,6 +1,6 @@
 import { ODataTypeRef } from "magic-odata-shared";
-import { Filter, FilterEnv, FilterResult } from "../../queryBuilder.js";
-import { Reader } from "../../utils.js";
+import { Filter, FilterEnv, FilterResult, QbEmit } from "../../queryBuilder.js";
+import { ReaderWriter } from "../../utils.js";
 import { serialize } from "../../valueSerializer.js";
 import { functionCall } from "./op1.js";
 import { combineFilterStrings, Operable, operableToFilter } from "./operable0.js";
@@ -12,10 +12,12 @@ const int32T = resolveOutputType(IntegerTypes.Int32)
 
 function toFilter(x: Operable<string> | string) {
     return typeof x === "string"
-        ? Reader.create<FilterEnv, FilterResult>(env => ({
-            $$output: stringT,
-            $$filter: serialize(x, stringT, env.serviceConfig.schemaNamespaces)
-        }))
+        ? ReaderWriter.create<FilterEnv, FilterResult, QbEmit>(env => [
+            QbEmit.zero,
+            {
+                $$output: stringT,
+                $$filter: serialize(x, stringT, env.serviceConfig.schemaNamespaces)
+            }])
         : operableToFilter(x);
 }
 

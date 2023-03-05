@@ -1,6 +1,9 @@
 import { ODataSchema, ODataServiceConfig, ODataTypeRef } from "magic-odata-shared";
+import { ParameterDefinition, params } from "./entitySet/params.js";
 import { ODataUriParts } from "./entitySet/requestTools.js";
-import { Reader } from "./utils.js";
+import { NonNumericTypes, OutputTypes, resolveOutputType } from "./query/filtering/queryPrimitiveTypes0.js";
+import { groupBy, mapDict, ReaderWriter, removeNulls, Writer } from "./utils.js";
+import { serialize } from "./valueSerializer.js";
 
 type Dict<T> = { [key: string]: T }
 
@@ -28,9 +31,11 @@ export type Count = {
     $$oDataQueryObjectType: "Count"
 }
 
+export type ExpandResult = Writer<string, ParameterDefinition[][]>
+
 export type Expand = {
     $$oDataQueryObjectType: "Expand"
-    $$expand: (env: FilterEnv) => string
+    $$expand: (env: FilterEnv) => ExpandResult
 }
 
 export type OrderBy = {
@@ -59,49 +64,90 @@ export type FilterResult = {
     $$output: ODataTypeRef
 }
 
+export type BuildUri = (uriParts: ODataUriParts) => string
+
 export type FilterEnv = {
-    buildUri: (uriParts: ODataUriParts) => string,
+    rootUri: string
+    buildUri: BuildUri
     serviceConfig: ODataServiceConfig
     schema: ODataSchema
     rootContext: string
 }
 
-export type Filter = Reader<FilterEnv, FilterResult>
+export class QbEmit {
+    static readonly zero = new QbEmit([])
+
+    /** @param params: the inner list might mutate */
+    constructor(public readonly params: ParameterDefinition[][]) {
+
+    }
+
+    concat(other: QbEmit) {
+        if (this === QbEmit.zero) return other
+        if (other === QbEmit.zero) return this
+
+        return new QbEmit(this.params.concat(other.params))
+    }
+}
+
+export type Filter = ReaderWriter<FilterEnv, FilterResult, QbEmit>
 
 export type Query = Top | Skip | Count | Expand | OrderBy | Select | Filter | Custom | Search
 
-function maybeAdd(encode: boolean, s: Dict<string>, stateProp: string, inputProp: string | undefined, errorMessage: string) {
+type QueryAccumulator = Writer<Dict<string>, ParameterDefinition[][]>
 
-    if (s[stateProp]) {
-        throw new Error(errorMessage);
-    }
+function maybeAdd(encode: boolean, s: QueryAccumulator, stateProp: string, inputProp: string | undefined,
+    errorMessage: string): QueryAccumulator {
 
-    return inputProp !== undefined
-        ? {
-            ...s,
+    return s.map(state => {
+
+        if (state[stateProp]) {
+            throw new Error(errorMessage)
+        }
+
+        return inputProp ? {
+            ...state,
             [stateProp]: encode
                 ? encodeURIComponent(inputProp)
                 : inputProp
-        }
-        : s
+        } : state
+    })
 }
 
-export function buildQuery(q: Query | Query[], filterEnv: FilterEnv, encode = true): Dict<string> {
+function verifyAllParamsAreDefined(allParams: ParameterDefinition[]) {
+    const grouped = groupBy(allParams, x => x.data.name)
+    const notDefined = Object
+        .keys(grouped)
+        .filter(param => grouped[param].every(x => x.type === "Param"))
+        .map(param => `Param ${param} is referenced but not defined`)
+        .join("\n")
+
+    if (notDefined) {
+        throw new Error(`${notDefined}\nUse the "createRef" or "createConst" methods to define a param`)
+    }
+}
+
+export function buildPartialQuery(q: Query | Query[], filterEnv: FilterEnv, encode = true): QueryAccumulator {
     if (!Array.isArray(q)) {
-        return buildQuery([q], filterEnv, encode)
+        return buildPartialQuery([q], filterEnv, encode)
     }
 
     return q
         .reduce((s, x) => {
 
-            if (x instanceof Reader) {
-                return maybeAdd(encode, s, "$filter", x.apply(filterEnv).$$filter,
-                    "Multiple expansions detected. Combine multipe expansions with the $filter.and or $filter.or utils");
+            if (x instanceof ReaderWriter) {
+                return x
+                    .asWriter(filterEnv)
+                    .mapAcc(x => x.params)
+                    .bind(applied => maybeAdd(encode, s, "$filter", applied.$$filter,
+                        "Multiple expansions detected. Combine multipe expansions with the $filter.and or $filter.or utils"))
             }
 
             if (x.$$oDataQueryObjectType === "Expand") {
-                return maybeAdd(encode, s, "$expand", x.$$expand(filterEnv),
-                    "Multiple expansions detected. Combine multipe expansions with the $expand.combine util");
+                return x
+                    .$$expand(filterEnv)
+                    .bind(applied => maybeAdd(encode, s, "$expand", applied,
+                        "Multiple expansions detected. Combine multipe expansions with the $expand.combine util"));
             }
 
             if (x.$$oDataQueryObjectType === "OrderBy") {
@@ -129,5 +175,66 @@ export function buildQuery(q: Query | Query[], filterEnv: FilterEnv, encode = tr
             }
 
             return maybeAdd(encode, s, "$skip", x.$$skip.toString(), "Multiple skip clauses detected");
-        }, {} as Dict<string>);
+        }, Writer.create<Dict<string>, ParameterDefinition[][]>({}, []));
+}
+
+export function buildQuery(types: Dict<ODataSchema>, buildUri: BuildUri, q: Query | Query[], filterEnv: FilterEnv, mutableDataParams: ParameterDefinition[][], encode = true): Dict<string> {
+
+    const pq = buildPartialQuery(q, filterEnv, encode)
+        .bind(x => Writer.create(x, mutableDataParams))
+
+    return merge(types, buildUri, pq, encode)
+}
+
+const stringT = resolveOutputType(NonNumericTypes.String)
+
+function merge(types: Dict<ODataSchema>, buildUri: BuildUri, acc: QueryAccumulator, encode: boolean): Dict<string> {
+    const [params, _dataParams] = acc.execute()
+
+    // once the partial query is built, mutableDataParams **should** be finished mutating
+    const dataParams = _dataParams.reduce((s, x) => [...s, ...x], [])
+    verifyAllParamsAreDefined(dataParams)
+
+    const stringify = encode
+        ? (x: any) => encodeURIComponent(JSON.stringify(x))
+        : (x: any) => JSON.stringify(x)
+
+    const _serialize: typeof serialize = encode
+        ? (x, y, z) => encodeURIComponent(serialize(x, y, z))
+        : (x, y, z) => serialize(x, y, z)
+
+    const serializedDataParams = removeNulls(dataParams
+        .map(d => d.type === "Const"
+            ? {
+                k: d.data.name,
+                v: d.data.paramType
+                    ? _serialize(d.data.value, d.data.paramType, types)
+                    : typeof d.data.value === "string"
+                        ? _serialize(d.data.value, stringT, types)
+                        : stringify(d.data.value)
+            }
+            : d.type === "Ref"
+                ? { k: d.data.name, v: stringify({ "@odata.id": buildUri(d.data.uri.uri(false)) }) }
+                : null))
+
+    const newParamsDict = mapDict(
+        groupBy(serializedDataParams, ({ k }) => k), vs => vs.map(({ v }) => v))
+
+    const err = Object
+        .keys(newParamsDict)
+        .map(k => newParamsDict[k].length > 1 || params[k]
+            ? `Data parameter ${k} is defined more than once`
+            : null)
+        .filter(x => !!x)
+        .join("\n")
+
+    if (err) {
+        throw new Error(err);
+    }
+
+    return serializedDataParams
+        .reduce((s, x) => ({
+            ...s,
+            [x.k]: x.v
+        }), params)
 }

@@ -78,8 +78,10 @@ function _buildUri<TFetchResult, TResult>(
         throw new Error(`Invalid config. Could not find schema: ${data.tools.entitySet.namespace}`);
     }
 
+    const buildUri = tools.uriInterceptor || defaultUriInterceptor
     const filterEnv = {
-        buildUri: defaultUriInterceptor,
+        buildUri,
+        rootUri: data.tools.requestTools.uriRoot,
         serviceConfig: data.tools.root,
         rootContext: "$it",
         schema: data.tools.root.schemaNamespaces[data.tools.entitySet.namespace]
@@ -91,7 +93,7 @@ function _buildUri<TFetchResult, TResult>(
         entitySetContainerName: data.tools.entitySet.containerName || null,
         entitySetName: data.tools.entitySet.name,
         relativePath: relativePath,
-        query: buildQuery(data.state.query?.query || [], filterEnv, data.state.query?.urlEncode)
+        query: buildQuery(data.tools.root.schemaNamespaces, buildUri, data.state.query.query, filterEnv, data.state.mutableDataParams, data.state.query.urlEncode)
     }
 }
 
@@ -108,16 +110,16 @@ export function executeRequest<TFetchResult, TResult>(
     relativePath: string,
     overrideRequestTools: Partial<RequestTools<TFetchResult, TResult>> | undefined): TResult {
 
-    const tools = combineTools(data, overrideRequestTools)
+    const requestTools = combineTools(data, overrideRequestTools)
 
-    const uri = tools.uriInterceptor!(
-        _buildUri(data, relativePath, tools));
+    const uri = requestTools.uriInterceptor!(
+        _buildUri({ ...data, tools: { ...data.tools, requestTools } }, relativePath, requestTools));
 
     const acceptHeader = !data.state.accept || data.state.accept === Accept.Json
         ? "application/json"
         : "text/plain"
 
-    let init: RequestOptions = tools.requestInterceptor!(uri, {
+    let init: RequestOptions = requestTools.requestInterceptor!(uri, {
         method: "GET",
         headers: [
             ["OData-Version", "4"],
@@ -127,8 +129,8 @@ export function executeRequest<TFetchResult, TResult>(
         ]
     });
 
-    const stringParser = buildStringParser(data.state.accept, tools.ignoreWarnings ? acceptHeader : undefined)
-    return buildResponseInterceptorChain(data, stringParser, overrideRequestTools)(tools.request(uri, init), uri, init)
+    const stringParser = buildStringParser(data.state.accept, requestTools.ignoreWarnings ? acceptHeader : undefined)
+    return buildResponseInterceptorChain(data, stringParser, overrideRequestTools)(requestTools.request(uri, init), uri, init)
 }
 
 function buildResponseInterceptorChain<TFetchResult, TResult>(

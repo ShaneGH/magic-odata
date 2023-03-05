@@ -1,7 +1,7 @@
 import { ODataTypeRef } from "magic-odata-shared";
 import { EdmDate, EdmDateTimeOffset, EdmDuration, EdmTimeOfDay } from "../../edmTypes.js";
-import { Filter, FilterEnv, FilterResult } from "../../queryBuilder.js";
-import { Reader } from "../../utils.js";
+import { Filter, FilterEnv, FilterResult, QbEmit } from "../../queryBuilder.js";
+import { ReaderWriter } from "../../utils.js";
 import { serialize } from "../../valueSerializer.js";
 import { functionCall, infixOp } from "./op1.js";
 import { asOperable, Operable, operableToFilter } from "./operable0.js";
@@ -24,12 +24,14 @@ function filterize<T>(
         return operableToFilter(toFilterizeO)
     }
 
-    return Reader.create<FilterEnv, FilterResult>(({ serviceConfig }) => ({
-        $$output: expected,
-        $$filter: mapper
-            ? mapper(toFilterize as T)
-            : serialize(toFilterize, expected, serviceConfig.schemaNamespaces)
-    }))
+    return ReaderWriter.create<FilterEnv, FilterResult, QbEmit>(({ serviceConfig }) => [
+        QbEmit.zero,
+        {
+            $$output: expected,
+            $$filter: mapper
+                ? mapper(toFilterize as T)
+                : serialize(toFilterize, expected, serviceConfig.schemaNamespaces)
+        }])
 }
 
 export function addDateTimeOffset(lhs: Operable<EdmDateTimeOffset> | EdmDateTimeOffset, rhs: Operable<EdmDuration> | EdmDuration): Filter {
@@ -114,17 +116,17 @@ function accessorFunction<T>(
     return functionCall(name, [operableToFilter(operand)], outputType)
 }
 
-const _now: Filter = Reader.retn<FilterEnv, FilterResult>({ $$output: dateTimeOffsetT, $$filter: "now()" })
+const _now: Filter = ReaderWriter.retn<FilterEnv, FilterResult, QbEmit>(QbEmit.zero, { $$output: dateTimeOffsetT, $$filter: "now()" })
 export function now() {
     return _now;
 }
 
-const _maxdatetime: Filter = Reader.retn<FilterEnv, FilterResult>({ $$output: dateTimeOffsetT, $$filter: "maxdatetime()" })
+const _maxdatetime: Filter = ReaderWriter.retn<FilterEnv, FilterResult, QbEmit>(QbEmit.zero, { $$output: dateTimeOffsetT, $$filter: "maxdatetime()" })
 export function maxDateTime() {
     return _maxdatetime
 }
 
-const _mindatetime: Filter = Reader.retn<FilterEnv, FilterResult>({ $$output: dateTimeOffsetT, $$filter: "mindatetime()" })
+const _mindatetime: Filter = ReaderWriter.retn<FilterEnv, FilterResult, QbEmit>(QbEmit.zero, { $$output: dateTimeOffsetT, $$filter: "mindatetime()" })
 export function minDateTime() {
     return _mindatetime
 }

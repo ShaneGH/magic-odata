@@ -74,7 +74,7 @@ export function recontextDataForCasting<TFetchResult, TResult, TCaster, TNewEnti
     data: EntitySetData<TFetchResult, TResult>,
     cast: (caster: TCaster) => CastSelection<TNewEntityQuery>) {
 
-    if (data.state.query) {
+    if (data.state.query.query.length) {
         throw new Error("You cannot add query components before casting");
     }
 

@@ -1,4 +1,4 @@
-import { IEntitySet } from "./entitySet.js"
+import { IEntitySet } from "./entitySetInterfaces.js"
 import { SubPathSelection } from "./entitySet/subPath.js"
 
 

@@ -34,11 +34,15 @@ export {
 } from "./src/queryBuilder.js"
 
 export {
+    EntitySet
+} from "./src/entitySet.js"
+
+export {
     ODataCollectionResult,
     ODataResult,
-    EntitySet,
+    Params,
     IEntitySet
-} from "./src/entitySet.js"
+} from "./src/entitySetInterfaces.js"
 
 export {
     HttpError

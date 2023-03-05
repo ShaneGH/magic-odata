@@ -81,6 +81,12 @@ export async function addUser(user?: Partial<User>) {
         ...user || {}
     };
 
+    if (user?.UserType === My.Odata.Entities.UserType.Admin) {
+        blogUser.UserType = "Admin" as any
+    } else if (user?.UserType === My.Odata.Entities.UserType.User) {
+        blogUser.UserType = "User" as any
+    }
+
     return await postUser(blogUser as User);
 }
 

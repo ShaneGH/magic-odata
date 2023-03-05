@@ -1,5 +1,5 @@
-import { Filter, FilterEnv, FilterResult } from "../../queryBuilder.js";
-import { Reader } from "../../utils.js";
+import { Filter, FilterEnv, FilterResult, QbEmit } from "../../queryBuilder.js";
+import { ReaderWriter } from "../../utils.js";
 import { serialize } from "../../valueSerializer.js";
 import { OperableCollection } from "./collection1.js";
 import { infixOp } from "./op1.js";
@@ -19,13 +19,14 @@ function filterize<T>(
     }
 
     return operableToFilter(supplimentary)
-        .map(({ $$output }) => $$output)
-        .bind($$output => Reader.create<FilterEnv, FilterResult>(({ serviceConfig }) => ({
-            $$output,
-            $$filter: mapper
-                ? mapper(toFilterize as T)
-                : serialize(toFilterize, $$output, serviceConfig.schemaNamespaces)
-        })))
+        .bind(({ $$output }) => ReaderWriter.create<FilterEnv, FilterResult, QbEmit>(({ serviceConfig }) => [
+            QbEmit.zero,
+            {
+                $$output,
+                $$filter: mapper
+                    ? mapper(toFilterize as T)
+                    : serialize(toFilterize, $$output, serviceConfig.schemaNamespaces)
+            }]))
 }
 
 /** 
@@ -104,12 +105,14 @@ export function isIn<T>(lhs: Operable<T>, rhs: T[] | OperableCollection<T>, mapp
     lhs = operableToFilter(lhs)
     if (Array.isArray(rhs)) {
         const rhsA = rhs;
-        rhs = lhs.bind(({ $$output }) => Reader.create<FilterEnv, FilterResult>(env => ({
-            $$output: { isCollection: true, collectionType: $$output },
-            $$filter: `[${mapper
-                ? rhsA.map(mapper).join(",")
-                : rhsA.map(x => serialize(x, $$output, env.serviceConfig.schemaNamespaces)).join(",")}]`
-        })))
+        rhs = lhs.bind(({ $$output }) => ReaderWriter.create<FilterEnv, FilterResult, QbEmit>(env => [
+            QbEmit.zero,
+            {
+                $$output: { isCollection: true, collectionType: $$output },
+                $$filter: `[${mapper
+                    ? rhsA.map(mapper).join(",")
+                    : rhsA.map(x => serialize(x, $$output, env.serviceConfig.schemaNamespaces)).join(",")}]`
+            }]))
     }
 
     lhs = operableToFilter(lhs)
