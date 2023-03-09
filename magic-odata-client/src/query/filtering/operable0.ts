@@ -3,7 +3,6 @@ import { Filter, FilterEnv, FilterResult, QbEmit } from "../../queryBuilder.js";
 import { QueryCollection, QueryEnum, QueryObject, QueryPrimitive } from "../queryComplexObjectBuilder.js";
 import { serialize } from "../../valueSerializer.js";
 import { ReaderWriter } from "../../utils.js";
-import { ParameterDefinition } from "../../entitySet/params.js";
 
 export type Operable<T> = QueryPrimitive<T> | QueryEnum<T> | Filter
 
@@ -30,7 +29,20 @@ export function operableToFilter<T>(op: Operable<T> | QueryCollection<QueryObjec
     });
 }
 
-export function valueToFilter<T>(val: Filter | T, typeRef: ODataTypeRef, mapper: ((x: T) => string)) {
+export function filterize<T>(
+    toFilterize: Operable<T> | T,
+    expected: ODataTypeRef,
+    mapper: ((x: T) => string) | undefined) {
+
+    const toFilterizeO = asOperable(toFilterize)
+    if (toFilterizeO) {
+        return operableToFilter(toFilterizeO)
+    }
+
+    return valueToFilter(toFilterize as Filter | T, expected, mapper)
+}
+
+export function valueToFilter<T>(val: Filter | T, typeRef: ODataTypeRef, mapper: ((x: T) => string) | undefined) {
     if (val instanceof ReaderWriter) return val;
 
     return ReaderWriter.create<FilterEnv, FilterResult, QbEmit>(env => [

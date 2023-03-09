@@ -1,7 +1,7 @@
 import { Filter, FilterEnv, FilterResult, QbEmit } from "../../queryBuilder.js";
 import { QueryCollection, QueryObject, QueryPrimitive } from "../queryComplexObjectBuilder.js";
 import { serialize } from "../../valueSerializer.js";
-import { asOperable, combineFilterStrings, Operable, operableToFilter } from "./operable0.js";
+import { asOperable, combineFilterStrings, Operable, operableToFilter, valueToFilter } from "./operable0.js";
 import { IntegerTypes, NonNumericTypes, resolveOutputType } from "./queryPrimitiveTypes0.js";
 import { ODataTypeRef } from "../../../index.js";
 import { ReaderWriter } from "../../utils.js";
@@ -46,15 +46,10 @@ function filterize<TArrayType>(
         return operableToFilter(toFilterize)
     }
 
+    const mapperA = mapper && ((xs: TArrayType[]) => `[${xs.map(mapper).join(",")}]`)
+
     return operableToFilter(supplimentary)
-        .bind(({ $$output }) => ReaderWriter.create<FilterEnv, FilterResult, QbEmit>(({ serviceConfig }) => [
-            QbEmit.zero,
-            {
-                $$output,
-                $$filter: `[${mapper
-                    ? toFilterize.map(mapper).join(",")
-                    : toFilterize.map(x => serialize(x, $$output.isCollection ? $$output.collectionType : undefined, serviceConfig.schemaNamespaces)).join(",")}]`
-            }]))
+        .bind(({ $$output }) => valueToFilter(toFilterize, $$output, mapperA))
 }
 
 function filterizeSingle<TArrayType>(
@@ -71,14 +66,7 @@ function filterizeSingle<TArrayType>(
         .map(({ $$output }) => ({
             $$output: ($$output.isCollection && $$output.collectionType) || $$output
         }))
-        .bind(({ $$output }) => ReaderWriter.create<FilterEnv, FilterResult, QbEmit>(({ serviceConfig }) => [
-            QbEmit.zero,
-            {
-                $$output,
-                $$filter: mapper
-                    ? mapper(toFilterize as TArrayType)
-                    : serialize(toFilterize, $$output, serviceConfig.schemaNamespaces)
-            }]))
+        .bind(({ $$output }) => valueToFilter(toFilterize as TArrayType, $$output, mapper))
 }
 
 function _collectionFunction<TArrayType>(

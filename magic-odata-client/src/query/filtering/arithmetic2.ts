@@ -3,7 +3,7 @@ import { Filter, FilterEnv, QbEmit } from "../../queryBuilder.js";
 import { ReaderWriter } from "../../utils.js";
 import { serialize } from "../../valueSerializer.js";
 import { functionCall, infixOp } from "./op1.js";
-import { Operable, operableToFilter } from "./operable0.js";
+import { Operable, operableToFilter, valueToFilter } from "./operable0.js";
 import { DecimalNumberTypes, IntegerTypes, RealNumberTypes, resolveOutputType } from "./queryPrimitiveTypes0.js";
 
 const int32T = resolveOutputType(IntegerTypes.Int32)
@@ -50,10 +50,7 @@ function toFilter(lhs: Operable<number> | number): Filter {
         return operableToFilter(lhs)
     }
 
-    return ReaderWriter.retn(QbEmit.zero, {
-        $$filter: lhs == null ? "null" : serialize(lhs),
-        $$output: Number.isInteger(lhs) ? int64T : doubleT
-    })
+    return valueToFilter(lhs, Number.isInteger(lhs) ? int64T : doubleT, undefined)
 }
 
 /** 

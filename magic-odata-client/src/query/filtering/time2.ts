@@ -2,9 +2,8 @@ import { ODataTypeRef } from "magic-odata-shared";
 import { EdmDate, EdmDateTimeOffset, EdmDuration, EdmTimeOfDay } from "../../edmTypes.js";
 import { Filter, FilterEnv, FilterResult, QbEmit } from "../../queryBuilder.js";
 import { ReaderWriter } from "../../utils.js";
-import { serialize } from "../../valueSerializer.js";
 import { functionCall, infixOp } from "./op1.js";
-import { asOperable, Operable, operableToFilter } from "./operable0.js";
+import { filterize, Operable, operableToFilter } from "./operable0.js";
 import { DecimalNumberTypes, IntegerTypes, NonNumericTypes, resolveOutputType } from "./queryPrimitiveTypes0.js";
 
 const int32T = resolveOutputType(IntegerTypes.Int32)
@@ -13,26 +12,6 @@ const durationT = resolveOutputType(NonNumericTypes.Duration)
 const dateTimeOffsetT = resolveOutputType(NonNumericTypes.DateTimeOffset)
 const dateT = resolveOutputType(NonNumericTypes.Date)
 const timeT = resolveOutputType(NonNumericTypes.TimeOfDay)
-
-function filterize<T>(
-    toFilterize: Operable<T> | T,
-    expected: ODataTypeRef,
-    mapper: ((x: T) => string) | undefined) {
-
-    const toFilterizeO = asOperable(toFilterize)
-    if (toFilterizeO) {
-        return operableToFilter(toFilterizeO)
-    }
-
-    return ReaderWriter.create<FilterEnv, FilterResult, QbEmit>(({ serviceConfig }) => [
-        QbEmit.zero,
-        {
-            $$output: expected,
-            $$filter: mapper
-                ? mapper(toFilterize as T)
-                : serialize(toFilterize, expected, serviceConfig.schemaNamespaces)
-        }])
-}
 
 export function addDateTimeOffset(lhs: Operable<EdmDateTimeOffset> | EdmDateTimeOffset, rhs: Operable<EdmDuration> | EdmDuration): Filter {
 

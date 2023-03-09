@@ -3,7 +3,7 @@ import { ReaderWriter } from "../../utils.js";
 import { serialize } from "../../valueSerializer.js";
 import { OperableCollection } from "./collection1.js";
 import { infixOp } from "./op1.js";
-import { asOperable, combineFilterStrings, Operable, operableToFilter } from "./operable0.js";
+import { asOperable, combineFilterStrings, Operable, operableToFilter, valueToFilter } from "./operable0.js";
 import { NonNumericTypes, resolveOutputType } from "./queryPrimitiveTypes0.js";
 
 const bool = resolveOutputType(NonNumericTypes.Boolean)
@@ -19,14 +19,8 @@ function filterize<T>(
     }
 
     return operableToFilter(supplimentary)
-        .bind(({ $$output }) => ReaderWriter.create<FilterEnv, FilterResult, QbEmit>(({ serviceConfig }) => [
-            QbEmit.zero,
-            {
-                $$output,
-                $$filter: mapper
-                    ? mapper(toFilterize as T)
-                    : serialize(toFilterize, $$output, serviceConfig.schemaNamespaces)
-            }]))
+        .bind(({ $$output }) =>
+            valueToFilter(toFilterize as T, $$output, mapper))
 }
 
 /** 
@@ -105,14 +99,9 @@ export function isIn<T>(lhs: Operable<T>, rhs: T[] | OperableCollection<T>, mapp
     lhs = operableToFilter(lhs)
     if (Array.isArray(rhs)) {
         const rhsA = rhs;
-        rhs = lhs.bind(({ $$output }) => ReaderWriter.create<FilterEnv, FilterResult, QbEmit>(env => [
-            QbEmit.zero,
-            {
-                $$output: { isCollection: true, collectionType: $$output },
-                $$filter: `[${mapper
-                    ? rhsA.map(mapper).join(",")
-                    : rhsA.map(x => serialize(x, $$output, env.serviceConfig.schemaNamespaces)).join(",")}]`
-            }]))
+        const mapperA = mapper && ((xs: T[]) => `[${xs.map(mapper).join(",")}]`)
+
+        rhs = lhs.bind(({ $$output }) => valueToFilter(rhsA, { isCollection: true, collectionType: $$output }, mapperA))
     }
 
     lhs = operableToFilter(lhs)

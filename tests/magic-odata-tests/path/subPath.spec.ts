@@ -548,7 +548,6 @@ describe("SubPath", function () {
             });
         });
 
-
         // describe("Unbound", () => {
         //     it("Should call a function with no inputs", async () => {
         //         const calculation = await oDataClient
