@@ -13,7 +13,7 @@ const integerTypes = Object.keys(IntegerTypes);
 function isInteger(item: Operable<number> | number) {
 
     if (typeof item === "number") {
-        return ReaderWriter.retn(QbEmit.zero, Number.isInteger(item));
+        return ReaderWriter.retn(Number.isInteger(item), QbEmit.zero);
     }
 
     return operableToFilter(item)
@@ -27,7 +27,7 @@ function guessAritmeticOutputType(
     lhs: Operable<number> | number, operator: string, rhs: Operable<number> | number): ReaderWriter<FilterEnv, RealNumberTypes, QbEmit> {
 
     if (operator === "div" || operator === "divby") {
-        return ReaderWriter.retn(QbEmit.zero, DecimalNumberTypes.Double)
+        return ReaderWriter.retn(DecimalNumberTypes.Double, QbEmit.zero)
     }
 
     return isInteger(lhs)
@@ -61,7 +61,7 @@ function arithmeticInfixOp(
     rhs: Operable<number> | number,
     result: RealNumberTypes | undefined): Filter {
 
-    const r = (result && ReaderWriter.retn(QbEmit.zero, result)) || guessAritmeticOutputType(lhs, operator, rhs)
+    const r = (result && ReaderWriter.retn(result, QbEmit.zero)) || guessAritmeticOutputType(lhs, operator, rhs)
 
     return r
         .bind(r => infixOp(toFilter(lhs), ` ${operator} `, toFilter(rhs), r))

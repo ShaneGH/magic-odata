@@ -95,17 +95,17 @@ function accessorFunction<T>(
     return functionCall(name, [operableToFilter(operand)], outputType)
 }
 
-const _now: Filter = ReaderWriter.retn<FilterEnv, FilterResult, QbEmit>(QbEmit.zero, { $$output: dateTimeOffsetT, $$filter: "now()" })
+const _now: Filter = ReaderWriter.retn<FilterEnv, FilterResult, QbEmit>({ $$output: dateTimeOffsetT, $$filter: "now()" }, QbEmit.zero)
 export function now() {
     return _now;
 }
 
-const _maxdatetime: Filter = ReaderWriter.retn<FilterEnv, FilterResult, QbEmit>(QbEmit.zero, { $$output: dateTimeOffsetT, $$filter: "maxdatetime()" })
+const _maxdatetime: Filter = ReaderWriter.retn<FilterEnv, FilterResult, QbEmit>({ $$output: dateTimeOffsetT, $$filter: "maxdatetime()" }, QbEmit.zero)
 export function maxDateTime() {
     return _maxdatetime
 }
 
-const _mindatetime: Filter = ReaderWriter.retn<FilterEnv, FilterResult, QbEmit>(QbEmit.zero, { $$output: dateTimeOffsetT, $$filter: "mindatetime()" })
+const _mindatetime: Filter = ReaderWriter.retn<FilterEnv, FilterResult, QbEmit>({ $$output: dateTimeOffsetT, $$filter: "mindatetime()" }, QbEmit.zero)
 export function minDateTime() {
     return _mindatetime
 }

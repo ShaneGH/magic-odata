@@ -139,13 +139,13 @@ export function $filter<TRoot, T, TQuery extends QueryObject<T>>(collection: Que
 
                 const [mutableParamDefinitions, paramsBuilder] = params<TRoot>(env.rootUri, env.serviceConfig, env.schema);
                 return [
-                    new QbEmit([mutableParamDefinitions]),
                     executeQueryBuilder<TRoot, TQuery, Filter>(x.$$output.collectionType, env.serviceConfig.schemaNamespaces, itemFilter, "$this", paramsBuilder)
                         .mapEnv<FilterEnv>(env => ({ ...env, rootContext: "$this" }))
                         .map(({ $$filter }) => ({
                             $$output: x.$$output,
                             $$filter: `${x.$$filter}/$filter(${$$filter})`
-                        }))
+                        })),
+                    new QbEmit([mutableParamDefinitions])
                 ]
             }))
         .bind(x => x)

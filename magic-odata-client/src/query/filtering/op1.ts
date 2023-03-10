@@ -21,10 +21,10 @@ export function filterRaw(arg1: string | FilterableProps, arg2?: ((path: Filtera
             throw new Error("Invalid method overload");
         }
 
-        return ReaderWriter.retn(QbEmit.zero, {
+        return ReaderWriter.retn({
             $$filter: arg1,
             $$output: (arg2 && resolveOutputType(arg2)) || rawType
-        })
+        }, QbEmit.zero)
     }
 
     if (typeof arg2 !== "function") {

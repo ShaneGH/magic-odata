@@ -34,11 +34,11 @@ export function $root(filter: (root: any) => IUriBuilder) {
         const entitySets = buildUriBuilderRoot("$root/", env.serviceConfig, env.schema)
         const entitySet = filter(entitySets)
         return [
-            QbEmit.zero,
             {
                 $$output: entitySet.getOutputType(),
                 $$filter: env.buildUri(entitySet.uri(false))
-            }]
+            },
+            QbEmit.zero]
     });
 }
 

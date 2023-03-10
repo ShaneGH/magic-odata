@@ -1,5 +1,4 @@
-import { ParameterDefinition } from "../../entitySet/params.js";
-import { Filter, FilterEnv, FilterResult, QbEmit } from "../../queryBuilder.js";
+import { Filter, FilterResult, QbEmit } from "../../queryBuilder.js";
 import { ReaderWriter } from "../../utils.js";
 import { NonNumericTypes, resolveOutputType } from "./queryPrimitiveTypes0.js";
 
@@ -13,7 +12,7 @@ export function caseExpression(...cases: [Filter | true, Filter][]): Filter {
     const casesF = ReaderWriter.traverse(cases
         .map(([condition, result]) => [
             condition === true
-                ? ReaderWriter.retn<FilterResult, QbEmit>(QbEmit.zero, { $$output: trueT, $$filter: "true" })
+                ? ReaderWriter.retn<FilterResult, QbEmit>({ $$output: trueT, $$filter: "true" }, QbEmit.zero)
                 : condition,
             result] as [Filter, Filter])
         .map(([condition, result]) => condition.bind(c => result.map(r => [c, r] as [FilterResult, FilterResult]))), QbEmit.zero)

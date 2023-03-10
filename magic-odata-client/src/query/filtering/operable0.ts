@@ -19,13 +19,14 @@ export function operableToFilter<T>(op: Operable<T> | QueryCollection<QueryObjec
         }
 
         return [
-            QbEmit.zero,
             {
                 $$filter: !op.$$oDataQueryMetadata.path.length
                     ? op.$$oDataQueryMetadata.rootContext
                     : pathParts.join("/"),
                 $$output: op.$$oDataQueryMetadata.typeRef
-            }]
+            },
+            QbEmit.zero
+        ]
     });
 }
 
@@ -46,12 +47,13 @@ export function valueToFilter<T>(val: Filter | T, typeRef: ODataTypeRef, mapper:
     if (val instanceof ReaderWriter) return val;
 
     return ReaderWriter.create<FilterEnv, FilterResult, QbEmit>(env => [
-        QbEmit.zero, {
+        {
             $$filter: mapper
                 ? mapper(val)
                 : serialize(val, typeRef, env.serviceConfig.schemaNamespaces),
             $$output: typeRef
-        }])
+        },
+        QbEmit.zero])
 }
 
 export function asOperable<T>(x: Operable<T> | T): Filter | null {
