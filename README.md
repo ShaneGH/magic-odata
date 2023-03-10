@@ -55,7 +55,7 @@ Write safe, statically typed odata queries in typescript. No more `string`. No m
  * Runs in the browser or in node
  * No prod dependencies. Small bundle size
     * Generated executable code is tiny. Almost all generated code is `type` information
-    * `magic-odata-client` minifies to ~24KB
+    * `magic-odata-client` minifies and compresses to ~10KB
  * Optional angular mode, for the angular `HttpClient`
 
 ## Features
