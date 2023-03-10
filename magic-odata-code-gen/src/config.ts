@@ -108,6 +108,11 @@ export type SupressWarnings = Partial<{
      * @default false
      */
     suppressInvalidFunctionConfiguration: boolean
+
+    /** 
+     * @default false
+     */
+    supressAmbiguousFileLocation: boolean
 }>
 
 export enum TypeCaseSettings {

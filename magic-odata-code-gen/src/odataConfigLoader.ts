@@ -3,7 +3,9 @@ import fetch, { Response } from 'node-fetch'
 import prompt from "prompt"
 import * as fs from 'fs'
 import { DOMParser } from '@xmldom/xmldom'
-import { Config } from './config.js';
+import { Config, SupressWarnings } from './config.js';
+import * as path from 'path';
+import { warn } from './utils.js';
 
 export enum LocationType {
     FileLocation = "FileLocation",
@@ -15,10 +17,10 @@ export type UriLocation = { uri: string, type: LocationType.UriLocation }
 export type XmlString = { xml: string, type: LocationType.XmlString }
 export type XmlLocation = FileLocation | UriLocation | XmlString
 
-export async function loadConfig(config: Config, odataConfig: XmlLocation) {
+export async function loadConfig(config: Config, odataConfig: XmlLocation, configFileLocation: string | null) {
 
     const stringResultP = odataConfig.type == LocationType.FileLocation
-        ? loadFromFile(odataConfig)
+        ? loadFromFile(odataConfig, process.cwd(), configFileLocation, config.warningSettings || null)
         : odataConfig.type == LocationType.UriLocation
             ? loadFromUri(odataConfig, config.httpHeaders, !config.ciMode)
             : new Promise<string>(res => res(odataConfig.xml));
@@ -137,11 +139,34 @@ function loadFromUri(odataConfig: UriLocation, headers: [string, string][] = [],
         });
 }
 
-function loadFromFile(odataConfig: FileLocation) {
+function loadFromFile(odataConfig: FileLocation, cwd: string, configFileLocation: string | null, warnings: SupressWarnings | null) {
 
     return new Promise<string>((res, rej) => {
-        fs.readFile(odataConfig.path, (err, buffer) => {
+        fs.readFile(getAbsolutePath(odataConfig, cwd, configFileLocation, warnings), (err, buffer) => {
             err ? rej(err) : res(buffer.toString());
         });
     });
+}
+
+function getAbsolutePath(odataConfig: FileLocation, cwd: string, configFileLocation: string | null, warnings: SupressWarnings | null): string {
+
+    if (path.isAbsolute(odataConfig.path)) {
+        return odataConfig.path
+    }
+
+    if (configFileLocation && !path.isAbsolute(configFileLocation)) {
+        configFileLocation = path.join(cwd, configFileLocation)
+    }
+
+    const cwdPath = path.join(cwd, odataConfig.path)
+    if (!configFileLocation) {
+        return cwdPath
+    }
+
+    const configPath = path.join(path.dirname(configFileLocation), odataConfig.path)
+    if (fs.existsSync(cwdPath) && fs.existsSync(configPath)) {
+        warn(warnings, "supressAmbiguousFileLocation", `Found 2 possible $metadata files: ${cwdPath} + ${configPath}.\nUsing ${configPath}`);
+    }
+
+    return configPath
 }

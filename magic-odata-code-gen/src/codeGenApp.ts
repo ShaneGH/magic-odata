@@ -41,10 +41,10 @@ function loadConfigFile(location: string) {
         .then(x => JSON.parse(x) as Config)
 }
 
-export function generateCode(odataConfig: XmlLocation, settings: Config): Promise<string> {
+export function generateCode(odataConfig: XmlLocation, settings: Config, configFileLocation: string | null): Promise<string> {
 
     console.log("Generating code file");
-    return loadConfig(settings, odataConfig)
+    return loadConfig(settings, odataConfig, configFileLocation)
         .then(x => processConfig(settings.warningSettings || {}, x))
         .then(x => applyWhitelist(x, settings))
         .then(x => applyRenames(x, settings))
@@ -65,7 +65,7 @@ export function generateTypescriptFile(args: CommandLineArgs): Promise<void> {
         }))
 
     return configFile
-        .then(config => generateCode(getXmlLocation(config), config)
+        .then(config => generateCode(getXmlLocation(config), config, args.type === "ConfigFile" ? args.configFile : null)
             .then(code => persist(code, outputFile(config))));
 
     function outputFile(config: Config) {
