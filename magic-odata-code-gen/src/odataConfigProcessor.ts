@@ -43,9 +43,14 @@ function findFunctions(config: Document, filter: (node: Element) => boolean) {
         .filter(filter)
 }
 
-function getSchemaNamespace(n: Node) {
+function getSchemaNamespace(n: Element | null): string {
+    if (!n) return ""
 
-    return nsLookup<Attr>(n, "//ancestor::edm:Schema/@Namespace")[0]?.value || ""
+    if (n.tagName === "edm:Schema" || (n.tagName === "Schema" && n.namespaceURI === ns.edm)) {
+        return nsLookup<Attr>(n, "@Namespace")[0]?.value || ""
+    }
+
+    return getSchemaNamespace(n.parentNode as Element)
 }
 
 function processFunction(warningConfig: SupressWarnings, f: Element): Function | null {
@@ -182,6 +187,7 @@ function getUnboundFunctions(entityContainer: Element, warningConfig: SupressWar
     if (!functionImports.length) return []
 
     const unboundFunctions = processUnboundFunctions(warningConfig, entityContainer.ownerDocument!)
+
     const output = functionImports
         .map(fImport => {
             const functionName = nsLookup<Attr>(fImport, "@Function")[0]?.value
@@ -192,7 +198,7 @@ function getUnboundFunctions(entityContainer: Element, warningConfig: SupressWar
 
             const f = unboundFunctions.filter(x => `${x.namespace && `${x.namespace}.`}${x.name}` === functionName)[0]
             if (!f) {
-                warn(warningConfig, "suppressInvalidFunctionConfiguration", `Could not find function definition for unboudn function ${functionName}. Ignoring`)
+                warn(warningConfig, "suppressInvalidFunctionConfiguration", `Could not find function definition for unbound function ${functionName}. Ignoring`)
                 return null
             }
 

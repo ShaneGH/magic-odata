@@ -19,9 +19,3 @@ Bound
 
     add namespaces to entities in path: odata/test-entities/Users({key})/HasBlog(blog={blog}) -vs- odata/test-entities/Users({key})/My.Odata.Entities.HasBlog(blog={blog})
     
-
-Data params
-
- * enum as param
- * use the param of an inner obj: .withKey((k, params) => k.key(params.createRef("x", root => root => root.My.Odata.Container.BlogPosts
-                        .withKey((x, param2) => x.key(param2.const("x2", 123)))

@@ -1,0 +1,11 @@
+{
+    "inputFileLocation": {
+        "fromFile": "./namespaces.xml"
+    },
+    "outputFileLocation": "./generatedCode.ts",
+    "codeGenSettings": {
+        "addODataClientToNamespace": true,
+        "oDataClientName": "NamespaceClient"
+    },
+    "warningSettings": {}
+}
