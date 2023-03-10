@@ -1,6 +1,5 @@
 import { Filter, FilterEnv, FilterResult, QbEmit } from "../../queryBuilder.js";
 import { QueryCollection, QueryObject, QueryPrimitive } from "../queryComplexObjectBuilder.js";
-import { serialize } from "../../valueSerializer.js";
 import { asOperable, combineFilterStrings, Operable, operableToFilter, valueToFilter } from "./operable0.js";
 import { IntegerTypes, NonNumericTypes, resolveOutputType } from "./queryPrimitiveTypes0.js";
 import { ODataTypeRef } from "../../../index.js";

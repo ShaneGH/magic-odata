@@ -1,7 +1,6 @@
 import { EdmDuration } from "../../edmTypes.js";
 import { Filter, FilterEnv, QbEmit } from "../../queryBuilder.js";
 import { ReaderWriter } from "../../utils.js";
-import { serialize } from "../../valueSerializer.js";
 import { functionCall, infixOp } from "./op1.js";
 import { Operable, operableToFilter, valueToFilter } from "./operable0.js";
 import { DecimalNumberTypes, IntegerTypes, RealNumberTypes, resolveOutputType } from "./queryPrimitiveTypes0.js";
