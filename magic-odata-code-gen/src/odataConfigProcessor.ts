@@ -81,6 +81,7 @@ function processFunction(warningConfig: SupressWarnings, f: Element): Function |
         namespace: getSchemaNamespace(f),
         name: name[0].value,
         params,
+        returnTypeNullable: /^true$/i.test(nsLookup<Attr>(f, "edm:ReturnType/@Nullable")[0]?.value || "true"),
         returnType: parseTypeStr(returnType[0].value)
     }
 }
@@ -104,6 +105,7 @@ function processFunctionParam(fName: string, param: Node, warningConfig: Supress
     return {
         isBindingParameter: "bindingParameter" === name[0].value,
         name: name[0].value,
+        isNullable: /^true$/i.test(nsLookup<Attr>(param, "@Nullable")[0]?.value || "true"),
         type: parseTypeStr(paramType[0].value)
     }
 }

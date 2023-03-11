@@ -258,9 +258,42 @@ describe("@Params", () => {
                 .subPath((x, params) => x.GetCommentsByTag({ input: params.createConst("x", { Tag: { Tag: tag } }) }))
                 .get();
 
-            expect(result.value.length).toBe(1)
-            expect(result.value[0].Id).toBe(ctxt.comment.Id)
+            expect(result.value!.length).toBe(1)
+            expect(result.value![0].Id).toBe(ctxt.comment.Id)
         });
+    });
+
+    describe("null complex const", () => {
+        it("Should throw error if same param used twice in different scopes (3)", async function () {
+            const tag = uniqueString("comment_tag_")
+            const ctxt = await addFullUserChain({ commentTags: [{ Tag: tag }] })
+            const result = await oDataClient
+                .unboundFunctions((x, params) => x.Calculator4({
+                    lhs: params.createConst("x", null),
+                    rhs: params.param("x")
+                }))
+                .get();
+
+            expect(result.value).toBe(0)
+        });
+    });
+
+    describe("Entity const", () => {
+
+        it("Should reference another entity ref (1)", execute.bind(null, true));
+        it("Should reference another entity ref (2)", execute.bind(null, false));
+
+        async function execute(expected: boolean) {
+            const ctxt = await addFullUserChain()
+            const hasBlog = await oDataClient.Users
+                .withKey(k => k.key(expected ? ctxt.blogUser.Id : "invalid"))
+                .subPath((u, params) => u.HasBlog({
+                    blog: params.createConst("x", { Id: ctxt.blog.Id } as My.Odata.Entities.Blog)
+                }))
+                .get();
+
+            expect(hasBlog.value).toBe(expected)
+        }
     });
 
     describe("Reference", () => {

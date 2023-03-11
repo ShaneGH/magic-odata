@@ -460,12 +460,12 @@ describe("SubPath", function () {
                     .subPath(x => x.Top10BlogsByName())
                     .get();
 
-                expect(top10.value.length).toBe(10);
-                for (let i = 1; i < top10.value.length; i++) {
+                expect(top10.value!.length).toBe(10);
+                for (let i = 1; i < top10.value!.length; i++) {
                     expect(
-                        top10.value[i].Name
+                        top10.value![i].Name
                             .toLocaleLowerCase()
-                            .localeCompare(top10.value[i - 1].Name
+                            .localeCompare(top10.value![i - 1].Name
                                 .toLocaleLowerCase()))
                         .toBeGreaterThanOrEqual(0)
                 }
@@ -561,6 +561,43 @@ describe("SubPath", function () {
             it("Should call a function with inputs", async () => {
                 const calculation = await oDataClient
                     .unboundFunctions(f => f.Calculator({ lhs: 1, rhs: 2 }))
+                    .get();
+
+                expect(calculation.value).toBe(3);
+            });
+        });
+
+        describe("Nullable args", () => {
+            it("Should work with primitive collection", () => {
+                // asp doesn't like this one
+                const result = oDataClient
+                    .unboundFunctions(f => f.Calculator3({ vals: null }))
+                    .uri(false);
+
+                expect(result.relativePath).toBe("Calculator3(vals=null)");
+            });
+
+            it("Should work with complex collection", async () => {
+                const calculation = await oDataClient
+                    .unboundFunctions(f => f.Calculator4({ lhs: { Val: 1 }, rhs: null }))
+                    .get();
+
+                expect(calculation.value).toBe(1);
+            });
+        });
+
+        describe("Collection args", () => {
+            it("Should work with primitive collection", async () => {
+                const blogs = await oDataClient
+                    .unboundFunctions(f => f.Calculator2({ vals: [1, 2] }))
+                    .get();
+
+                expect(blogs.value).toBe(3);
+            });
+
+            it("Should work with complex collection", async () => {
+                const calculation = await oDataClient
+                    .unboundFunctions(f => f.Calculator3({ vals: [{ Val: 1 }, { Val: 2 }] }))
                     .get();
 
                 expect(calculation.value).toBe(3);

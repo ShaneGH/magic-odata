@@ -72,8 +72,8 @@ function buildFunctions(groupedFunctions: { [k: string]: ODataFunction[] }, root
                 }
 
                 const _serialize: typeof serialize_legacy = encodeUri
-                    ? (x, y, z) => encodeURIComponent(serialize_legacy(x, y, z))
-                    : (x, y, z) => serialize_legacy(x, y, z)
+                    ? (x, y, z) => encodeURIComponent(serialize_legacy(x, y, z, true))
+                    : (x, y, z) => serialize_legacy(x, y, z, true)
 
                 const params = fn.params
                     .filter(x => !x.isBindingParameter)

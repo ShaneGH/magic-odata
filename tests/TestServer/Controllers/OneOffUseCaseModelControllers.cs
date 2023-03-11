@@ -8,6 +8,10 @@ using TestServer.Model;
 
 namespace TestServer.Controllers;
 
+public class Value<T>
+{
+    public T Val { get; set; }
+}
 
 [Route(Program.OdataRoot)]
 public class UnboundFunctionController : ODataController
@@ -21,9 +25,30 @@ public class UnboundFunctionController : ODataController
 
     [HttpGet("Calculator(lhs={lhs},rhs={rhs})")]
     [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
-    public SingleResult<int> Calculator([FromRoute] int lhs, [FromRoute] int rhs)
+    public SingleResult<int> Calculator([FromODataUri] int lhs, [FromODataUri] int rhs)
     {
         return SingleResult.Create(new[] { lhs + rhs }.AsQueryable());
+    }
+
+    [HttpGet("Calculator2(vals={vals})")]
+    [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
+    public SingleResult<int> Calculator2([FromODataUri] IEnumerable<int> vals)
+    {
+        return SingleResult.Create(new[] { vals.Sum() }.AsQueryable());
+    }
+
+    [HttpGet("Calculator3(vals={vals})")]
+    [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
+    public SingleResult<int?> Calculator3([FromODataUri] IEnumerable<Value<int>> vals)
+    {
+        return SingleResult.Create(new[] { vals?.Select(x => x?.Val ?? 0).Sum() }.AsQueryable());
+    }
+
+    [HttpGet("Calculator4(lhs={lhs},rhs={rhs})")]
+    [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
+    public SingleResult<int> Calculator4([FromODataUri] Value<int> lhs, [FromODataUri] Value<int> rhs)
+    {
+        return SingleResult.Create(new[] { lhs?.Val ?? 0 + rhs?.Val ?? 0 }.AsQueryable());
     }
 }
 

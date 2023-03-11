@@ -171,12 +171,25 @@ public class Program
         builder.ComplexType<CommentTag>();
         builder.ComplexType<CommentMood>();
 
-        builder.Function("MyBlogs").ReturnsCollection<Blog>();
+        builder.Function("MyBlogs").ReturnsCollection<Blog>().ReturnNullable = false;
 
         var calculator = builder.Function("Calculator");
         calculator.Parameter<int>("lhs");
         calculator.Parameter<int>("rhs");
         calculator.Returns<int>();
+
+        var calculator2 = builder.Function("Calculator2");
+        calculator2.CollectionParameter<int>("vals");
+        calculator2.Returns<int>();
+
+        var calculator3 = builder.Function("Calculator3");
+        calculator3.CollectionParameter<Value<int>>("vals").Nullable = true;
+        calculator3.Returns<int>().ReturnNullable = true;
+
+        var calculator4 = builder.Function("Calculator4");
+        calculator4.Parameter<Value<int>>("lhs").Nullable = true;
+        calculator4.Parameter<Value<int>>("rhs").Nullable = true;
+        calculator4.Returns<int>();
 
         var favouriteBlog = builder
             .EntityType<User>()

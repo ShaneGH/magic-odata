@@ -18,6 +18,7 @@ export type ODataTypeRef = ODataCollectionTypeRef | ODataSingleTypeRef
 // FUNCTIONS
 export type FunctionParam = {
     isBindingParameter: boolean
+    isNullable: boolean
     name: string
     type: ODataTypeRef
 }
@@ -27,6 +28,7 @@ export type Function = {
     name: string
     params: FunctionParam[]
     returnType: ODataTypeRef
+    returnTypeNullable: boolean
 }
 
 // ENUMS

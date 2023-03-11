@@ -199,6 +199,7 @@ export const buildGetTypeString = (settings: CodeGenConfig | null | undefined) =
 
 export type HttpClientGenerics = {
     tResult: ODataTypeRef
+    tResultNullable?: boolean
     rawResult?: boolean
     tKeyBuilder: string,
     tQueryable: string,
@@ -253,7 +254,10 @@ export function buildHttpClientType(types: Dict<ODataSchema>, keywords: Keywords
             ? fullyQualifiedTsType(generics.tResult.collectionType)
             : fullyQualifiedTsType(generics.tResult)
 
-        const tResult = fullyQualifiedTsType(generics.tResult);
+        let tResult = fullyQualifiedTsType(generics.tResult);
+        if (generics.tResultNullable) {
+            tResult += " | null"
+        }
 
         const gs = [
             entitySetsName(settings),

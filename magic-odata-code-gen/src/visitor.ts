@@ -154,6 +154,7 @@ export function visit<TWriter extends { concat: (x: TWriter) => TWriter }>(confi
                 : {
                     isBindingParameter: param.isBindingParameter,
                     name: param.name,
+                    isNullable: param.isNullable,
                     type
                 })
     }
@@ -187,6 +188,7 @@ export function visit<TWriter extends { concat: (x: TWriter) => TWriter }>(confi
             return {
                 namespace,
                 name: f.name,
+                returnTypeNullable: f.returnTypeNullable,
                 params,
                 returnType
             }

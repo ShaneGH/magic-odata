@@ -198,8 +198,8 @@ const warnedCollectionTypes = {} as { [k: string]: boolean }
 const warnedEnumTypes = {} as { [k: string]: boolean }
 export const rawType: ODataSingleTypeRef = { isCollection: false, namespace: "magic-odata", name: "Raw" }
 
-export function serialize(value: any, type?: ODataTypeRef, serviceConfig?: Dict<ODataSchema>): Writer<string, [AtParam, ODataTypeRef][]> {
-    const asString = serialize_legacy(value, type, serviceConfig)
+export function serialize(value: any, type?: ODataTypeRef, serviceConfig?: Dict<ODataSchema>, allowJsonForComplexTypes = false): Writer<string, [AtParam, ODataTypeRef][]> {
+    const asString = serialize_legacy(value, type, serviceConfig, allowJsonForComplexTypes)
     if (!type || !(value instanceof AtParam)) {
         return Writer.create(asString, [])
     }
@@ -208,7 +208,7 @@ export function serialize(value: any, type?: ODataTypeRef, serviceConfig?: Dict<
 }
 
 // eventually will be made private
-export function serialize_legacy(value: any, type?: ODataTypeRef, serviceConfig?: Dict<ODataSchema>): string {
+export function serialize_legacy(value: any, type?: ODataTypeRef, serviceConfig?: Dict<ODataSchema>, allowJsonForComplexTypes = false): string {
 
     if (value == null) {
         return "null"
@@ -220,7 +220,7 @@ export function serialize_legacy(value: any, type?: ODataTypeRef, serviceConfig?
 
     if (Array.isArray(value)) {
         type = type?.isCollection ? type.collectionType : type
-        return `[${value.map(x => serialize_legacy(x, type, serviceConfig))}]`
+        return `[${value.map(x => serialize_legacy(x, type, serviceConfig, allowJsonForComplexTypes))}]`
     }
 
     if (type?.isCollection) {
@@ -277,6 +277,10 @@ export function serialize_legacy(value: any, type?: ODataTypeRef, serviceConfig?
 
     const enumType: ComplexTypeOrEnum | undefined = serviceConfig[type.namespace] && serviceConfig[type.namespace].types[type.name]
     if (!enumType || enumType.containerType !== "Enum") {
+
+        if (enumType && allowJsonForComplexTypes) {
+            return JSON.stringify(value)
+        }
 
         const name = typeRefString(type)
         if (!warnedEnumTypes[name]) {

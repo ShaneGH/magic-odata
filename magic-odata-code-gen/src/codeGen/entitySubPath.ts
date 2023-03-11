@@ -38,7 +38,7 @@ type EntityTypeInfo = {
     type: IsComplexType | IsPrimitiveType | IsEnumType
 }
 
-export type GetTypeForSubPath = (t: ODataTypeRef) => string
+export type GetTypeForSubPath = (t: ODataTypeRef, isNullable?: boolean) => string
 export function buildGetTypeForSubPath(
     allTypes: Dict<ODataSchema>,
     fullyQualifiedTsType: FullyQualifiedTsType,
@@ -50,7 +50,7 @@ export function buildGetTypeForSubPath(
     httpClientType: HttpClientType,
     settings: CodeGenConfig | null): GetTypeForSubPath {
 
-    return t => {
+    return (t, isNullable) => {
         // TODO: test with arrays of arrays?
 
         const entityInfo = getEntityTypeInfo(t)
@@ -61,7 +61,8 @@ export function buildGetTypeForSubPath(
             tQueryable,
             tCaster: getTCaster(entityInfo),
             tSubPath: getTSubPath(t, tQueryable),
-            tResult: t
+            tResult: t,
+            tResultNullable: isNullable
         }
 
         const entityQueryType = httpClientType(generics, true);
