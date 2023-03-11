@@ -294,6 +294,10 @@ export function getEntitySetFunctionsName(settings: CodeGenConfig | null | undef
     return settings?.entitySetFunctionsTypeName || "EntitySetFunctions";
 }
 
+export function getUnboundFunctionsName(settings: CodeGenConfig | null | undefined) {
+    return settings?.unboundFunctionsTypeName || "UnboundFunctions";
+}
+
 export type GetEntityFunctionsName = (forType: string) => string
 export const buildGetEntityFunctionsName = (settings: CodeGenConfig | null | undefined): GetEntityFunctionsName => (forType: string) => {
     const qTemplate = settings?.entityFunctionContainerTypeNameTemplate || "{0}EntityFunctions";

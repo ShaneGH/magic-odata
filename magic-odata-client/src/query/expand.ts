@@ -1,6 +1,6 @@
-import { ParameterDefinition } from "../entitySet/params.js";
-import { buildPartialQuery, buildQuery, Expand, ExpandResult, FilterEnv, Query } from "../queryBuilder.js"
-import { Dict, ReaderWriter, Writer } from "../utils.js";
+import { buildPartialQuery, Expand, FilterEnv, Query } from "../queryBuilder.js"
+import { Writer } from "../utils.js";
+import { ParameterDefinition } from "../valueSerializer.js";
 import { PathSegment, QueryCollection, QueryComplexObject, QueryObjectType, reContext } from "./queryComplexObjectBuilder.js"
 
 export type ExpandUtils = {

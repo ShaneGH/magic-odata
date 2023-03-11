@@ -1,4 +1,4 @@
-import { ODataServiceConfig, Function, ODataComplexType, ODataEntitySet } from "magic-odata-shared";
+import { ODataServiceConfig, Function, ODataComplexType, ODataEntitySet, ODataSchema, EntityContainer } from "magic-odata-shared";
 import { CodeGenConfig } from "../config.js";
 import { buildGetTypeForSubPath, GetTypeForSubPath } from "./entitySubPath.js";
 import { Keywords } from "./keywords.js";
@@ -80,6 +80,32 @@ export function buildGenerateEntitySetFunction(serviceConfig: ODataServiceConfig
             .map(mapFunction.bind(null, typeName, getTypeForSubPath))
 
         return `${e.name}: {
+${tab(functions.join("\n\n"))}
+}`
+    }
+}
+
+export type GenerateUnboundFunction = (name: string, es: EntityContainer) => string
+export function buildGenerateUnboundFunction(serviceConfig: ODataServiceConfig, keywords: Keywords, config: CodeGenConfig | null, tab: Tab): GenerateUnboundFunction {
+    const typeName = buildFullyQualifiedTsType(config)
+    const httpClient = buildHttpClientType(serviceConfig.schemaNamespaces, keywords, tab, config)
+
+    const getTypeForSubPath = buildGetTypeForSubPath(
+        serviceConfig.schemaNamespaces,
+        typeName,
+        buildGetQueryableName(config),
+        buildGetCasterName(config),
+        buildGetSubPathName(config),
+        buildGetKeyBuilderName(config),
+        keywords,
+        httpClient,
+        config);
+
+    return (name, e) => {
+        const functions = (e.unboundFunctions || [])
+            .map(mapFunction.bind(null, typeName, getTypeForSubPath))
+
+        return `"${name}": {
 ${tab(functions.join("\n\n"))}
 }`
     }

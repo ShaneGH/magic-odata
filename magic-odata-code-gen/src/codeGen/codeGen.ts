@@ -8,6 +8,7 @@ import { entitySetFunctions } from "./entitySetFunctions.js";
 import { fetchHttpClient } from "./fetchHttpClient.js";
 import { generateKeywords, imports } from "./keywords.js";
 import { buildSanitizeNamespace, buildTab, configObj, linting, comments } from "./utils.js";
+import { unboundFunctions } from "./unboundFunctions.js"
 
 export function codeGen(serviceConfig: ODataServiceConfig, settings: CodeGenConfig | null | undefined, warnings: SupressWarnings | null | undefined) {
 
@@ -33,6 +34,8 @@ ${client(serviceConfig, tab, keywords, settings || null)}
 ${entities()}
 
 ${entitySetFunctions(serviceConfig, keywords, settings, tab)}
+
+${unboundFunctions(serviceConfig, keywords, settings, tab)}
 
 ${configObj(serviceConfig, keywords, settings, tab)}
 

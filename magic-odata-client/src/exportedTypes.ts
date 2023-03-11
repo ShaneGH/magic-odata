@@ -35,6 +35,20 @@ export type CastingOnEnumsAndPrimitivesIsNotSupported = never
 export type QueryingOnCollectionsOfCollectionsIsNotSupported = never
 
 /*
+ * It is not possible to query a set of unbound functions
+ * 
+ * This is a type designed not to be used
+ */
+export type QueryingOnUnboundFunctionsIsNotSupported = never
+
+/*
+ * It is not possible to cast a set of unbound functions
+ * 
+ * This is a type designed not to be used
+ */
+export type CastingOnUnboundFunctionsIsNotSupported = never
+
+/*
  * The item you are attmpting to query does not have a key property
  * This might be because it is not an entity type, or becauese the OData service is misconfigured
  * 

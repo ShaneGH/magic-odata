@@ -218,6 +218,12 @@ export type CodeGenConfig = Partial<{
     entitySetFunctionsTypeName: string,
 
     /** 
+     * Specifies the name for unbound functions for a schema namespace
+     * @default "UnboundFunctions"
+     */
+    unboundFunctionsTypeName: string,
+
+    /** 
      * Specifies how to name unbound the Function type.
      * @default "UnboundFunctions"
      */

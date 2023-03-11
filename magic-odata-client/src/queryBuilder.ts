@@ -1,9 +1,8 @@
 import { ODataSchema, ODataServiceConfig, ODataTypeRef } from "magic-odata-shared";
-import { ParameterDefinition } from "./entitySet/params.js";
 import { ODataUriParts } from "./entitySet/requestTools.js";
 import { NonNumericTypes, resolveOutputType } from "./query/filtering/queryPrimitiveTypes0.js";
 import { groupBy, mapDict, ReaderWriter, removeNulls, Writer } from "./utils.js";
-import { serialize } from "./valueSerializer.js";
+import { ParameterDefinition, serialize } from "./valueSerializer.js";
 
 type Dict<T> = { [key: string]: T }
 

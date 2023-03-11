@@ -96,6 +96,8 @@ export {
     CastingOnCollectionsOfCollectionsIsNotSupported,
     CastingOnEnumsAndPrimitivesIsNotSupported,
     QueryingOnCollectionsOfCollectionsIsNotSupported,
+    QueryingOnUnboundFunctionsIsNotSupported,
+    CastingOnUnboundFunctionsIsNotSupported,
     ThisItemDoesNotHaveAKey,
     $ValueAnd$CountTypesCanNotBeOperatedOn,
     PrimitiveSubPath,

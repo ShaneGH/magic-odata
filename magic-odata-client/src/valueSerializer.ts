@@ -1,10 +1,19 @@
 import { ComplexTypeOrEnum, Dict, ODataEnum, ODataSchema, ODataSingleTypeRef, ODataTypeRef } from "magic-odata-shared";
 import { ODataDate, ODataDuration, ODataTimeOfDay, ODataDateTimeOffset } from "./edmTypes.js";
+import { IUriBuilder } from "./entitySetInterfaces.js";
 import { typeRefString } from "./utils.js";
 
+export type ParameterDefinition =
+    | { type: "Ref", data: { name: string, uri: IUriBuilder } }
+    | { type: "Const", data: { name: string, value: any, paramType: ODataTypeRef | undefined } }
+    | { type: "Param", data: { name: string } }
+
 export class AtParam {
-    constructor(public readonly name: string) {
-        if (!name.length || name[0] !== "@") {
+    public readonly name: string
+
+    constructor(public readonly param: ParameterDefinition) {
+        this.name = param.data.name
+        if (!this.name.length || this.name[0] !== "@") {
             throw new Error(`Parameters must begin with @: "${name}"`);
         }
     }

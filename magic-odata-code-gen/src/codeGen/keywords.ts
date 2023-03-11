@@ -28,6 +28,8 @@ export type Keywords = {
     CastingOnEnumsAndPrimitivesIsNotSupported: string
     CastingOnCollectionsOfCollectionsIsNotSupported: string
     QueryingOnCollectionsOfCollectionsIsNotSupported: string
+    QueryingOnUnboundFunctionsIsNotSupported: string
+    CastingOnUnboundFunctionsIsNotSupported: string
     ThisItemDoesNotHaveAKey: string,
     toODataTypeRef: string,
     toODataEntitySet: string,
@@ -46,6 +48,7 @@ export type Keywords = {
     EdmTimeOfDay: string
     EdmDuration: string
     EdmDateTimeOffset: string
+    Params: string
 };
 
 export function generateKeywords(allNamespaces: string[], rootLevelTypes: string[]): Keywords {
@@ -104,7 +107,10 @@ export function generateKeywords(allNamespaces: string[], rootLevelTypes: string
         CastingOnCollectionsOfCollectionsIsNotSupported: getKeyword("CastingOnCollectionsOfCollectionsIsNotSupported"),
         CastingOnEnumsAndPrimitivesIsNotSupported: getKeyword("CastingOnEnumsAndPrimitivesIsNotSupported"),
         QueryingOnCollectionsOfCollectionsIsNotSupported: getKeyword("QueryingOnCollectionsOfCollectionsIsNotSupported"),
-        ThisItemDoesNotHaveAKey: getKeyword("ThisItemDoesNotHaveAKey")
+        QueryingOnUnboundFunctionsIsNotSupported: getKeyword("QueryingOnUnboundFunctionsIsNotSupported"),
+        CastingOnUnboundFunctionsIsNotSupported: getKeyword("CastingOnUnboundFunctionsIsNotSupported"),
+        ThisItemDoesNotHaveAKey: getKeyword("ThisItemDoesNotHaveAKey"),
+        Params: getKeyword("Params")
     }
 
     function getKeyword(defaultVal: string) {
@@ -130,6 +136,7 @@ export function imports(keywords: Keywords, tab: Tab, config: CodeGenConfig | nu
 } from 'rxjs'`
 
     const odataTsClient = `import {
+${tab(importWithAlias("Params"))},
 ${tab(importWithAlias("EdmDate"))},
 ${tab(importWithAlias("EdmTimeOfDay"))},
 ${tab(importWithAlias("EdmDuration"))},
@@ -158,6 +165,8 @@ ${tab(importWithAlias("ThisItemDoesNotHaveAKey"))},
 ${tab(importWithAlias("CastingOnEnumsAndPrimitivesIsNotSupported"))},
 ${tab(importWithAlias("CastingOnCollectionsOfCollectionsIsNotSupported"))},
 ${tab(importWithAlias("QueryingOnCollectionsOfCollectionsIsNotSupported"))},
+${tab(importWithAlias("QueryingOnUnboundFunctionsIsNotSupported"))},
+${tab(importWithAlias("CastingOnUnboundFunctionsIsNotSupported"))},
 ${tab(importWithAlias("PrimitiveSubPath"))},
 ${tab(importWithAlias("CollectionSubPath"))},
 ${tab(importWithAlias("EntitySetSubPath"))}

@@ -1,13 +1,8 @@
-import { ODataSchema, ODataServiceConfig, ODataTypeRef } from "magic-odata-shared";
-import { IEntitySet, IUriBuilder, Params } from "../entitySetInterfaces.js";
+import { ODataSchema, ODataServiceConfig } from "magic-odata-shared";
+import { IEntitySet, Params } from "../entitySetInterfaces.js";
 import { OutputTypes, resolveOutputType } from "../query/filtering/queryPrimitiveTypes0.js";
 import { buildUriBuilderRoot } from "../query/root.js";
-import { AtParam, rawType } from "../valueSerializer.js";
-
-export type ParameterDefinition =
-    | { type: "Ref", data: { name: string, uri: IUriBuilder } }
-    | { type: "Const", data: { name: string, value: any, paramType: ODataTypeRef | undefined } }
-    | { type: "Param", data: { name: string } }
+import { AtParam, ParameterDefinition, rawType } from "../valueSerializer.js";
 
 function ensureAt(param: string) {
     return param[0] === "@" ? param : `@${param}`

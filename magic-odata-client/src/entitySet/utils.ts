@@ -1,7 +1,7 @@
 import { Dict, ODataComplexType, ODataEntitySet, ODataEnum, ODataSchema, ODataServiceConfig, ODataTypeName, ODataTypeRef } from "magic-odata-shared"
 import { Query } from "../queryBuilder.js"
 import { typeNameString } from "../utils.js"
-import { ParameterDefinition } from "./params.js"
+import { ParameterDefinition } from "../valueSerializer.js"
 import { DefaultResponseInterceptor, RequestTools } from "./requestTools.js"
 
 
