@@ -10,7 +10,7 @@
     "fix-links": "npm link ../../magic-odata-client ../../magic-odata-code-gen",
     "start-test-server": "node startTestServer.js",
     "stop-test-server": "node stopTestServer.js",
-    "generate-code": "node node_modules/magic-odata-code-gen/dist/index.js --config ./code-gen-config.json",
+    "generate-code": "node node_modules/magic-odata-code-gen/dist/index.js --config ./code-gen-config.json && node node_modules/magic-odata-code-gen/dist/index.js --config ./code-gen/namespaces/namespaces.json",
     "test-only": "node --experimental-vm-modules node_modules/jest/bin/jest.js dist/tests/magic-odata-tests",
     "test": "(npm run generate-code && tsc && npm run test-only)",
     "start-server-and-test": "(npm run start-test-server && npm run test)",

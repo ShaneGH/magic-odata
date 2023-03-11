@@ -52,7 +52,7 @@ ${tab(parseResponseFunctionBody)}
     }
 }
 
-type CollectionItem = { type: "EntitySet", value: ODataEntitySet } | { type: "Function", containerName: string, value: Function }
+type CollectionItem = { type: "EntitySet", value: ODataEntitySet } | { type: "Function", schemaName: string, containerName: string, value: Function }
 
 function containerName(x: CollectionItem) {
     return x.type === "EntitySet" ? x.value.containerName : x.containerName
@@ -112,13 +112,15 @@ export module ${ns} {\n${tab(module)}\n}`
         const functions = flatten(
             toList(serviceConfig.schemaNamespaces[schemaName].entityContainers)
                 .map(([containerName, ctr]) => ctr.unboundFunctions
-                    .map(x => ({ type: "Function", containerName, value: x } as CollectionItem))))
+                    .map(x => ({ type: "Function", schemaName, containerName, value: x } as CollectionItem))))
 
-        const entitySetsPerContainer = mapDict(groupBy(entitySets.concat(functions), x => x.value.namespace), es =>
+        const entitySetsPerContainer = mapDict(groupBy(entitySets.concat(functions), x => x.type === "EntitySet" ? x.value.namespace : x.schemaName), es =>
             treeify(es.map(e => [sanitizeNamespace(containerName(e)).split(".").filter(x => !!x), e])))
 
-
-        return methodsForEntitySetNamespace(schemaName, [], isForInterface, entitySetsPerContainer[Object.keys(entitySetsPerContainer)[0]])
+        const keys = Object.keys(entitySetsPerContainer)
+        return keys.length
+            ? methodsForEntitySetNamespace(schemaName, [], isForInterface, entitySetsPerContainer[keys[0]])
+            : ""
     }
 
     function methodsForEntitySetNamespace(
@@ -133,9 +135,8 @@ export module ${ns} {\n${tab(module)}\n}`
             ?.map(x => methodForEntitySet(isForInterface, x, first))
             .filter(x => !!x) || []
 
-
-        var fs = (entitySets.value || []).map(x => x.type === "Function" ? x.containerName : null).filter(x => !!x)[0]
-        const functions = (fs && getFunctions(isForInterface, first, schemaName, fs)) || ""
+        var fs = (entitySets.value || []).map(x => x.type === "Function" ? x.containerName : null).filter(x => x != null)[0]
+        const functions = (fs != null && getFunctions(isForInterface, first, schemaName, fs)) || ""
 
         const cacheArgs = !isForInterface && first
             // TODO: weird error. If I remove the ";" from this.${keywords._httpClientArgs};, the last letter of 
@@ -169,11 +170,14 @@ ${tab(methodsForEntitySetNamespace(schemaName, entitySetName.concat([c]), isForI
         const schema = `${sanitizedNs && `${sanitizedNs}.`}${unboundFunctions}["${entitySetName}"]`
 
         const tSubPath = `${keywords.EntitySetSubPath}<${entitySetsName(settings)}, never, ${schema}, never, ${async}<${fetchResponse}>>`
+        const selectorParams = [
+            `entity: ${tSubPath}`,
+            `params: ${keywords.Params}<${entitySetsName(settings)}>`
+        ].join(",\n")
 
         const signature = `unboundFunctions<TNewEntityQuery>(
 ${tab(`selector: (
-${tab(`entity: ${tSubPath}, 
-params: ${keywords.Params}<${entitySetsName(settings)}>) => ${keywords.SubPathSelection}<TNewEntityQuery>): TNewEntityQuery`)}`)}`
+${tab(selectorParams)}) => ${keywords.SubPathSelection}<TNewEntityQuery>): TNewEntityQuery`)}`
 
         if (isForInterface) {
             return signature
@@ -206,24 +210,6 @@ const entitySet = new ${entitySet}(args)
 return entitySet.subPath(selector)`
 
         return `${signature} {\n\n${tab(body)}\n}`
-
-
-
-        const returnType = httpClientType(generics, true)
-        //subPath<TNewEntityQuery>(selector: (entity: TSubPath, params: Params<TRoot>) => SubPathSelection<TNewEntityQuery>): TNewEntityQuery;
-        return `get unboundFunctions() :
-${tab(returnType)} {
-${tab(`     
-const args = {
-${tab(`requestTools: ${ths}_httpClientArgs,
-defaultResponseInterceptor: responseParser,
-type: toODataTypeRef(true, "${entitySetName}", "Entity"),
-entitySet: toODataEntitySet("${schemaName}", "${entitySetName}", "Entities"),
-root: rootConfig`)}
-}
-
-return new ${entitySet}(args as any)`)}
-}`
     }
 
     function methodForEntitySet(isForInterface: boolean, entitySet: ODataEntitySet, hasThisContext: boolean): string | undefined {
