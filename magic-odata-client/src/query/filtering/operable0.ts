@@ -1,7 +1,7 @@
 import { ODataTypeRef } from "magic-odata-shared";
 import { Filter, FilterEnv, FilterResult, QbEmit } from "../../queryBuilder.js";
 import { QueryCollection, QueryEnum, QueryObject, QueryPrimitive } from "../queryComplexObjectBuilder.js";
-import { serialize } from "../../valueSerializer.js";
+import { serialize_legacy } from "../../valueSerializer.js";
 import { ReaderWriter } from "../../utils.js";
 
 export type Operable<T> = QueryPrimitive<T> | QueryEnum<T> | Filter
@@ -50,7 +50,7 @@ export function valueToFilter<T>(val: Filter | T, typeRef: ODataTypeRef, mapper:
         {
             $$filter: mapper
                 ? mapper(val)
-                : serialize(val, typeRef, env.serviceConfig.schemaNamespaces),
+                : serialize_legacy(val, typeRef, env.serviceConfig.schemaNamespaces),
             $$output: typeRef
         },
         QbEmit.zero])

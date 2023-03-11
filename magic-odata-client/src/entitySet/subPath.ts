@@ -1,6 +1,6 @@
 import { ODataComplexType, ODataTypeRef, Function as ODataFunction, ODataEntitySet, Dict, ODataSchema } from "magic-odata-shared";
 import { Params } from "../entitySetInterfaces.js";
-import { serialize } from "../valueSerializer.js";
+import { serialize_legacy } from "../valueSerializer.js";
 import { params } from "./params.js";
 import { Accept, EntitySetData, lookup, tryFindBaseType, tryFindPropertyType } from "./utils.js";
 
@@ -68,9 +68,9 @@ function buildFunctions(groupedFunctions: { [k: string]: ODataFunction[] }, root
                     throw new Error(`Unknown function args for function ${key}(${(x && Object.keys(x)) || ""})`);
                 }
 
-                const _serialize: typeof serialize = encodeUri
-                    ? (x, y, z) => encodeURIComponent(serialize(x, y, z))
-                    : (x, y, z) => serialize(x, y, z)
+                const _serialize: typeof serialize_legacy = encodeUri
+                    ? (x, y, z) => encodeURIComponent(serialize_legacy(x, y, z))
+                    : (x, y, z) => serialize_legacy(x, y, z)
 
                 const params = fn.params
                     .filter(x => !x.isBindingParameter)

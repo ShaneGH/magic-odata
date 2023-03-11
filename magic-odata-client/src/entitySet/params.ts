@@ -22,29 +22,33 @@ export function params<TRoot>(uriRoot: string, serviceConfig: ODataServiceConfig
             root ??= (buildUriBuilderRoot(uriRoot, serviceConfig, schema) as TRoot)
 
             paramName = ensureAt(paramName)
-            ps.push({ type: "Ref", data: { name: paramName, uri: ref(root) } })
-            return new AtParam(paramName) as any
+            const param: ParameterDefinition = { type: "Ref", data: { name: paramName, uri: ref(root) } }
+            ps.push(param)
+            return new AtParam(param) as any
         },
 
         createConst<T>(paramName: string, value: T, paramType?: OutputTypes | undefined) {
 
             paramName = ensureAt(paramName)
-            ps.push({ type: "Const", data: { name: paramName, value, paramType: paramType && resolveOutputType(paramType) } })
-            return new AtParam(paramName) as any
+            const param: ParameterDefinition = { type: "Const", data: { name: paramName, value, paramType: paramType && resolveOutputType(paramType) } }
+            ps.push(param)
+            return new AtParam(param) as any
         },
 
         param(paramName: string) {
 
             paramName = ensureAt(paramName)
-            ps.push({ type: "Param", data: { name: paramName } })
-            return new AtParam(paramName) as any
+            const param: ParameterDefinition = { type: "Param", data: { name: paramName } }
+            ps.push(param)
+            return new AtParam(param) as any
         },
 
         createRawConst(paramName: string, value: string) {
 
             paramName = ensureAt(paramName)
-            ps.push({ type: "Const", data: { name: paramName, value, paramType: rawType } })
-            return new AtParam(paramName) as any
+            const param: ParameterDefinition = { type: "Const", data: { name: paramName, value, paramType: rawType } }
+            ps.push(param)
+            return new AtParam(param) as any
         }
     }]
 }

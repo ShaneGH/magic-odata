@@ -2,7 +2,7 @@ import { ODataSchema, ODataServiceConfig, ODataTypeRef } from "magic-odata-share
 import { ODataUriParts } from "./entitySet/requestTools.js";
 import { NonNumericTypes, resolveOutputType } from "./query/filtering/queryPrimitiveTypes0.js";
 import { groupBy, mapDict, ReaderWriter, removeNulls, Writer } from "./utils.js";
-import { ParameterDefinition, serialize } from "./valueSerializer.js";
+import { ParameterDefinition, serialize_legacy } from "./valueSerializer.js";
 
 type Dict<T> = { [key: string]: T }
 
@@ -198,9 +198,9 @@ function merge(types: Dict<ODataSchema>, buildUri: BuildUri, acc: QueryAccumulat
         ? (x: any) => encodeURIComponent(JSON.stringify(x))
         : (x: any) => JSON.stringify(x)
 
-    const _serialize: typeof serialize = encode
-        ? (x, y, z) => encodeURIComponent(serialize(x, y, z))
-        : (x, y, z) => serialize(x, y, z)
+    const _serialize: typeof serialize_legacy = encode
+        ? (x, y, z) => encodeURIComponent(serialize_legacy(x, y, z))
+        : (x, y, z) => serialize_legacy(x, y, z)
 
     const serializedDataParams = removeNulls(dataParams
         .map(d => d.type === "Const"

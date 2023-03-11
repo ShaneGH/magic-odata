@@ -34,7 +34,7 @@ export class EntitySet<TRoot, TEntity, TResult, TKeyBuilder, TQueryable, TCaster
                     query: []
                 }
             }
-        };
+        }
     }
 
     getOutputType(): ODataTypeRef {

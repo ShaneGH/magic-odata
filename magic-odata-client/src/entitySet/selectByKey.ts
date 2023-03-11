@@ -1,7 +1,7 @@
 import { Dict, ODataSchema, ODataTypeName, ODataTypeRef } from "magic-odata-shared";
 import { Params } from "../entitySetInterfaces.js";
 import { typeNameString } from "../utils.js";
-import { serialize } from "../valueSerializer.js";
+import { serialize_legacy } from "../valueSerializer.js";
 import { params } from "./params.js";
 import { EntitySetData, lookupComplex, tryFindBaseType, tryFindPropertyType } from "./utils.js";
 
@@ -70,9 +70,9 @@ function keyExpr(keyTypes: KeyType[], key: any, keyEmbedType: WithKeyType, servi
 
     if (keyTypes.length === 1) {
         const result = keyEmbedType === WithKeyType.FunctionCall
-            ? { appendToLatest: true, value: `(${serialize(key, keyTypes[0].type, serviceConfig)})` }
+            ? { appendToLatest: true, value: `(${serialize_legacy(key, keyTypes[0].type, serviceConfig)})` }
             : keyEmbedType === WithKeyType.PathSegment
-                ? { appendToLatest: false, value: `${serialize(key, keyTypes[0].type, serviceConfig)}` }
+                ? { appendToLatest: false, value: `${serialize_legacy(key, keyTypes[0].type, serviceConfig)}` }
                 : null;
 
         if (!result) {
@@ -88,7 +88,7 @@ function keyExpr(keyTypes: KeyType[], key: any, keyEmbedType: WithKeyType, servi
 
     const kvp = keyTypes
         .map(t => Object.prototype.hasOwnProperty.call(key, t.name)
-            ? { key: t.name, value: serialize(key[t.name], t.type, serviceConfig) }
+            ? { key: t.name, value: serialize_legacy(key[t.name], t.type, serviceConfig) }
             : t.name);
 
     const missingKeys = kvp.filter(x => typeof x === "string") as string[]

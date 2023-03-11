@@ -1,7 +1,7 @@
 import { ComplexTypeOrEnum, Dict, ODataEnum, ODataSchema, ODataSingleTypeRef, ODataTypeRef } from "magic-odata-shared";
 import { ODataDate, ODataDuration, ODataTimeOfDay, ODataDateTimeOffset } from "./edmTypes.js";
 import { IUriBuilder } from "./entitySetInterfaces.js";
-import { typeRefString } from "./utils.js";
+import { typeRefString, Writer } from "./utils.js";
 
 export type ParameterDefinition =
     | { type: "Ref", data: { name: string, uri: IUriBuilder } }
@@ -198,7 +198,17 @@ const warnedCollectionTypes = {} as { [k: string]: boolean }
 const warnedEnumTypes = {} as { [k: string]: boolean }
 export const rawType: ODataSingleTypeRef = { isCollection: false, namespace: "magic-odata", name: "Raw" }
 
-export function serialize(value: any, type?: ODataTypeRef, serviceConfig?: Dict<ODataSchema>): string {
+export function serialize(value: any, type?: ODataTypeRef, serviceConfig?: Dict<ODataSchema>): Writer<string, [AtParam, ODataTypeRef][]> {
+    const asString = serialize_legacy(value, type, serviceConfig)
+    if (!type || !(value instanceof AtParam)) {
+        return Writer.create(asString, [])
+    }
+
+    return Writer.create(asString, [[value, type]])
+}
+
+// eventually will be made private
+export function serialize_legacy(value: any, type?: ODataTypeRef, serviceConfig?: Dict<ODataSchema>): string {
 
     if (value == null) {
         return "null"
@@ -210,7 +220,7 @@ export function serialize(value: any, type?: ODataTypeRef, serviceConfig?: Dict<
 
     if (Array.isArray(value)) {
         type = type?.isCollection ? type.collectionType : type
-        return `[${value.map(x => serialize(x, type, serviceConfig))}]`
+        return `[${value.map(x => serialize_legacy(x, type, serviceConfig))}]`
     }
 
     if (type?.isCollection) {
