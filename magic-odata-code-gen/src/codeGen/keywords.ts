@@ -10,8 +10,10 @@ export type Keywords = {
     QueryCollection: string
     QueryComplexObject: string
     QueryEnum: string
-    EntitySet: string
+    RequestBuilder: string
+    UnboundFunctionSet: string
     ODataEntitySet: string
+    ODataSchema: string
     IEntitySet: string
     rootConfig: string
     rootConfigExporter: string
@@ -33,6 +35,7 @@ export type Keywords = {
     ThisItemDoesNotHaveAKey: string,
     toODataTypeRef: string,
     toODataEntitySet: string,
+    toODataSchema: string,
     responseParser: string,
     DefaultResponseInterceptor: string
     parseAngularBlob: string
@@ -65,6 +68,7 @@ export function generateKeywords(allNamespaces: string[], rootLevelTypes: string
 
     return {
         EdmDate: getKeyword("EdmDate"),
+        UnboundFunctionSet: getKeyword("UnboundFunctionSet"),
         EdmTimeOfDay: getKeyword("EdmTimeOfDay"),
         EdmDuration: getKeyword("EdmDuration"),
         EdmDateTimeOffset: getKeyword("EdmDateTimeOffset"),
@@ -83,6 +87,8 @@ export function generateKeywords(allNamespaces: string[], rootLevelTypes: string
         responseParser: getKeyword("responseParser"),
         toODataTypeRef: getKeyword("toODataTypeRef"),
         toODataEntitySet: getKeyword("toODataEntitySet"),
+        toODataSchema: getKeyword("toODataSchema"),
+        ODataSchema: getKeyword("ODataSchema"),
         QueryEnum: getKeyword("QueryEnum"),
         WithKeyType: getKeyword("WithKeyType"),
         ODataTypeRef: getKeyword("ODataTypeRef"),
@@ -94,7 +100,7 @@ export function generateKeywords(allNamespaces: string[], rootLevelTypes: string
         QueryComplexObject: getKeyword("QueryComplexObject"),
         SubPathSelection: getKeyword("SubPathSelection"),
         CastSelection: getKeyword("CastSelection"),
-        EntitySet: getKeyword("EntitySet"),
+        RequestBuilder: getKeyword("RequestBuilder"),
         ODataEntitySet: getKeyword("ODataEntitySet"),
         IEntitySet: getKeyword("IEntitySet"),
         rootConfig: getKeyword("rootConfig"),
@@ -136,6 +142,7 @@ export function imports(keywords: Keywords, tab: Tab, config: CodeGenConfig | nu
 } from 'rxjs'`
 
     const odataTsClient = `import {
+${tab(importWithAlias("UnboundFunctionSet"))},
 ${tab(importWithAlias("Params"))},
 ${tab(importWithAlias("EdmDate"))},
 ${tab(importWithAlias("EdmTimeOfDay"))},
@@ -154,8 +161,9 @@ ${tab(importWithAlias("CastSelection"))},
 ${tab(importWithAlias("SubPathSelection"))},
 ${tab(importWithAlias("QueryPrimitive"))},
 ${tab(importWithAlias("QueryCollection"))},
-${tab(importWithAlias("EntitySet"))},
+${tab(importWithAlias("RequestBuilder"))},
 ${tab(importWithAlias("ODataEntitySet"))},
+${tab(importWithAlias("ODataSchema"))},
 ${tab(importWithAlias("IEntitySet"))},
 ${tab(importWithAlias("QueryComplexObject"))},
 ${tab(importWithAlias("ODataCollectionResult"))},

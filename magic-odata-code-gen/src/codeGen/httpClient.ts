@@ -1,4 +1,4 @@
-import { ODataEntitySet, ODataSchema, ODataServiceConfig, Function } from "magic-odata-shared";
+import { ODataEntitySet, ODataSchema, ODataServiceConfig, Function, Dict } from "magic-odata-shared";
 import { CodeGenConfig } from "../config.js";
 import { treeify, Node, flatten, toList, mapDict, groupBy, removeNulls, removeNullNulls } from "../utils.js";
 import { Keywords } from "./keywords.js";
@@ -26,6 +26,8 @@ export function httpClient(
 
 ${toODataTypeRef()}
 
+${toODataSchema()}
+
 ${toODataEntitySet()}
 
 ${schemas}`
@@ -39,7 +41,13 @@ return collection ? { isCollection: true, collectionType } : collectionType`)}
 
     function toODataEntitySet() {
         return `function ${keywords.toODataEntitySet}(namespace: string, collection: string, entitySet: string): ${keywords.ODataEntitySet} {
-${tab(`return ${keywords.rootConfig}.schemaNamespaces[namespace || ""].entityContainers[collection || ""].entitySets[entitySet]`)}
+${tab(`return ${keywords.toODataSchema}(namespace).entityContainers[collection || ""].entitySets[entitySet]`)}
+}`
+    }
+
+    function toODataSchema() {
+        return `function ${keywords.toODataSchema}(namespace: string): ${keywords.ODataSchema} {
+${tab(`return ${keywords.rootConfig}.schemaNamespaces[namespace || ""]`)}
 }`
     }
 
@@ -135,8 +143,8 @@ export module ${ns} {\n${tab(module)}\n}`
             ?.map(x => methodForEntitySet(isForInterface, x, first))
             .filter(x => !!x) || []
 
-        var fs = (entitySets.value || []).map(x => x.type === "Function" ? x.containerName : null).filter(x => x != null)[0]
-        const functions = (fs != null && getFunctions(isForInterface, first, schemaName, fs)) || ""
+        var containerName = (entitySets.value || []).map(x => x.type === "Function" ? x.containerName : null).filter(x => x != null)[0]
+        const functions = (containerName != null && getFunctions(isForInterface, first, schemaName, containerName)) || ""
 
         const cacheArgs = !isForInterface && first
             // TODO: weird error. If I remove the ";" from this.${keywords._httpClientArgs};, the last letter of 
@@ -163,11 +171,11 @@ ${tab(methodsForEntitySetNamespace(schemaName, entitySetName.concat([c]), isForI
         ].filter(x => x).join(first || isForInterface ? "\n\n" : ",\n\n")
     }
 
-    function getFunctions(isForInterface: boolean, first: boolean, schemaName: string, entitySetName: string): string | undefined {
+    function getFunctions(isForInterface: boolean, first: boolean, schemaName: string, containerName: string): string | undefined {
         const { async, fetchResponse } = getFetchResult(keywords, settings || null)
         const unboundFunctions = getUnboundFunctionsName(settings);
         const sanitizedNs = sanitizeNamespace(schemaName)
-        const schema = `${sanitizedNs && `${sanitizedNs}.`}${unboundFunctions}["${entitySetName}"]`
+        const schema = `${sanitizedNs && `${sanitizedNs}.`}${unboundFunctions}["${containerName}"]`
 
         const tSubPath = `${keywords.EntitySetSubPath}<${entitySetsName(settings)}, never, ${schema}, never, ${async}<${fetchResponse}>>`
         const selectorParams = [
@@ -183,33 +191,37 @@ ${tab(selectorParams)}) => ${keywords.SubPathSelection}<TNewEntityQuery>): TNewE
             return signature
         }
 
-        const generics = {
-            tKeyBuilder: keywords.ThisItemDoesNotHaveAKey,
-            tQueryable: keywords.QueryingOnUnboundFunctionsIsNotSupported,
-            tCaster: keywords.CastingOnUnboundFunctionsIsNotSupported,
+        const generics = [
+            entitySetsName(settings),
             tSubPath,
-            tResult: {
-                isCollection: false as false,
-                name: "any",
-                namespace: ""
-            }
-        }
+            `${async}<${fetchResponse}>`
+        ]
 
         const ths = first ? "this." : ""
-        const entitySet = httpClientType(generics, false)
-        const body = `const args = {
-${tab(`requestTools: ${ths}_httpClientArgs,
-defaultResponseInterceptor: responseParser,
-type: toODataTypeRef(true, "${entitySetName}", "Entity"),
-entitySet: toODataEntitySet("${schemaName}", "${entitySetName}", "Entities"),
-root: rootConfig`)}
-}
+        const args = {
+            root: "rootConfig",
+            schemaName: `"${schemaName}"`,
+            containerName: `"${containerName}"`,
+            requestTools: `${(first && "this.") || ""}_httpClientArgs`,
+            defaultResponseInterceptor: "responseParser"
+        }
 
-const entitySet = new ${entitySet}(args)
+        const body = `const args = ${toTs(args)}
+
+const entitySet = new ${keywords.UnboundFunctionSet}<${generics.join(", ")}>(args)
 
 return entitySet.subPath(selector)`
 
         return `${signature} {\n\n${tab(body)}\n}`
+    }
+
+    function toTs(obj: Dict<string>) {
+        const props = Object
+            .keys(obj)
+            .map(k => `${k}: ${obj[k]}`)
+            .join(",\n")
+
+        return !props.length ? "{}" : `{\n${tab(props)}\n}`
     }
 
     function methodForEntitySet(isForInterface: boolean, entitySet: ODataEntitySet, hasThisContext: boolean): string | undefined {
@@ -225,11 +237,12 @@ return entitySet.subPath(selector)`
 
         const ths = hasThisContext ? "this." : ""
         const instanceType = httpClientType(generics, false);
+        const entitySetArg = `${keywords.toODataEntitySet}("${entitySet.namespace || ""}", "${entitySet.containerName || ""}", "${entitySet.name}")`
         const constructorArgs = {
             requestTools: `${ths}${keywords._httpClientArgs}`,
             defaultResponseInterceptor: keywords.responseParser,
             type: `${keywords.toODataTypeRef}(${!entitySet.isSingleton}, "${entitySet.forType.namespace || ""}", "${entitySet.forType.name}")`,
-            entitySet: `${keywords.toODataEntitySet}("${entitySet.namespace || ""}", "${entitySet.containerName || ""}", "${entitySet.name}")`,
+            schema: `${keywords.toODataSchema}("${entitySet.namespace || ""}")`,
             root: keywords.rootConfig
         } as any
 
@@ -244,7 +257,7 @@ return entitySet.subPath(selector)`
 
 ${tab(args)}
 
-${tab(`return new ${instanceType}(args);`)}
+${tab(`return new ${instanceType}(args, ${entitySetArg});`)}
 }`
     }
 

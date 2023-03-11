@@ -2,7 +2,7 @@ import { Dict, ODataComplexType, ODataEnum, ODataSchema, ODataTypeName } from "m
 import { Utils, utils as queryUtils } from "../query/queryUtils.js";
 import { Query } from "../queryBuilder.js";
 import { buildComplexTypeRef, QueryComplexObject, QueryEnum, QueryObjectType, QueryPrimitive } from "../query/queryComplexObjectBuilder.js";
-import { EntitySetData, getDeepTypeRef, lookup } from "./utils.js";
+import { RequestBuilderData, getDeepTypeRef, lookup } from "./utils.js";
 import { Params } from "../entitySetInterfaces.js";
 import { params } from "./params.js";
 
@@ -85,9 +85,9 @@ export function executeQueryBuilder<TRoot, TQueryable, TQuery>(
 }
 
 export function recontextDataForRootQuery<TRoot, TFetchResult, TResult, TQueryable>(
-    data: EntitySetData<TFetchResult, TResult>,
+    data: RequestBuilderData<TFetchResult, TResult>,
     queryBuilder: (entity: TQueryable, utils: Utils<TRoot>, params: Params<TRoot>) => Query | Query[],
-    urlEncode?: boolean): EntitySetData<TFetchResult, TResult> {
+    urlEncode?: boolean): RequestBuilderData<TFetchResult, TResult> {
 
     if (data.state.query.query.length) {
         throw new Error("This request already has a query");
@@ -99,12 +99,13 @@ export function recontextDataForRootQuery<TRoot, TFetchResult, TResult, TQueryab
     }
 
     const [mutableParamDefinitions, paramsBuilder] = params<TRoot>(
-        data.tools.requestTools.uriRoot, data.tools.root, data.tools.root.schemaNamespaces[data.tools.entitySet.namespace]);
+        data.tools.requestTools.uriRoot, data.tools.root, data.tools.schema);
     const t = lookup(typeRef, data.tools.root.schemaNamespaces)
     const query = executeQueryBuilder(t.type, data.tools.root.schemaNamespaces, queryBuilder, "$it", paramsBuilder)
 
     return {
         tools: data.tools,
+        entitySet: data.entitySet,
         state: {
             ...data.state,
             mutableDataParams: [...data.state.mutableDataParams, mutableParamDefinitions],

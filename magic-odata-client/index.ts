@@ -4,6 +4,7 @@ export {
     ODataComplexType,
     ODataTypeRef,
     ODataEntitySet,
+    ODataSchema,
 } from "magic-odata-shared"
 
 export {
@@ -34,8 +35,12 @@ export {
 } from "./src/queryBuilder.js"
 
 export {
-    EntitySet
-} from "./src/entitySet.js"
+    RequestBuilder
+} from "./src/requestBuilder.js"
+
+export {
+    UnboundFunctionSet
+} from "./src/unboundFunctionSet.js"
 
 export {
     ODataCollectionResult,

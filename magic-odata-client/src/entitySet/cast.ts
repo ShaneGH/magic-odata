@@ -1,11 +1,11 @@
 import { ODataComplexType, ODataSingleTypeRef, ODataTypeRef } from "magic-odata-shared";
 import { typeNameString } from "../utils.js";
-import { EntitySetData, getDeepTypeRef } from "./utils.js";
+import { RequestBuilderData, getDeepTypeRef } from "./utils.js";
 
 
 // https://github.com/ShaneGH/magic-odata/issues/4
 function buildCaster<TFetchResult, TResult, TCaster>(
-    data: EntitySetData<TFetchResult, TResult>): TCaster {
+    data: RequestBuilderData<TFetchResult, TResult>): TCaster {
 
     const { namespace, name, isCollection } = getCastingTypeRef(data.tools.type);
 
@@ -71,7 +71,7 @@ export type CastSelection<TNewEntityQuery> = {
 }
 
 export function recontextDataForCasting<TFetchResult, TResult, TCaster, TNewEntityQuery>(
-    data: EntitySetData<TFetchResult, TResult>,
+    data: RequestBuilderData<TFetchResult, TResult>,
     cast: (caster: TCaster) => CastSelection<TNewEntityQuery>) {
 
     if (data.state.query.query.length) {

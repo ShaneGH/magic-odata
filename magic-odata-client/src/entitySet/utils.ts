@@ -4,18 +4,18 @@ import { typeNameString } from "../utils.js"
 import { ParameterDefinition } from "../valueSerializer.js"
 import { DefaultResponseInterceptor, RequestTools } from "./requestTools.js"
 
-
-export type EntitySetData<TFetchResult, TResult> = {
-    tools: EntitySetTools<TFetchResult, TResult>
+export type RequestBuilderData<TFetchResult, TResult> = {
+    tools: SchemaTools<TFetchResult, TResult>
+    entitySet: ODataEntitySet | null
     state: EntityQueryState
 }
 
-export type EntitySetTools<TFetchResult, TResult> = {
+export type SchemaTools<TFetchResult, TResult> = {
     requestTools: RequestTools<TFetchResult, TResult>,
     defaultResponseInterceptor: DefaultResponseInterceptor<TFetchResult, TResult>,
     type: ODataTypeRef,
-    entitySet: ODataEntitySet,
     root: ODataServiceConfig
+    schema: ODataSchema
 }
 
 export enum Accept {
@@ -23,6 +23,8 @@ export enum Accept {
     Raw = "Raw",
     Integer = "Integer"
 }
+
+export const defaultAccept = Accept.Json
 
 export type EntityQueryState = {
     path: string[]

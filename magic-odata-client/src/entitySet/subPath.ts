@@ -1,21 +1,24 @@
-import { ODataComplexType, ODataTypeRef, Function as ODataFunction, ODataEntitySet, Dict, ODataSchema } from "magic-odata-shared";
+import { ODataComplexType, ODataTypeRef, Function as ODataFunction, ODataEntitySet, Dict, ODataSchema, ODataServiceConfig } from "magic-odata-shared";
 import { Params } from "../entitySetInterfaces.js";
 import { serialize_legacy } from "../valueSerializer.js";
 import { params } from "./params.js";
-import { Accept, EntitySetData, lookup, tryFindBaseType, tryFindPropertyType } from "./utils.js";
+import { DefaultResponseInterceptor, RequestTools } from "./requestTools.js";
+import { Accept, RequestBuilderData, lookup, tryFindBaseType, tryFindPropertyType, defaultAccept } from "./utils.js";
 
 const $count = {};
 const $value = {};
 
 function buildSubPathProperties<TFetchResult, TResult, TSubPath>(
-    data: EntitySetData<TFetchResult, TResult>,
+    data: RequestBuilderData<TFetchResult, TResult>,
     type: ODataTypeRef,
     encodeUri: boolean): TSubPath {
 
     if (type.isCollection) {
 
-        const functions = listAllEntitySetFunctionsGrouped(data.tools.entitySet, data.tools.root.schemaNamespaces, encodeUri)
-            .reduce((s, x) => ({ ...s, [x[0]]: x[1] }), {} as any);
+        const functions = data.entitySet
+            ? listAllEntitySetFunctionsGrouped(data.entitySet, data.tools.root.schemaNamespaces, encodeUri)
+                .reduce((s, x) => ({ ...s, [x[0]]: x[1] }), {} as any)
+            : {};
 
         return {
             ...functions,
@@ -93,6 +96,16 @@ function listAllEntityFunctionsGrouped(
     return buildFunctions(groupedFunctions, root, encodeUri)
 }
 
+function listUnboundFunctionsGrouped(
+    root: Dict<ODataSchema>,
+    schemaName: string,
+    containerName: string,
+    encodeUri: boolean): [string, (x: any) => SubPathSelection<any>][] {
+
+    const groupedFunctions = groupFunctions(root[schemaName].entityContainers[containerName].unboundFunctions)
+    return buildFunctions(groupedFunctions, root, encodeUri)
+}
+
 function groupFunctions(functions: ODataFunction[]) {
     return functions
         .reduce((s, x) => s[x.name]
@@ -152,8 +165,8 @@ export type SubPathSelection<TNewEntityQuery> = {
 }
 
 export function recontextDataForSubPath<TRoot, TFetchResult, TResult, TSubPath, TNewEntityQuery>(
-    data: EntitySetData<TFetchResult, TResult>,
-    subPath: (pathSelector: TSubPath, params: Params<TRoot>) => SubPathSelection<TNewEntityQuery>): EntitySetData<TFetchResult, TResult> {
+    data: RequestBuilderData<TFetchResult, TResult>,
+    subPath: (pathSelector: TSubPath, params: Params<TRoot>) => SubPathSelection<TNewEntityQuery>): RequestBuilderData<TFetchResult, TResult> {
 
     if (data.state.query.query.length) {
         throw new Error("You cannot add query components before navigating a sub path");
@@ -161,7 +174,8 @@ export function recontextDataForSubPath<TRoot, TFetchResult, TResult, TSubPath, 
 
     let propType: ODataTypeRef | null = null
     const [mutableParamDefinitions, paramsBuilder] = params<TRoot>(data.tools.requestTools.uriRoot,
-        data.tools.root, data.tools.root.schemaNamespaces[data.tools.entitySet.namespace]);
+        data.tools.root, data.tools.schema);
+
     const newT = subPath(buildSubPathProperties(data, data.tools.type, true), paramsBuilder);
     if (newT === $value) {
         propType = data.tools.type
@@ -187,6 +201,7 @@ export function recontextDataForSubPath<TRoot, TFetchResult, TResult, TSubPath, 
 
     return {
         tools: { ...data.tools, type: propType },
+        entitySet: data.entitySet,
         state: {
             ...data.state,
             path,
@@ -196,6 +211,49 @@ export function recontextDataForSubPath<TRoot, TFetchResult, TResult, TSubPath, 
                 : newT === $count
                     ? Accept.Integer
                     : data.state.accept,
+        }
+    }
+}
+
+export type UnboundFunctionSetTools<TFetchResult, TResult> = {
+    root: ODataServiceConfig
+    schemaName: string
+    containerName: string
+    requestTools: RequestTools<TFetchResult, TResult>
+    defaultResponseInterceptor: DefaultResponseInterceptor<TFetchResult, TResult>
+}
+
+export function recontextDataForUnboundFunctions<TRoot, TFetchResult, TResult, TSubPath, TNewEntityQuery>(
+    data: UnboundFunctionSetTools<TFetchResult, TResult>,
+    subPath: (pathSelector: TSubPath, params: Params<TRoot>) => SubPathSelection<TNewEntityQuery>): RequestBuilderData<TFetchResult, TResult> {
+
+    const [mutableParamDefinitions, paramsBuilder] = params<TRoot>(data.requestTools.uriRoot,
+        data.root, data.root.schemaNamespaces[data.schemaName]);
+
+    const functions = listUnboundFunctionsGrouped(data.root.schemaNamespaces, data.schemaName, data.containerName, true)
+        .reduce((s, x) => ({ ...s, [x[0]]: x[1] }), {} as any)
+    const newT = subPath(functions, paramsBuilder);
+    if (!newT.outputType) {
+        throw new Error(`Invalid property ${newT.propertyName}`);
+    }
+
+    return {
+        tools: {
+            requestTools: data.requestTools,
+            defaultResponseInterceptor: data.defaultResponseInterceptor,
+            type: newT.outputType,
+            schema: data.root.schemaNamespaces[data.schemaName],
+            root: data.root
+        },
+        entitySet: null,
+        state: {
+            path: [newT.propertyName],
+            accept: defaultAccept,
+            mutableDataParams: [mutableParamDefinitions],
+            query: {
+                query: [],
+                urlEncode: true
+            }
         }
     }
 }

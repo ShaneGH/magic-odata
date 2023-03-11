@@ -3,7 +3,7 @@ import { Params } from "../entitySetInterfaces.js";
 import { typeNameString } from "../utils.js";
 import { serialize_legacy } from "../valueSerializer.js";
 import { params } from "./params.js";
-import { EntitySetData, lookupComplex, tryFindBaseType, tryFindPropertyType } from "./utils.js";
+import { RequestBuilderData, lookupComplex, tryFindBaseType, tryFindPropertyType } from "./utils.js";
 
 /**
  * Specified how to format an entity key in a url
@@ -132,8 +132,8 @@ function keyStructured(key: any, keyEmbedType?: WithKeyType.FunctionCall): KeySe
 }
 
 export function recontextDataForKey<TRoot, TFetchResult, TResult, TNewEntityQuery, TKeyBuilder>(
-    data: EntitySetData<TFetchResult, TResult>,
-    key: (builder: TKeyBuilder, params: Params<TRoot>) => KeySelection<TNewEntityQuery>): EntitySetData<TFetchResult, TResult> {
+    data: RequestBuilderData<TFetchResult, TResult>,
+    key: (builder: TKeyBuilder, params: Params<TRoot>) => KeySelection<TNewEntityQuery>): RequestBuilderData<TFetchResult, TResult> {
 
     if (data.state.query.query.length) {
         throw new Error("You cannot add query components before doing a key lookup");
@@ -152,7 +152,7 @@ export function recontextDataForKey<TRoot, TFetchResult, TResult, TNewEntityQuer
     }
 
     const [mutableParamDefinitions, paramsBuilder] = params<TRoot>(data.tools.requestTools.uriRoot,
-        data.tools.root, data.tools.root.schemaNamespaces[data.tools.entitySet.namespace]);
+        data.tools.root, data.tools.schema);
     const keyResult = key({ keyRaw, key: keyStructured } as any, paramsBuilder);
     const keyTypes = tryFindKeyTypes(data.tools.type.collectionType, data.tools.root.schemaNamespaces);
     const keyPath = keyResult.raw
@@ -174,6 +174,7 @@ export function recontextDataForKey<TRoot, TFetchResult, TResult, TNewEntityQuer
             ...data.tools,
             type: data.tools.type.collectionType
         },
+        entitySet: data.entitySet,
         state: {
             ...data.state,
             mutableDataParams: [...data.state.mutableDataParams, mutableParamDefinitions],

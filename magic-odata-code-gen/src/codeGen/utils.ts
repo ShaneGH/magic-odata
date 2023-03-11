@@ -273,7 +273,7 @@ export function buildHttpClientType(types: Dict<ODataSchema>, keywords: Keywords
             .map(tab)
             .join(",\n");
 
-        return `${asInterface ? keywords.IEntitySet : keywords.EntitySet}<\n${gs}>`
+        return `${asInterface ? keywords.IEntitySet : keywords.RequestBuilder}<\n${gs}>`
     }
 }
 

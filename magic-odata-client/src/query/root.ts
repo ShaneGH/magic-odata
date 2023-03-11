@@ -1,11 +1,11 @@
 import { Dict, ODataEntitySet, ODataSchema, ODataServiceConfig } from "magic-odata-shared";
-import { EntitySet } from "../entitySet.js";
-import { EntitySetTools } from "../entitySet/utils.js";
+import { RequestBuilder } from "../requestBuilder.js";
+import { SchemaTools } from "../entitySet/utils.js";
 import { IUriBuilder } from "../entitySetInterfaces.js";
 import { FilterEnv, FilterResult, QbEmit } from "../queryBuilder.js";
 import { ReaderWriter } from "../utils.js";
 
-type ESet = EntitySet<any, any, any, any, any, any, any, any>
+type RBuilder = RequestBuilder<any, any, any, any, any, any, any, any>
 
 export type RootQuery<TRoot> = (filter: TRoot) => IUriBuilder
 
@@ -17,6 +17,7 @@ export function buildUriBuilderRoot(uriRoot: string, serviceConfig: ODataService
         .map(ns => methodsForEntitySetNamespace(
             uriRoot,
             serviceConfig,
+            schema,
             ns.replace(/[^a-zA-Z0-9$._]/g, ".").split("."),
             schema.entityContainers[ns].entitySets))
         .reduce((s, x) => {
@@ -42,7 +43,7 @@ export function $root(filter: (root: any) => IUriBuilder) {
     });
 }
 
-function stripSumType(leaf: Node): FinalNamespace<ESet> | ESet {
+function stripSumType(leaf: Node): FinalNamespace<RBuilder> | RBuilder {
     if (leaf.t === "EntitySet") {
         return leaf.data
     }
@@ -52,7 +53,7 @@ function stripSumType(leaf: Node): FinalNamespace<ESet> | ESet {
         .reduce((s, x) => ({
             ...s,
             [x]: stripSumType(leaf.data[x])
-        }), {} as FinalNamespace<ESet>)
+        }), {} as FinalNamespace<RBuilder>)
 }
 
 function merge(part1: Node, part2: Node, name: string): Node {
@@ -117,12 +118,13 @@ type FinalNamespace<T> = { [k: string]: T | FinalNamespace<T> }
 type Namespace = { [k: string]: Node }
 
 type Node =
-    | { t: "EntitySet", data: ESet }
+    | { t: "EntitySet", data: RBuilder }
     | { t: "Namespace", data: Namespace }
 
 function methodsForEntitySetNamespace(
     uriRoot: string,
     serviceConfig: ODataServiceConfig,
+    schema: ODataSchema,
     entitySetNamespaceParts: string[],
     entitySets: Dict<ODataEntitySet>): Node {
 
@@ -137,7 +139,7 @@ function methodsForEntitySetNamespace(
                     throw new Error("Unexpected error");
                 }
 
-                const tools: EntitySetTools<any, any> = {
+                const tools: SchemaTools<any, any> = {
                     requestTools: {
                         request() { throw new Error("This entity set has http requests disabled") },
                         uriRoot: uriRoot
@@ -146,7 +148,7 @@ function methodsForEntitySetNamespace(
                     type: entitySets[key].isSingleton
                         ? entitySets[key].forType
                         : { isCollection: true, collectionType: entitySets[key].forType },
-                    entitySet: entitySets[key],
+                    schema,
                     root: serviceConfig
                 }
 
@@ -156,7 +158,7 @@ function methodsForEntitySetNamespace(
                         ...s.data,
                         [key]: {
                             t: "EntitySet",
-                            data: new EntitySet<any, any, any, any, any, any, any, any>(tools, undefined, true)
+                            data: new RequestBuilder<any, any, any, any, any, any, any, any>(tools, entitySets[key], undefined, true)
                         }
                     }
                 }
@@ -166,7 +168,7 @@ function methodsForEntitySetNamespace(
     return {
         t: "Namespace",
         data: {
-            [entitySetNamespaceParts[0]]: methodsForEntitySetNamespace(uriRoot, serviceConfig, entitySetNamespaceParts.slice(1), entitySets)
+            [entitySetNamespaceParts[0]]: methodsForEntitySetNamespace(uriRoot, serviceConfig, schema, entitySetNamespaceParts.slice(1), entitySets)
         }
     }
 }

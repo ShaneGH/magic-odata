@@ -1,6 +1,6 @@
 import { buildQuery } from "../queryBuilder.js";
 import { ODataUriParts, RequestOptions, RequestTools, RootResponseInterceptor } from "./requestTools.js";
-import { Accept, EntitySetData } from "./utils.js";
+import { Accept, RequestBuilderData } from "./utils.js";
 
 export class HttpError extends Error {
     constructor(message: string, public httpResponse: any) {
@@ -59,7 +59,7 @@ function buildStringParser(accept: Accept, acceptHeader?: string): StringParser 
 }
 
 function combineTools<TFetchResult, TResult>(
-    data: EntitySetData<TFetchResult, TResult>,
+    data: RequestBuilderData<TFetchResult, TResult>,
     overrideRequestTools: Partial<RequestTools<TFetchResult, TResult>> | undefined): RequestTools<TFetchResult, TResult> {
 
     return {
@@ -70,13 +70,9 @@ function combineTools<TFetchResult, TResult>(
 }
 
 function _buildUri<TFetchResult, TResult>(
-    data: EntitySetData<TFetchResult, TResult>,
+    data: RequestBuilderData<TFetchResult, TResult>,
     relativePath: string,
     tools: RequestTools<TFetchResult, TResult>): ODataUriParts {
-
-    if (!data.tools.root.schemaNamespaces[data.tools.entitySet.namespace]) {
-        throw new Error(`Invalid config. Could not find schema: ${data.tools.entitySet.namespace}`);
-    }
 
     const buildUri = tools.uriInterceptor || defaultUriInterceptor
     const filterEnv = {
@@ -84,21 +80,21 @@ function _buildUri<TFetchResult, TResult>(
         rootUri: data.tools.requestTools.uriRoot,
         serviceConfig: data.tools.root,
         rootContext: "$it",
-        schema: data.tools.root.schemaNamespaces[data.tools.entitySet.namespace]
+        schema: data.tools.schema
     }
 
     return {
         uriRoot: tools.uriRoot,
         // if namespace === "", give null instead
-        entitySetContainerName: data.tools.entitySet.containerName || null,
-        entitySetName: data.tools.entitySet.name,
+        entitySetContainerName: data.entitySet?.containerName || null,
+        entitySetName: data.entitySet?.name || null,
         relativePath: relativePath,
         query: buildQuery(data.tools.root.schemaNamespaces, buildUri, data.state.query.query, filterEnv, data.state.mutableDataParams, data.state.query.urlEncode)
     }
 }
 
 export function buildUri<TFetchResult, TResult>(
-    data: EntitySetData<TFetchResult, TResult>,
+    data: RequestBuilderData<TFetchResult, TResult>,
     relativePath: string): ODataUriParts {
 
     const tools = combineTools(data, undefined)
@@ -106,7 +102,7 @@ export function buildUri<TFetchResult, TResult>(
 }
 
 export function executeRequest<TFetchResult, TResult>(
-    data: EntitySetData<TFetchResult, TResult>,
+    data: RequestBuilderData<TFetchResult, TResult>,
     relativePath: string,
     overrideRequestTools: Partial<RequestTools<TFetchResult, TResult>> | undefined): TResult {
 
@@ -134,7 +130,7 @@ export function executeRequest<TFetchResult, TResult>(
 }
 
 function buildResponseInterceptorChain<TFetchResult, TResult>(
-    data: EntitySetData<TFetchResult, TResult>,
+    data: RequestBuilderData<TFetchResult, TResult>,
     stringParser: StringParser,
     overrideRequestTools: Partial<RequestTools<TFetchResult, TResult>> | undefined): RootResponseInterceptor<TFetchResult, TResult> {
 
