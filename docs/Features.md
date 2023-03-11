@@ -9,6 +9,8 @@
  * [Key lookup](#key-lookup)
  * [Sub path lookup](#sub-path-lookup)
     * [$value and $count](#value-and-count)
+    * [Functions](#function-calls)
+ * [@Parameter Aliases](#parameter-aliases)
  * [Query options](#query-options)
     * [$filter](#filter)
     * [$select](#select)
@@ -253,6 +255,85 @@ const userName = new MyOdataClient({...})
     .User
     .subPath(user => user.$count)
     .get();
+```
+
+## Function calls
+
+```typescript
+// Call an entity set function
+const userName = new MyOdataClient({...})
+    .User
+    .subPath(users => users.GetUser({id: "the_user_id"}))
+    .get();
+```
+
+```typescript
+// Call an entity function
+const userName = new MyOdataClient({...})
+    .User
+    .withKey(k => k.withKey("the_user_id"))
+    .subPath(users => users.GetBlog({id: "the_blog_id"}))
+    .get();
+```
+
+```typescript
+// Call an unbound function
+const userName = new MyOdataClient({...})
+    .unboundFunctions(f => f.GetUser({id: "the_user_id"}))
+    .get();
+```
+
+# @Parameter Aliases
+
+Data and entities can be aliased with [Parameter Aliases](http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_ParameterAliases)
+
+```typescript
+// use parameters in a key lookup
+const userName = new MyOdataClient({...})
+    .Users
+    .withKey((k, params) => k.key(params.createConst("id", "the_user_id")))
+    .get()
+```
+
+```typescript
+// use parameters in a sub path
+const userName = new MyOdataClient({...})
+    .Users
+    .withKey(k => k.key(user.Id))
+    .subPath((user, params) => user.GetBlog({ blogId: params.createConst("id", "the_blog_id") }))
+    .get()
+```
+
+```typescript
+// use parameters in a query
+const userName = new MyOdataClient({...})
+    .Users
+    .withKey(k => k.key(user.Id))
+    .withQuery((user, { $filter: { eq } }, params) => eq(user.Id, params.createConst("id", "the_user_id")))
+    .get()
+```
+
+```typescript
+// use a parameter multiple times
+const userName = new MyOdataClient({...})
+    .Users
+    .withKey(k => k.key(user.Id))
+    .withQuery((user, { $filter: { or, eq } }, params) =>
+        or(
+            eq(user.FavouriteBlogId, params.createConst("id", "the_blog_id")),
+            eq(user.SecondFavouriteBlogId, params.param("id"))))
+    .get()
+```
+
+```typescript
+// use a reference to an entity as a parameter
+const userName = new MyOdataClient({...})
+    .Users
+    .withKey(k => k.key(user.Id))
+    .subPath((u, params) => u.HasBlog({
+        blog: params.createRef("x", root => root.Blogs.withKey(x => x.key("some_blog_id")))
+    }))
+    .get()
 ```
 
 # Query Options

@@ -70,6 +70,8 @@ Write safe, statically typed odata queries in typescript. No more `string`. No m
  * OData URI generation
  * Entity keys
  * Entity path
+ * @Parameter aliases
+ * Functions
  * Query options
     * $filter
     * $select
