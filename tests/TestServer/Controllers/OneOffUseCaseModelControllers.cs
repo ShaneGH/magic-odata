@@ -8,10 +8,12 @@ using TestServer.Model;
 
 namespace TestServer.Controllers;
 
+#nullable disable
 public class Value<T>
 {
     public T Val { get; set; }
 }
+#nullable enable
 
 [Route(Program.OdataRoot)]
 public class UnboundFunctionController : ODataController

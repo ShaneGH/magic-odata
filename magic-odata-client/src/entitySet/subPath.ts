@@ -1,4 +1,4 @@
-import { ODataComplexType, ODataTypeRef, Function as ODataFunction, ODataEntitySet, Dict, ODataSchema, ODataServiceConfig } from "magic-odata-shared";
+import { ODataComplexType, ODataTypeRef, Function as ODataFunction, ODataEntitySet, Dict, ODataSchema, ODataServiceConfig, Function } from "magic-odata-shared";
 import { Params } from "../entitySetInterfaces.js";
 import { serialize_legacy } from "../valueSerializer.js";
 import { params } from "./params.js";
@@ -43,47 +43,52 @@ function buildSubPathProperties<TFetchResult, TResult, TSubPath>(
     }
 }
 
+export function functionUriBuilder(functionName: string, root: Dict<ODataSchema>, functions: Function[], encodeUri: boolean) {
+
+    const _serialize: typeof serialize_legacy = encodeUri
+        ? (x, y, z) => encodeURIComponent(serialize_legacy(x, y, z, true))
+        : (x, y, z) => serialize_legacy(x, y, z, true)
+
+    return (x: any) => {
+
+        const fn = functions.filter(fn => {
+            const argNames = ((x && Object.keys(x)) || [])
+            const fnParams = fn.params.filter(x => !x.isBindingParameter)
+
+            for (let i = 0; i < fnParams.length; i++) {
+                if (fnParams[i].isBindingParameter) continue
+
+                const ix = argNames.indexOf(fnParams[i].name)
+                if (ix === -1) return false
+
+                argNames.splice(ix, 1)
+            }
+
+            return argNames.length === 0
+        })[0]
+
+        if (!fn) {
+            throw new Error(`Unknown function args for function ${functionName}(${(x && Object.keys(x)) || ""})`);
+        }
+
+        const params = fn.params
+            .filter(x => !x.isBindingParameter)
+            .map(param => `${param.name}=${_serialize(x[param.name], param.type, root)}`)
+            .join(",");
+
+        const output: SubPathSelection<any> = { propertyName: `${functionName}(${params})`, outputType: fn.returnType }
+        return output
+    }
+}
+
 function buildFunctions(groupedFunctions: { [k: string]: ODataFunction[] }, root: Dict<ODataSchema>, encodeUri: boolean): [string, (x: any) => SubPathSelection<any>][] {
 
     return Object
         .keys(groupedFunctions)
-        .map(key => {
-            const functions = groupedFunctions[key]
-            return [key, (x: any) => {
-
-                const fn = functions.filter(fn => {
-                    const argNames = ((x && Object.keys(x)) || [])
-                    const fnParams = fn.params.filter(x => !x.isBindingParameter)
-
-                    for (let i = 0; i < fnParams.length; i++) {
-                        if (fnParams[i].isBindingParameter) continue
-
-                        const ix = argNames.indexOf(fnParams[i].name)
-                        if (ix === -1) return false
-
-                        argNames.splice(ix, 1)
-                    }
-
-                    return argNames.length === 0
-                })[0]
-
-                if (!fn) {
-                    throw new Error(`Unknown function args for function ${key}(${(x && Object.keys(x)) || ""})`);
-                }
-
-                const _serialize: typeof serialize_legacy = encodeUri
-                    ? (x, y, z) => encodeURIComponent(serialize_legacy(x, y, z, true))
-                    : (x, y, z) => serialize_legacy(x, y, z, true)
-
-                const params = fn.params
-                    .filter(x => !x.isBindingParameter)
-                    .map(param => `${param.name}=${_serialize(x[param.name], param.type, root)}`)
-                    .join(",");
-
-                const output: SubPathSelection<any> = { propertyName: `${key}(${params})`, outputType: fn.returnType }
-                return output
-            }]
-        })
+        .map(key => [
+            key,
+            functionUriBuilder(key, root, groupedFunctions[key], encodeUri)
+        ])
 }
 
 function listAllEntityFunctionsGrouped(
@@ -197,7 +202,9 @@ export function recontextDataForSubPath<TRoot, TFetchResult, TResult, TSubPath, 
             ? "$count"
             : newT.propertyName
 
-    const path = data.state.path?.length ? [...data.state.path, propName] : [propName];
+    const path = data.state.path?.length
+        ? [...data.state.path, propName]
+        : [propName];
 
     return {
         tools: { ...data.tools, type: propType },

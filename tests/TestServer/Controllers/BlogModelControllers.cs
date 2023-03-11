@@ -293,6 +293,13 @@ public class HasIdsController : ODataControllerBase<HasId>
         return SingleResult.Create(_inMemoryDb.Users.Where(x => x.Id == key));
     }
 
+    [HttpGet("HasIds({key})/JustReturn6()")]
+    [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
+    public SingleResult<int> JustReturn6()
+    {
+        return SingleResult.Create(new[] { 6 }.AsQueryable());
+    }
+
     [HttpGet("HasIds/My.Odata.Entities.User")]
     [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
     public IQueryable<User> GetUserFromHasIds()
@@ -386,6 +393,13 @@ public class UsersController : ODataControllerBase<User>
             .Where(x => x.Id == key)
             .Select(u => u.Name)
             .AsSingleResult();
+    }
+
+    [HttpGet("Users({key})/JustReturn6()")]
+    [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
+    public SingleResult<string> JustReturn6()
+    {
+        return SingleResult.Create(new[] { "6" }.AsQueryable());
     }
 
     [HttpGet("Users({key})/HasBlog(blog={blog})")]
@@ -529,6 +543,13 @@ public class BlogsController : ODataControllerBase<Blog>
            .Count();
 
         return new[] { result }.AsQueryable().AsSingleResult();
+    }
+
+    [HttpGet("Blogs({key})/JustReturn6()")]
+    [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
+    public SingleResult<int> JustReturn6()
+    {
+        return SingleResult.Create(new[] { 6 }.AsQueryable());
     }
 
     [HttpGet("MyBlogs()")]
@@ -797,7 +818,7 @@ public class BlogPostsController : ODataControllerBase<BlogPost>
             .Where(x => x.Id == key)
             .SelectMany(x => x.Comments)
             .Where(c => c.Id == commentKey)
-            .Select(x => x.User)
+            .Select(x => x.User!)
             .AsSingleResult();
     }
 
@@ -843,12 +864,12 @@ public class CommentsController : ODataControllerBase<Comment>
 
     protected override IQueryable<Comment> AllEntities(EntityDbContext db) => db.Comments;
 
-    [HttpGet("Comments/GetCommentsByTag(commentsByTag={commentsByTag})")]
+    [HttpGet("Comments/GetCommentsByTag(commentsByTag={input})")]
     [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
     public IQueryable<Comment> GetCommentsByTag([FromODataUri] CbtInput input)
     {
         return _inMemoryDb.Comments
-           .Where(x => x.Tags.Any(t => t.Tag == input.Tag.Tag));
+           .Where(x => x.Tags!.Any(t => t.Tag == input.Tag.Tag));
     }
 
     [HttpGet("Comments({key})/Tags")]
@@ -857,7 +878,7 @@ public class CommentsController : ODataControllerBase<Comment>
     {
         return _inMemoryDb.Comments
             .Where(x => x.Id == key)
-            .SelectMany(x => x.Tags);
+            .SelectMany(x => x.Tags!);
     }
 
     [HttpGet("Comments({key})")]
@@ -870,6 +891,7 @@ public class CommentsController : ODataControllerBase<Comment>
     }
 }
 
+#nullable disable
 public class CbtInput
 {
     public CommentTag Tag { get; set; }

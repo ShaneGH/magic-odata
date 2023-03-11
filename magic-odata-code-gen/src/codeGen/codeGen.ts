@@ -43,7 +43,7 @@ ${edm(tab, keywords)}`
 
     return output
         .replace(/\r\n/g, "\n")
-        .replace(/s+\n/g, "\n") + "\n";
+        .replace(/\s+\n/g, "\n") + "\n";
 
     function splitConfig(config: ProcessedServiceConfig): [ProcessedServiceConfig, ProcessedServiceConfig] {
 

@@ -2,7 +2,7 @@ import { ODataComplexType, ODataTypeRef, ODataServiceConfig, ODataEnum, ComplexT
 import { CodeGenConfig } from "../config.js";
 import { typeNameString } from "../utils.js";
 import { Keywords } from "./keywords.js";
-import { buildFullyQualifiedTsType, buildGetQueryableName, buildSanitizeNamespace, FullyQualifiedTsType, GetQueryableName, Tab } from "./utils.js";
+import { buildFullyQualifiedTsType, buildGetEntityFunctionsName, buildGetQueryableName, buildSanitizeNamespace, FullyQualifiedTsType, GetQueryableName, Tab } from "./utils.js";
 
 function getQueryableTypeString(
     type: ODataTypeRef, wrapInQueryObject: boolean, keywords: Keywords, serviceConfig: ODataServiceConfig,
@@ -59,6 +59,7 @@ export const buildEntityQuery = (settings: CodeGenConfig | null | undefined, tab
     const sanitizeNamespace = buildSanitizeNamespace(settings);
     const fullyQualifiedTsType = buildFullyQualifiedTsType(settings);
     const getQueryableName = buildGetQueryableName(settings);
+    const getEntityFunctionsName = buildGetEntityFunctionsName(settings);
 
     return (type: ComplexTypeOrEnum) => type.containerType === "ComplexType"
         ? complexType(type.type)
@@ -68,7 +69,7 @@ export const buildEntityQuery = (settings: CodeGenConfig | null | undefined, tab
         const qtName = getQueryableName(type.name)
 
         const baseTypeNs = type.baseType?.namespace ? `${sanitizeNamespace(type.baseType?.namespace)}.` : ""
-        const baseQType = type.baseType ? `${baseTypeNs}${getQueryableName(type.baseType.name)} & ` : "";
+        const baseQType = type.baseType ? ` & ${baseTypeNs}${getQueryableName(type.baseType.name)}` : "";
 
         const queryableProps = Object
             .keys(type.properties)
@@ -79,8 +80,8 @@ export const buildEntityQuery = (settings: CodeGenConfig | null | undefined, tab
             .map(prop => `${prop.key}: ${prop.type}`)
             .join("\n");
 
-        return `export type ${qtName} = ${baseQType}{
+        return `export type ${qtName} = {
 ${tab(queryableProps)}
-}`
+} & ${getEntityFunctionsName(type.name)} ${baseQType}`
     }
 }

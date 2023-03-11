@@ -1,13 +1,35 @@
 import { ODataTypeRef } from "magic-odata-shared";
 import { Filter, FilterEnv, FilterResult, QbEmit } from "../../queryBuilder.js";
 import { QueryCollection, QueryEnum, QueryObject, QueryPrimitive } from "../queryComplexObjectBuilder.js";
-import { serialize_legacy } from "../../valueSerializer.js";
+import { rawType, serialize_legacy } from "../../valueSerializer.js";
 import { ReaderWriter } from "../../utils.js";
+import { SubPathSelection } from "../../entitySet/subPath.js";
+import { IEntitySet } from "../../entitySetInterfaces.js";
 
-export type Operable<T> = QueryPrimitive<T> | QueryEnum<T> | Filter
+export type Operable<T> = QueryPrimitive<T> | QueryEnum<T> | Filter | SubPathSelection<IEntitySet<any, T, any, any, any, any, any, any>>
 
-export function operableToFilter<T>(op: Operable<T> | QueryCollection<QueryObject<T>, T>) {
+function isSubPathSelection<T>(x: any): x is SubPathSelection<IEntitySet<any, T, any, any, any, any, any, any>> {
+    const keys = Object.keys(x)
+    return !!keys.length
+        && keys.indexOf("propertyName") !== -1
+        && keys.indexOf("outputType") !== -1
+        && typeof x["propertyName"] === "string"
+        && typeof x["outputType"] === "object"
+}
+
+function processSubPath(subPath: SubPathSelection<any>): Filter {
+    return ReaderWriter.retn<FilterEnv, FilterResult, QbEmit>({
+        $$filter: subPath.propertyName,
+        $$output: subPath.outputType || rawType
+    }, QbEmit.zero)
+}
+
+export function operableToFilter<T>(op: Operable<T> | QueryCollection<QueryObject<T>, T>): Filter {
     if (op instanceof ReaderWriter) return op;
+
+    if (isSubPathSelection(op)) {
+        return processSubPath(op)
+    }
 
     return ReaderWriter.create<FilterEnv, FilterResult, QbEmit>(({ rootContext }) => {
         let pathParts = rootContext !== op.$$oDataQueryMetadata.rootContext

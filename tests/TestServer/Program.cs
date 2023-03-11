@@ -9,7 +9,9 @@ public class Program
 {
     public const string OdataRoot = "odata/test-entities";
 
+#nullable disable
     public static WebApplication App;
+#nullable enable
 
     public static void Main(string[] args)
     {
@@ -173,6 +175,16 @@ public class Program
 
         builder.Function("MyBlogs").ReturnsCollection<Blog>().ReturnNullable = false;
 
+        builder
+            .EntityType<HasId>()
+            .Function("JustReturn6")
+            .Returns<int>();
+
+        builder
+            .EntityType<User>()
+            .Function("JustReturn6")
+            .Returns<string>();
+
         var calculator = builder.Function("Calculator");
         calculator.Parameter<int>("lhs");
         calculator.Parameter<int>("rhs");
@@ -257,10 +269,6 @@ public class Program
 
         builder.EntitySet<CompositeKeyItem>("CompositeKeyItems");
         builder.EntitySet<OneOfEverything>("OneOfEverythings");
-
-        // builder.EntitySet<Shape>("Shapes");
-        // builder.ComplexType<Square>().DerivesFrom<Shape>();
-        // builder.ComplexType<Circle>().DerivesFrom<Shape>();
 
         return builder.GetEdmModel();
     }

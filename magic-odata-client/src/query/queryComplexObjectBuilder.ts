@@ -1,5 +1,7 @@
-import { ODataComplexType, ODataTypeRef, ODataEnum, ODataSchema } from "magic-odata-shared";
-import { typeNameString, typeRefString } from "../utils.js";
+import { ODataComplexType, ODataTypeRef, ODataEnum, ODataSchema, ODataComplexTypeProperty, Function } from "magic-odata-shared";
+import { functionUriBuilder } from "../entitySet/subPath.js";
+import { groupBy, typeNameString, typeRefString } from "../utils.js";
+import { rawType } from "../valueSerializer.js";
 
 type Dict<T> = { [key: string]: T }
 
@@ -188,16 +190,18 @@ function buildPropertyTypeRef<T>(type: ODataTypeRef, root: Dict<ODataSchema>, ro
     //   1. I can't get the type system to behave correctly here (Mixin between regular obj and dictionary)
     //   2. Spread won't work on getters. Need to mutate objects
     const baseType = bLookup?.type;
-    return Object
-        .keys(baseType?.properties || {})
-        .map(key => ({ key, value: baseType!.properties[key] }))
-        .concat(Object
-            .keys(complexType.properties)
-            .map(key => ({ key, value: complexType.properties[key] })))
+
+    // order is important
+    return properties()
+        .concat(functions())
+        .concat(baseTypeProperties())
+        .concat(baseTypeFunctions())
         .reduce((s, x) => {
             if (x.key === "$$oDataQueryObjectType" || x.key === "$$oDataQueryMetadata") {
                 throw new Error(`Property ${x.key} is reserved`);
             }
+
+            if ((s as any)[x.key]) return s
 
             let propertyCache: any = null;
             Object.defineProperty(
@@ -205,8 +209,22 @@ function buildPropertyTypeRef<T>(type: ODataTypeRef, root: Dict<ODataSchema>, ro
                 x.key,
                 {
                     get() {
+
                         if (propertyCache !== null) {
                             return propertyCache;
+                        }
+
+                        if (x.type === "Function") {
+                            const fs = functionUriBuilder(x.key, root, x.functionGroup, false)
+                            return propertyCache = function (args: any) {
+                                const { propertyName, outputType } = fs(args)
+                                const propPath = [
+                                    ...path,
+                                    { path: propertyName, navigationProperty: false }
+                                ];
+
+                                return buildPropertyTypeRef(outputType || rawType, root, rootContext, propPath, queryAliases)
+                            }
                         }
 
                         const propPath = [
@@ -222,7 +240,46 @@ function buildPropertyTypeRef<T>(type: ODataTypeRef, root: Dict<ODataSchema>, ro
 
             return s;
         }, base) as QueryComplexObject<T>;
+
+    function baseTypeFunctions(): PropertyOrMethod[] {
+        const grouped = groupBy(complexType.functions, x => x.name);
+        return Object
+            .keys(grouped)
+            .map(key => ({
+                type: "Function",
+                key,
+                functionGroup: grouped[key]
+            }))
+    }
+
+    function baseTypeProperties(): PropertyOrMethod[] {
+
+        return Object
+            .keys(baseType?.properties || {})
+            .map(key => ({ type: "Property", key, value: baseType!.properties[key] }))
+    }
+
+    function functions(): PropertyOrMethod[] {
+        const grouped = groupBy(complexType.functions, x => x.name);
+        return Object
+            .keys(grouped)
+            .map(key => ({
+                type: "Function",
+                key,
+                functionGroup: grouped[key]
+            }))
+    }
+
+    function properties(): PropertyOrMethod[] {
+        return Object
+            .keys(complexType.properties)
+            .map(key => ({ type: "Property", key, value: complexType.properties[key] }))
+    }
 }
+
+type PropertyOrMethod =
+    | { type: "Property", key: string, value: ODataComplexTypeProperty }
+    | { type: "Function", key: string, functionGroup: Function[] }
 
 export function buildComplexTypeRef<T>(type: ODataComplexType, root: Dict<ODataSchema>,
     rootContext: string): QueryComplexObject<T> {

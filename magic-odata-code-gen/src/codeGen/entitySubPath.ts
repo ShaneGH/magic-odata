@@ -254,11 +254,11 @@ export const buildEntitySubPath = (tab: Tab, settings: CodeGenConfig | null | un
         const subPathName = getSubPathName(type.name)
         const baseTypeNs = type.baseType?.namespace ? `${sanitizeNamespace(type.baseType?.namespace)}.` : ""
         const fullyQualifiedBaseTypeName = type.baseType ? `${baseTypeNs}${getSubPathName(type.baseType.name)}` : null;
-        const baseType = (fullyQualifiedBaseTypeName || "") && `${fullyQualifiedBaseTypeName} & `
+        const baseType = (fullyQualifiedBaseTypeName || "") && ` & ${fullyQualifiedBaseTypeName}`
         const props = getSubPathProps(type)
 
-        return `export type ${subPathName} = ${baseType}${functionsType(type.name)} & {
+        return `export type ${subPathName} = {
 ${tab(props.join("\n\n"))}
-}`;
+} & ${functionsType(type.name)}${baseType}`;
     }
 }
