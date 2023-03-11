@@ -536,26 +536,35 @@ describe("SubPath", function () {
                 expect(wordCount.value).toBe(user.blogPost.Content.split(/\s/).length);
             });
 
-            it("Should call a composed functions", () => {
-                const uris = oDataClient.Users
-                    .withKey(k => k.key("123"))
+            it("Should call a composed functions", async () => {
+                const user = await addFullUserChain();
+                const result = await oDataClient.Users
+                    .withKey(k => k.key(user.blogUser.Id))
                     .subPath(x => x.FavouriteBlog())
                     .subPath(x => x.WordCount())
-                    .uri(false);
+                    .get();
 
-                // asp net doesn't like this req :(
-                expect(uris.relativePath).toBe("Users('123')/FavouriteBlog()/WordCount()");
+                expect(result.value).toBe(2);
             });
         });
 
-        // describe("Unbound", () => {
-        //     it("Should call a function with no inputs", async () => {
-        //         const calculation = await oDataClient
-        //             .functions(f => f.Calculator(1, 2))
-        //             .get();
+        describe("Unbound", () => {
+            it("Should call a function with no inputs", async () => {
+                const blogs = await oDataClient
+                    .unboundFunctions(f => f.MyBlogs())
+                    .get();
 
-        //         expect(calculation).toBe(3);
-        //     });
-        // });
+                expect(blogs.value.length).toBe(1);
+                expect(blogs.value[0].Name).toBe("Owners Blog");
+            });
+
+            it("Should call a function with inputs", async () => {
+                const calculation = await oDataClient
+                    .unboundFunctions(f => f.Calculator({ lhs: 1, rhs: 2 }))
+                    .get();
+
+                expect(calculation.value).toBe(3);
+            });
+        });
     })
 });

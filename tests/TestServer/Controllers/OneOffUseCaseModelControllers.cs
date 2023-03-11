@@ -19,11 +19,11 @@ public class UnboundFunctionController : ODataController
         this._inMemoryDb = inMemoryDb;
     }
 
-    [HttpGet("Calculator(lhs={key1},lhs={key2})")]
+    [HttpGet("Calculator(lhs={lhs},rhs={rhs})")]
     [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
-    public SingleResult<int> Calculator([FromRoute] int key1, [FromRoute] int key2)
+    public SingleResult<int> Calculator([FromRoute] int lhs, [FromRoute] int rhs)
     {
-        return SingleResult.Create(new[] { key1 + key2 }.AsQueryable());
+        return SingleResult.Create(new[] { lhs + rhs }.AsQueryable());
     }
 }
 

@@ -178,10 +178,14 @@ public class Program
         calculator.Parameter<int>("rhs");
         calculator.Returns<int>();
 
-        builder
+        var favouriteBlog = builder
             .EntityType<User>()
-            .Function("FavouriteBlog")
+            .Function("FavouriteBlog");
+
+        favouriteBlog
             .Returns<Blog>();
+
+        favouriteBlog.IsComposable = true;
 
         var hasBlog = builder
             .EntityType<User>()

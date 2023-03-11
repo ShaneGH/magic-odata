@@ -299,4 +299,17 @@ describe("@Params", () => {
             }
         });
     });
+
+    describe("Unbound function", () => {
+        it("Should work correctly", async function () {
+            const result = await oDataClient
+                .unboundFunctions((f, params) => f.Calculator({
+                    lhs: params.createConst("x", 1),
+                    rhs: params.param("x")
+                }))
+                .get()
+
+            expect(result.value).toBe(2)
+        });
+    });
 });

@@ -1,10 +1,7 @@
 
-Unbound (static defined on same level as entity set)
 Bound
-    * 2 inputs
     * returns single complex
     * returns single enum
-    * returns collection
     * - client side: complex input (Get({x: 7})) Parameter values passed to functions MUST be specified either as a URL literal (for primitive values) or as a JSON formatted OData object (for complex values, or collections of primitive or complex values). Entity typed values are passed as JSON formatted entities that MAY include a subset of the properties, or just the entity reference, as appropriate to the function.   
         - input as entity
         - input as complex type which is exculsive to this function
@@ -13,7 +10,6 @@ Bound
     * - client side: server side value inpout (Get(my/greeting))
     * nullable args
     * what happens if the function has a param named "bindingParameter"
-    * how does the whitelist behave with unbound and collection bound functions
     * Optional namespaces on entity set functions
     * https://learn.microsoft.com/en-us/odata/webapi/function-parameter-support
 
