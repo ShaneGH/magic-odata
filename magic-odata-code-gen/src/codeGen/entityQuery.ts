@@ -4,7 +4,7 @@ import { typeNameString } from "../utils.js";
 import { Keywords } from "./keywords.js";
 import { buildFullyQualifiedTsType, buildGetEntityFunctionsName, buildGetQueryableName, buildSanitizeNamespace, FullyQualifiedTsType, GetQueryableName, Tab } from "./utils.js";
 
-function getQueryableTypeString(
+export function getQueryableTypeString(
     type: ODataTypeRef, wrapInQueryObject: boolean, keywords: Keywords, serviceConfig: ODataServiceConfig,
     settings: CodeGenConfig | null | undefined, fullyQualifiedTsType: FullyQualifiedTsType, getQueryableName: GetQueryableName): string {
 

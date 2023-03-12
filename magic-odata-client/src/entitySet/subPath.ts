@@ -1,5 +1,6 @@
 import { ODataComplexType, ODataTypeRef, Function as ODataFunction, ODataEntitySet, Dict, ODataSchema, ODataServiceConfig, Function } from "magic-odata-shared";
 import { Params } from "../entitySetInterfaces.js";
+import { asOperable } from "../query/filtering/operable0.js";
 import { serialize_legacy } from "../valueSerializer.js";
 import { params } from "./params.js";
 import { DefaultResponseInterceptor, RequestTools } from "./requestTools.js";
@@ -45,9 +46,21 @@ function buildSubPathProperties<TFetchResult, TResult, TSubPath>(
 
 export function functionUriBuilder(functionName: string, root: Dict<ODataSchema>, functions: Function[], encodeUri: boolean) {
 
-    const _serialize: typeof serialize_legacy = encodeUri
-        ? (x, y, z) => encodeURIComponent(serialize_legacy(x, y, z, true))
-        : (x, y, z) => serialize_legacy(x, y, z, true)
+    const _serialize: typeof serialize_legacy = (x, y, z) => {
+
+        // TODO: This is a hack. Serializing $$oDataQueryObjectType objects
+        // needs to be done within a FilterEnv Reader for the rootContext
+        if (typeof x?.$$oDataQueryObjectType === "string"
+            && x.$$oDataQueryMetadata
+            && Array.isArray(x.$$oDataQueryMetadata.path)) {
+
+            return x.$$oDataQueryMetadata.path.map((x: any) => x?.path).filter((x: any) => !!x).join("/")
+        }
+
+        return encodeUri
+            ? encodeURIComponent(serialize_legacy(x, y, z, true))
+            : serialize_legacy(x, y, z, true)
+    }
 
     return (x: any) => {
 

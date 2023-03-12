@@ -253,6 +253,12 @@ public class Program
             .Function("WordCount");
         wordCount2.Returns<int>();
 
+        var wordCount3 = builder
+            .EntityType<Blog>()
+            .Function("WordCount");
+        wordCount3.Parameter<string>("countThisWord");
+        wordCount3.Returns<int>();
+
         builder
             .EntityType<Blog>()
             .Collection.Function("Top10BlogsByName")

@@ -254,6 +254,19 @@ describe("function calls", () => {
             expect(uri.query["$filter"]).toBe("Id eq '123' and WordCount(filterCommentsOnly=true) eq 77")
         });
 
+        it("Should call serialize arg from entity", () => {
+
+            // this is not a valid OData query. Just testing the serializer
+            const uri = oDataClient.Blogs
+                .withQuery((x, { $filter: { and, eq } }) =>
+                    and(
+                        eq(x.Id, "123"),
+                        eq(x.WordCount({ countThisWord: x.Name }), 77)))
+                .uri(false);
+
+            expect(uri.query["$filter"]).toBe("Id eq '123' and WordCount(countThisWord=Name) eq 77")
+        });
+
         it("Should call entity function with params", () => {
 
             const uri = oDataClient.Blogs
@@ -267,15 +280,20 @@ describe("function calls", () => {
             expect(uri.query["@x"]).toBe("true")
         });
 
-        // it("Should call unbound function", () => {
+        // it.only("Should call unbound function", () => {
 
         //     const uri = oDataClient.Users
-        //         .withQuery((x, { $filter: { eq, $root } }) => eq(
-        //             $root(r => r.My.Odata.Container.unboundFunctions(f => f.Calculator2({ vals: [1, x.Score] }))),
+        //         .withQuery((x, { $filter: { eq, $root } }, params1) => eq(
+        //             $root(r => r.My.Odata.Container.unboundFunctions((f, params2) => {
+        //                 return f
+        //                     .Calculator2({ vals: [1, x.Score, /*params1.createConst("x", 2)/*, params2.createConst("y", 3)*/] })
+        //             })),
         //             2))
         //         .uri(false);
 
-        //     expect(uri.query["$filter"]).toBe("Id eq '123' and WordCount(filterCommentsOnly=true) eq 77")
+        //     expect(uri.query["$filter"]).toBe("Calculator2(vals=[1,Score,@x,@y]) eq 2")
+        //     expect(uri.query["@x"]).toBe("2")
+        //     expect(uri.query["@y"]).toBe("3")
         // });
     });
 })

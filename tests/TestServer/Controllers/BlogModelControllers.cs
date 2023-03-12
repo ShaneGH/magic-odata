@@ -585,6 +585,24 @@ public class BlogsController : ODataControllerBase<Blog>
         return new[] { result }.AsQueryable().AsSingleResult();
     }
 
+    [HttpGet("Blogs({key})/WordCount(countThisWord={countThisWord})")]
+    [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
+    public SingleResult<int> GetWordCount(string key, string countThisWord)
+    {
+        var posts = _inMemoryDb.Blogs
+           .Where(x => x.Id == key)
+           .SelectMany(u => u.Posts);
+
+        var result = posts
+           .ToList()
+           .SelectMany(p => Regex
+               .Split(p.Content, @"\s")
+               .Where(x => x != "" && x == countThisWord))
+           .Count();
+
+        return new[] { result }.AsQueryable().AsSingleResult();
+    }
+
     [HttpGet("Blogs({key})/WordCount()")]
     [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
     public SingleResult<int> GetWordCount(string key)
