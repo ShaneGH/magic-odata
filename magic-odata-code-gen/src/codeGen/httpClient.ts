@@ -177,9 +177,8 @@ ${tab(methodsForEntitySetNamespace(schemaName, entitySetName.concat([c]), isForI
         const sanitizedNs = sanitizeNamespace(schemaName)
         const schema = `${sanitizedNs && `${sanitizedNs}.`}${unboundFunctions}["${containerName}"]`
 
-        const tSubPath = `${keywords.EntitySetSubPath}<${entitySetsName(settings)}, never, ${schema}, never, ${async}<${fetchResponse}>>`
         const selectorParams = [
-            `entity: ${tSubPath}`,
+            `entity: ${schema}`,
             `params: ${keywords.Params}<${entitySetsName(settings)}>`
         ].join(",\n")
 
@@ -193,11 +192,10 @@ ${tab(selectorParams)}) => ${keywords.SubPathSelection}<TNewEntityQuery>): TNewE
 
         const generics = [
             entitySetsName(settings),
-            tSubPath,
+            schema,
             `${async}<${fetchResponse}>`
         ]
 
-        const ths = first ? "this." : ""
         const args = {
             root: "rootConfig",
             schemaName: `"${schemaName}"`,

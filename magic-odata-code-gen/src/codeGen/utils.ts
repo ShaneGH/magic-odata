@@ -289,11 +289,6 @@ export function httpClientName(settings: CodeGenConfig | null | undefined) {
     return settings?.oDataClientName || "ODataClient";
 }
 
-export type GetUnboundFunctionsName = () => string
-export const buildGetUnboundFunctionsName = (settings: CodeGenConfig | null | undefined): GetUnboundFunctionsName => () => {
-    return settings?.unboundFunctionContainerTypeNameTemplate || "UnboundFunctions";
-}
-
 export function getEntitySetFunctionsName(settings: CodeGenConfig | null | undefined) {
     return settings?.entitySetFunctionsTypeName || "EntitySetFunctions";
 }

@@ -224,12 +224,6 @@ export type CodeGenConfig = Partial<{
     unboundFunctionsTypeName: string,
 
     /** 
-     * Specifies how to name unbound the Function type.
-     * @default "UnboundFunctions"
-     */
-    unboundFunctionContainerTypeNameTemplate: string,
-
-    /** 
      * Specifies how to name entity Function types. Use "{0}" to inject the name of the type
      * that these functions are for
      * @default "{0}EntityFunctions"
