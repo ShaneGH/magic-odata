@@ -280,13 +280,14 @@ describe("function calls", () => {
             expect(uri.query["@x"]).toBe("true")
         });
 
+        // https://github.com/ShaneGH/magic-odata/issues/30
         // it.only("Should call unbound function", () => {
 
         //     const uri = oDataClient.Users
         //         .withQuery((x, { $filter: { eq, $root } }, params1) => eq(
         //             $root(r => r.My.Odata.Container.unboundFunctions((f, params2) => {
         //                 return f
-        //                     .Calculator2({ vals: [1, x.Score, /*params1.createConst("x", 2)/*, params2.createConst("y", 3)*/] })
+        //                     .Calculator2({ vals: [1, x.Score, params1.createConst("x", 2), params2.createConst("y", 3)] })
         //             })),
         //             2))
         //         .uri(false);
