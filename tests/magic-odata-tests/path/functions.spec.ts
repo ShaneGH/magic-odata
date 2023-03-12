@@ -150,6 +150,17 @@ describe("function calls", () => {
 
             expect(result.value).toBe(2);
         });
+
+        it("Should handle a path segments after functions", async () => {
+            const user = await addFullUserChain();
+            const result = await oDataClient.Users
+                .withKey(k => k.key(user.blogUser.Id))
+                .subPath(x => x.FavouriteBlog())
+                .subPath(x => x.Name)
+                .get();
+
+            expect(result.value).toBe(user.blog.Name);
+        });
     });
 
     describe("Unbound", () => {
@@ -280,8 +291,8 @@ describe("function calls", () => {
             expect(uri.query["@x"]).toBe("true")
         });
 
-        // https://github.com/ShaneGH/magic-odata/issues/30
-        // it.only("Should call unbound function", () => {
+        // https://github.com/ShaneGH/magic-odata/issues/72
+        // it("Should call unbound function", () => {
 
         //     const uri = oDataClient.Users
         //         .withQuery((x, { $filter: { eq, $root } }, params1) => eq(

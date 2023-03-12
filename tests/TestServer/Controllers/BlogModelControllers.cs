@@ -446,6 +446,18 @@ public class UsersController : ODataControllerBase<User>
             .AsSingleResult();
     }
 
+    [HttpGet("Users({key})/FavouriteBlog()/Name")]
+    [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
+    public SingleResult<string> GetFavouriteBlogName([FromRoute] string key)
+    {
+        return _inMemoryDb.Blogs
+            .Where(x => x.UserId == key)
+            .OrderBy(x => x.Name)
+            .Select(x => x.Name)
+            .Take(1)
+            .AsSingleResult();
+    }
+
     [HttpGet("Users({key})/FavouriteBlog()/WordCount()")]
     [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
     public SingleResult<int> GetFavouriteBlogWordCount([FromRoute] string key)
