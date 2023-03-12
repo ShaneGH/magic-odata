@@ -11,10 +11,4 @@
  * http://docs.oasis-open.org/odata/odata-data-aggregation-ext/v4.0/odata-data-aggregation-ext-v4.0.html
  * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_EntityIdsandEntityReferences
      * Services are strongly encouraged to use the canonical URL for an entity as defined in OData-URL as its entity-id, but clients cannot assume the entity-id can be used to locate the entity unless the Core.DereferenceableIDs term is applied to the entity container, nor can the client assume any semantics from the structure of the entity-id. The canonical resource $entity provides a general mechanism for resolving an entity-id into an entity representation.
-    
-Functions can be used within $filter or $orderby system query options my/items?$filter=eq($it/GetId(), 123)
-Functions can be used within $filter or $orderby system query options my/items?$filter=eq($root/GetPrimaryObj()/Id, 123)
-http://host/service/Customers?$filter=Sales.SalesRegion(City=$it/City) eq 'Western'
-GET http://host/service/MyShoppingCart()/Items
-POST http://host/service/MyShoppingCart()/Items
-If a collection-valued function has no result for a given parameter value combination, the response is the format-specific representation of an empty collection. If a single-valued function with a nullable return-type has no result, the service returns 204 No Content.
+        
