@@ -24,7 +24,10 @@ function defaultUriInterceptor(uri: ODataUriParts): string {
         .join("&");
 
     const uriRoot = removeTrailingSlash(uri.uriRoot)
-    const entityName = addLeadingSlash(removeTrailingSlash(uri.relativePath))
+    const entityName = uriRoot
+        ? addLeadingSlash(removeTrailingSlash(uri.relativePath))
+        : removeTrailingSlash(uri.relativePath)
+
     queryPart = queryPart && `?${queryPart}`
 
     return `${uriRoot}${entityName}${queryPart}`
