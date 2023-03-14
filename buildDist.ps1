@@ -1,6 +1,6 @@
 
 pushd .\magic-odata-code-gen
-echo "Building query compile time"
+echo "Building code gen"
 tsc
 if (-not($?)) {
     popd

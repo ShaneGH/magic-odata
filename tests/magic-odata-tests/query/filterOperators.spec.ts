@@ -541,7 +541,10 @@ describe("Query.Filter Operators", function () {
                 .withQuery((u, { $filter: { eq, and, any } }) =>
                     and(
                         eq(u.Id, ctxt.blogUser.Id),
-                        any(u.Blogs, b => eq(b.Name, name))))
+                        any(u.Blogs, b => and(
+                            eq(b.Name, name),
+                            // this condition added without testing (might fail test)
+                            eq(b.UserId, u.Id)))))
                 .get();
 
             if (success) {
@@ -569,7 +572,10 @@ describe("Query.Filter Operators", function () {
                 .withQuery((u, { $filter: { eq, and, all } }) =>
                     and(
                         eq(u.Id, ctxt.blogUser.Id),
-                        all(u.Blogs, b => eq(b.Name, name))))
+                        all(u.Blogs, b => and(
+                            eq(b.Name, name),
+                            // this condition added without testing (might fail test)
+                            eq(b.UserId, u.Id)))))
                 .get();
 
             if (success) {

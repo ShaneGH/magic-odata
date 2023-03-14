@@ -125,7 +125,7 @@ export interface IEntitySet<TRoot, TEntity, TResult, TKeyBuilder, TQueryable, TC
      * Create a new EntitySet of entites at the sub path defined
      */
     subPath<TNewEntityQuery>(
-        selector: (entity: TSubPath, params: Params<TRoot>) => SubPathSelection<TNewEntityQuery> | string): TNewEntityQuery;
+        selector: (entity: TSubPath, params: Params<TRoot>) => SubPathSelection<TNewEntityQuery>): TNewEntityQuery;
 
     /**
      * Create a new EntitySet with the defined query attached

@@ -12,7 +12,7 @@ export function typeRefString(type: ODataTypeRef, delimiter = "/"): string {
 }
 
 export class Reader<TEnv, T> {
-    private constructor(private _func: (env: TEnv) => T) { }
+    private constructor(public apply: (env: TEnv) => T) { }
 
     map<T1>(f: (env: T) => T1) {
         return new Reader<TEnv, T1>(env => f(this.apply(env)))
@@ -26,8 +26,13 @@ export class Reader<TEnv, T> {
         return new Reader<TEnv, T1>(env => f(this.apply(env)).apply(env))
     }
 
-    apply(env: TEnv) {
-        return this._func(env);
+    asReaderState<TState>() {
+        return ReaderState
+            .create<TEnv, T, TState>((env, state) => [this.apply(env), state])
+    }
+
+    asReaderWriter<TSemigroup extends { concat: (x: TSemigroup) => TSemigroup }>(zero: TSemigroup) {
+        return ReaderWriter.create<TEnv, T, TSemigroup>(env => [this.apply(env), zero])
     }
 
     static create<TEnv, T>(f: (env: TEnv) => T) {
@@ -92,11 +97,75 @@ export class Writer<T, TSemigroup extends { concat: (x: TSemigroup) => TSemigrou
     }
 }
 
+export class State<T, TState> {
+    private constructor(public readonly execute: (s: TState) => [T, TState]) {
+
+    }
+
+    static create<T, TState>(mapper: (s: TState) => [T, TState]) {
+        return new State<T, TState>(mapper)
+    }
+
+    static retn<T, TState>(x: T) {
+        return new State<T, TState>(s => [x, s])
+    }
+
+    map<T1>(f: (x: T) => T1) {
+        return State.create<T1, TState>(s => {
+            const [x, s1] = this.execute(s)
+            return [f(x), s1]
+        })
+    }
+
+    bind<T1>(f: (x: T) => State<T1, TState>) {
+        return State.create<T1, TState>(s => {
+            const [x, s1] = this.execute(s)
+            return f(x).execute(s1)
+        })
+    }
+}
+
+export class ReaderState<TEnv, T, TState> {
+    private constructor(public readonly execute: (env: TEnv, s: TState) => [T, TState]) {
+
+    }
+
+    static create<TEnv, T, TState>(mapper: (env: TEnv, s: TState) => [T, TState]) {
+        return new ReaderState<TEnv, T, TState>(mapper)
+    }
+
+    static retn<TEnv, T, TState>(x: T) {
+        return new ReaderState<TEnv, T, TState>((_, s) => [x, s])
+    }
+
+    asReader(state: TState) {
+        return Reader.create<TEnv, [T, TState]>(env => this.execute(env, state))
+    }
+
+    map<T1>(f: (x: T) => T1) {
+        return ReaderState.create<TEnv, T1, TState>((env, s) => {
+            const [x, s1] = this.execute(env, s)
+            return [f(x), s1]
+        })
+    }
+
+    bind<T1>(f: (x: T) => ReaderState<TEnv, T1, TState>) {
+        return ReaderState.create<TEnv, T1, TState>((env, s) => {
+            const [x, s1] = this.execute(env, s)
+            return f(x).execute(env, s1)
+        })
+    }
+}
+
 export class ReaderWriter<TEnv, T, TSemigroup extends { concat: (x: TSemigroup) => TSemigroup }> {
-    private constructor(private readonly _f: (env: TEnv) => [T, TSemigroup]) { }
+    private constructor(public readonly execute: (env: TEnv) => [T, TSemigroup]) { }
 
     public static create<TEnv, T, TSemigroup extends { concat: (x: TSemigroup) => TSemigroup }>(f: (env: TEnv) => [T, TSemigroup]) {
         return new ReaderWriter<TEnv, T, TSemigroup>(f)
+    }
+
+    public static bindCreate<TEnv, T, TSemigroup extends { concat: (x: TSemigroup) => TSemigroup }>(f: (env: TEnv) => ReaderWriter<TEnv, T, TSemigroup>) {
+        return new ReaderWriter<TEnv, T, TSemigroup>(env => f(env).execute(env))
     }
 
     public static retn<TEnv, T, TSemigroup extends { concat: (x: TSemigroup) => TSemigroup }>(data: T, zero: TSemigroup): ReaderWriter<TEnv, T, TSemigroup>;
@@ -105,8 +174,21 @@ export class ReaderWriter<TEnv, T, TSemigroup extends { concat: (x: TSemigroup) 
         return new ReaderWriter<any, T, TSemigroup>(_ => [data, zero])
     }
 
-    execute(env: TEnv) {
-        return this._f(env)
+    static ofReader<TEnv, T, TSemigroup extends { concat: (x: TSemigroup) => TSemigroup }>(
+        x: Reader<TEnv, T>, zero: TSemigroup
+    ) {
+        return ReaderWriter.create<TEnv, T, TSemigroup>(env => [x.apply(env), zero])
+    }
+
+    static ofWriter<TEnv, T, TSemigroup extends { concat: (x: TSemigroup) => TSemigroup }>(
+        x: Writer<T, TSemigroup>
+    ) {
+        const [x1, y1] = x.execute()
+        return ReaderWriter.retn<TEnv, T, TSemigroup>(x1, y1)
+    }
+
+    asReaderState<TState>() {
+        return ReaderState.create<TEnv, [T, TSemigroup], TState>((env, s) => [this.execute(env), s])
     }
 
     map<T1>(f: (x: T) => T1) {
@@ -126,6 +208,16 @@ export class ReaderWriter<TEnv, T, TSemigroup extends { concat: (x: TSemigroup) 
             const [y, wr2] = f(x).execute(env)
             return [y, wr1.concat(wr2)]
         })
+    }
+
+    catchError<T1>(f: (err: any) => T1, zero: TSemigroup) {
+        return new ReaderWriter<TEnv, T | T1, TSemigroup>(env => {
+            try {
+                return this.execute(env)
+            } catch (e: any) {
+                return [f(e), zero]
+            }
+        });
     }
 
     asReader() {
@@ -185,4 +277,19 @@ export function mapDict<T, T1>(items: Dict<T>, mapper: (x: T) => T1, keyMapper?:
                 [newK]: mapper(items[x])
             }
         }, {} as Dict<T1>)
+}
+
+export function zip<T, U>(xs: T[], ys: U[]): [T | undefined, U | undefined][] {
+
+    const output: [T | undefined, U | undefined][] = []
+    for (let i = 0; i < xs.length || i < ys.length; i++) {
+        output.push([xs[i], ys[i]])
+    }
+
+    return output
+}
+
+/** Generate an array from 0..N-1 */
+export function range(n: number) {
+    return [...Array(n).keys()]
 }

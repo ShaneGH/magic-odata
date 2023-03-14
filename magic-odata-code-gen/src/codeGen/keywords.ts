@@ -2,6 +2,8 @@ import { AsyncType, CodeGenConfig } from "../config.js";
 import { Dict, Tab } from "./utils.js";
 
 export type Keywords = {
+    _schema: string
+    schema: string
     mergeMap: string
     map: string
     RequestOptions: string
@@ -67,6 +69,8 @@ export function generateKeywords(allNamespaces: string[], rootLevelTypes: string
         .reduce((s, x) => ({ ...s, [x]: true }), {} as Dict<boolean>)
 
     return {
+        _schema: getKeyword("_schema"),
+        schema: getKeyword("schema"),
         EdmDate: getKeyword("EdmDate"),
         UnboundFunctionSet: getKeyword("UnboundFunctionSet"),
         EdmTimeOfDay: getKeyword("EdmTimeOfDay"),
@@ -142,6 +146,7 @@ export function imports(keywords: Keywords, tab: Tab, config: CodeGenConfig | nu
 } from 'rxjs'`
 
     const odataTsClient = `import {
+${tab(importWithAlias("schema"))},
 ${tab(importWithAlias("UnboundFunctionSet"))},
 ${tab(importWithAlias("Params"))},
 ${tab(importWithAlias("EdmDate"))},

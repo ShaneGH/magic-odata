@@ -167,13 +167,13 @@ describe("Query.OrderBy", function () {
                 const result = await client.Users
                     .withQuery((u, { $filter: { isIn }, $orderby: { orderBy } }) => [
                         isIn(u.Id, userIds),
-                        orderBy([u.Blogs.$count, "desc"])
+                        orderBy([u.Blogs.$count, "desc"], u.Name)
                     ])
                     .get();
 
                 expect(result.value.length).toBe(2);
                 expect(result.value[0].Id).toBe(ctxt.blogUser.Id);
-                expect(result.value[1].Id).toBe(ctxt.commentUser.Id);
+                expect(result.value[1].Id).toBe(ctxt.commentUser.Id)
             });
         });
     });

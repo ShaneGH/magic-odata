@@ -1,4 +1,4 @@
-import { ODataTypeRef } from "magic-odata-shared";
+import { ODataSingleTypeRef } from "magic-odata-shared";
 
 export enum IntegerTypes {
     Int16 = "Int16",
@@ -24,6 +24,7 @@ export enum NonNumericTypes {
     TimeOfDay = "TimeOfDay",
     Binary = "Binary",
     Byte = "Byte",
+    SByte = "SByte",
     GeographyPoint = "GeographyPoint",
     GeographyLineString = "GeographyLineString",
     GeographyPolygon = "GeographyPolygon",
@@ -37,13 +38,12 @@ export enum NonNumericTypes {
     GeometryMultiPoint = "GeometryMultiPoint",
     GeometryMultiLineString = "GeometryMultiLineString",
     GeometryMultiPolygon = "GeometryMultiPolygon",
-    GeometryCollection = "GeometryCollection",
-    SByte = "SByte"
+    GeometryCollection = "GeometryCollection"
 }
 
 export type OutputTypes = IntegerTypes | DecimalNumberTypes | NonNumericTypes
 
-export function resolveOutputType(t: OutputTypes): ODataTypeRef {
+export function resolveOutputType(t: OutputTypes): ODataSingleTypeRef {
     return {
         isCollection: false,
         name: t,

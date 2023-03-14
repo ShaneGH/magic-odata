@@ -626,7 +626,8 @@ export type FilterUtils<TRoot> = {
     /**
      * An OData "case" operation
      *
-     * @example caseExpression(
+     * @example 
+     * caseExpression(
      *  [eq(x.favouriteBeatle, "John"), filterRaw("'Incorrect'", NonNumericTypes.String)],
      *  [eq(x.favouriteBeatle, "Ringo"), filterRaw("'Correct'", NonNumericTypes.String)],
      *  [true, filterRaw("'Inconclusive'", NonNumericTypes.String)])

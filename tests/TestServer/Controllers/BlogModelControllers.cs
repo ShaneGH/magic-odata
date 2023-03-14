@@ -336,6 +336,16 @@ public class HasIdsController : ODataControllerBase<HasId>
             .AsSingleResult();
     }
 
+    [HttpGet("HasIds/My.Odata.Entities.Blog({blogId})/Name")]
+    [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
+    public SingleResult<string> GetBlogNameFromHasIds([FromRoute] string blogId)
+    {
+        return _inMemoryDb.Blogs
+           .Where(x => x.Id == blogId)
+           .Select(x => x.Name)
+           .AsSingleResult();
+    }
+
     [HttpGet("HasIds/My.Odata.Entities.Blog({blogId})/WordCount()")]
     [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
     public SingleResult<int> GetBlogWordCountFromHasIds([FromRoute] string blogId)

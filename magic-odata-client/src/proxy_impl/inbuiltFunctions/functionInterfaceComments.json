@@ -1,0 +1,449 @@
+{
+    "orderBy(...properties:(any|[any,\"asc\"|\"desc\"])[]):any;": [
+        "Order results. Use an array to group properties with their direction if necessary",
+        "@example expand(my.prop1, [my.prop2, \"desc\"], my.collection.$count)"
+    ],
+    "orderByRaw(orderByString:string):any;": [
+        "Add a custom expand string",
+        "@example orderByRaw(\"property1 asc\")"
+    ],
+    "$skip(skip:number):number;": [
+        "Add a $skip paging parameter to the query"
+    ],
+    "$top(top:number):number;": [
+        "Add a $top paging parameter to the query"
+    ],
+    "$count():number;": [
+        "Add a $count parameter to the query"
+    ],
+    "custom(paramName:string,value:any):any;": [
+        "Add a custom query param",
+        "@param paramName The name. If this param is added at the root query level, it's value will not be url encoded. Otherwise it will",
+        "@param value The value",
+        "@example custom(\"$filter\", \"name eq 'John'\")"
+    ],
+    "filterRaw(filter:any,outputType?:OutputTypes):any;": [
+        "Do a custom filter operation. If mixing this operation with other",
+        "filtering operations, it is best to include an output type so that values",
+        "can be serialized correctly",
+        "@param filter  A basic filter string",
+        "@param outputType  Add this parameter if you are using ",
+        "the output of this filter with some of the other built in filters:",
+        "e.g. eq(x.val1, op(x.val2, p => `${p} add 1`, OutputTypes.Int32)). ",
+        "e.g. lt(x.minAge, op(`age add 1`, OutputTypes.Int32)). ",
+        "This will help the filter utils to serialize data correctly.",
+        "@example op(\"bandLeader eq 'Ringo'\")"
+    ],
+    "filterRaw(obj:FilterableProps,filter:(paths:FilterablePaths)=>string,outputType?:OutputTypes):any;": [
+        "Do a custom filter operation using the path of an item.",
+        "@param obj  The root object of this filter operation. ",
+        "The root object can be any object available to the query. ",
+        "It does not have to be the query root object",
+        "@param filter  A function to build the filter as a string. ",
+        "The input is a reference to the root object param",
+        "The filter should return an unencoded filter string",
+        "@param outputType  Add this parameter if you are using ",
+        "the output of this filter with some of the other built in filters:",
+        "e.g. lt(x.minAge, op({ age: x.age }, p => `${p.age} add 1`, OutputTypes.Int32)). ",
+        "This will help the filter utils to serialize data correctly.",
+        "@example op({ property: x.bandLeader }, p => `${p.bandLeader} eq 'Ringo'`)"
+    ],
+    "logicalOp<T>(lhs:T,operator:string,rhs:T,mapper?:(x:T)=>string):Filter;": [
+        "Do a custom filter operation with a given operator. The result of the operation should be a boolean",
+        "@param mapper  An optional mapper to map the rhs to a string. The mapper should return values unencoded",
+        "@example logicalOp(x.bandLeader, \"eq\", \"Ringo\")"
+    ],
+    "eq<T>(lhs:T,rhs:T,mapper?:(x:T)=>string):boolean;": [
+        "An OData \"eq\" operation",
+        "@param mapper  An optional mapper to map the rhs to a string. The mapper should return values unencoded",
+        "@example eq(x.bandLeader, \"Ringo\")"
+    ],
+    "isIn<T>(lhs:T,rhs:T[],mapper?:(x:T)=>string):boolean;": [
+        "An OData \"in\" operation",
+        "@param mapper  An optional mapper to map the rhs to a string. The mapper should return values unencoded",
+        "@example isIn(x.bandLeader, [\"John\", \"Paul\"])"
+    ],
+    "$filter<T,TQueryextendsQueryObject<T>>(collection:QueryCollection<TQuery,T>|Filter,itemFilter:(item:TQuery)=>Filter):Filter;": [
+        "An OData nested $filter operation. Like $filter=bandMembers/$filter(name eq \"Ringo\")/$count eq 1",
+        "@example $filter(x.bandMembers, member => eq(member.Name, \"Ringo\"))"
+    ],
+    "ne<T>(lhs:T,rhs:T,mapper?:(x:T)=>string):boolean;": [
+        "An OData \"en\" operation",
+        "@param mapper  An optional mapper to map the rhs to a string. The mapper should return values unencoded",
+        "@example ne(x.bandLeader, \"Ringo\")"
+    ],
+    "lt<T>(lhs:T,rhs:T,mapper?:(x:T)=>string):boolean;": [
+        "An OData \"lt\" operation",
+        "@param mapper  An optional mapper to map the rhs to a string. The mapper should return values unencoded",
+        "@example lt(x.bandMemberCount, 4)"
+    ],
+    "le<T>(lhs:T,rhs:T,mapper?:(x:T)=>string):boolean;": [
+        "An OData \"le\" operation",
+        "@param mapper  An optional mapper to map the rhs to a string. The mapper should return values unencoded",
+        "@example le(x.bandMemberCount, 4)"
+    ],
+    "gt<T>(lhs:T,rhs:T,mapper?:(x:T)=>string):boolean;": [
+        "An OData \"gt\" operation",
+        "@param mapper  An optional mapper to map the rhs to a string. The mapper should return values unencoded",
+        "@example gt(x.bandMemberCount, 4)"
+    ],
+    "ge<T>(lhs:T,rhs:T,mapper?:(x:T)=>string):boolean;": [
+        "An OData \"ge\" operation",
+        "@param mapper  An optional mapper to map the rhs to a string. The mapper should return values unencoded",
+        "@example ge(x.bandMemberCount, 4)"
+    ],
+    "not(condition:Filter,group?:boolean):boolean;": [
+        "An OData \"not(...)\" operation",
+        "@param group - true If true, will surround the condition in (...).",
+        "@example not(eq(x.bandMemberCount, 4))"
+    ],
+    "group(condition:T):T;": [
+        "Surrounds a filter value in (...)",
+        "@param condition  The value from a previous filter",
+        "@example and( group(eq(x.bandMemberCount, 4)), group(eq(x.bandLeader, \"Ringo\")) )"
+    ],
+    "and(...conditions:boolean[]):boolean;": [
+        "An OData \"and\" operation",
+        "@param conditions  The values from a previous filter",
+        "@example and(eq(x.bandMemberCount, 4)), group(eq(x.bandLeader, \"Ringo\"))"
+    ],
+    "or(...conditions:boolean[]):boolean;": [
+        "An OData \"or\" operation",
+        "@param conditions  The values from a previous filter",
+        "@example or(eq(x.bandMemberCount, 4)), group(eq(x.bandLeader, \"Ringo\"))"
+    ],
+    "collectionFilter<T>(collection:T[],operator:string,collectionItemOperation:(item:T)=>boolean):boolean;": [
+        "Do a filter operation on the elelments of a collection. The filter result should be a boolean",
+        "@example collectionFilter(x.bandMembers, \"any\", bandMember => eq(bandMember, \"Ringo\"))"
+    ],
+    "collectionFunction<TArrayType>(functionName:string,collection:TArrayType[],values:TArrayType[],mapper?:(x:TArrayType)=>string):Filter;": [
+        "Call a function on a collection. The result of this function should be a boolean",
+        "@param mapper  A custom mapper to seialize individual values",
+        "@example collectionFunction(\"hassubset\", x.bandMembers, [\"Ringo\", \"John\"])"
+    ],
+    "any<T>(collection:T[],collectionItemOperation:(item:T)=>boolean):boolean;": [
+        "Do an OData \"any\" operation on a collection",
+        "@example any(x.bandMembers, bandMember => eq(bandMember, \"Ringo\"))"
+    ],
+    "all<T>(collection:T[],collectionItemOperation:(item:T)=>boolean):boolean;": [
+        "Do an OData \"all\" operation on a collection",
+        "@example all(x.bandMembers, bandMember => eq(bandMember.band, \"The Beatles\"))"
+    ],
+    "count<T>(collection:T[],countUnit?:IntegerTypes):number;": [
+        "Do an OData \"$count\" operation on a collection",
+        "@param countUnit - IntegerTypes.Int32 The expected result of the type",
+        "@example count(x.bandMembers)"
+    ],
+    "concatCollection<T>(lhs:T[],rhs:T[],mapper?:(x:T)=>string):T[];": [
+        "An OData \"concat\" operation",
+        "@param mapper  An optional mapper to map any primitives to a string. The mapper should return values unencoded",
+        "@example concatCollection(x.bandMembers, [\"Elvis\"])"
+    ],
+    "containsCollection<T>(lhs:T[],rhs:T,mapper?:(x:T)=>string):boolean;": [
+        "An OData \"contains\" operation",
+        "@example containsCollection(x.bandMembers, \"Ringo\")"
+    ],
+    "indexOfCollection<T>(lhs:T[],rhs:T,mapper?:(x:T)=>string):number;": [
+        "An OData \"indexof\" operation",
+        "@example indexof(x.bandMembers, \"Ringo\")"
+    ],
+    "lengthCollection<T>(collection:T[]):number;": [
+        "An OData \"length\" operation",
+        "@example lengthCollection(x.bandMember)"
+    ],
+    "startsWithCollection<T>(lhs:T[],rhs:T[],mapper?:(x:T)=>string):boolean;": [
+        "An OData \"startswith\" operation",
+        "@param mapper  An optional mapper to map any primitives to a string. The mapper should return values unencoded",
+        "@example startsWithCollection(x.bandMembers, [\"Ringo\", \"John\"])"
+    ],
+    "endsWithCollection<T>(lhs:T[],rhs:T[],mapper?:(x:T)=>string):boolean;": [
+        "An OData \"endswith\" operation",
+        "@param mapper  An optional mapper to map any primitives to a string. The mapper should return values unencoded",
+        "@example endsWithCollection(x.bandMembers, [\"Ringo\", \"John\"])"
+    ],
+    "subStringCollection<T>(lhs:T[],start:number,length?:number):boolean;": [
+        "An OData \"substring\" operation on a collection",
+        "@example subStringCollection(x.bandMemberName, 5, 6)"
+    ],
+    "hasSubset<T>(collection:T[],values:T[],mapper?:(x:T)=>string)boolean;": [
+        "Call the \"hassubset\" function on a collection",
+        "@param mapper  A custom mapper to seialize individual values",
+        "@example hasSubset(x.bandMembers, [\"Ringo\", \"George\"])"
+    ],
+    "hasSubSequence<T>(collection:T[],values:T[],mapper?:(x:T)=>string)boolean;": [
+        "Call the \"hassubsequence\" function on a collection",
+        "@param mapper  A custom mapper to seialize individual values",
+        "@example hasSubSequence(x.bandMembers, [\"Ringo\", \"George\"])"
+    ],
+    "add(lhs:number,rhs:number,outputType?:RealNumberTypes):number;": [
+        "An OData \"+\" operation",
+        "@example add(x.bandMembersCount, 4)"
+    ],
+    "sub(lhs:number,rhs:number,outputType?:RealNumberTypes):number;": [
+        "An OData \"-\" operation",
+        "@example sub(4, x.bandMembersCount)"
+    ],
+    "mul(lhs:number,rhs:number,outputType?:RealNumberTypes):number;": [
+        "An OData \"*\" operation",
+        "@example mul(x.bandMembersCount, 4)"
+    ],
+    "div(lhs:number,rhs:number,outputType?:RealNumberTypes):number;": [
+        "An OData \"/\" operation on integers",
+        "@example div(4, x.bandMembersCount)"
+    ],
+    "divby(lhs:number,rhs:number,outputType?:RealNumberTypes):number;": [
+        "An OData \"/\" operation on decimals",
+        "@example divby(4, x.bandMembersCount)"
+    ],
+    "mod(lhs:number,rhs:number,outputType?:RealNumberTypes):number;": [
+        "An OData \"%\" operation on decimals",
+        "@example mod(4, x.bandMembersCount)"
+    ],
+    "ceiling(lhs:number,result?:IntegerTypes):number;": [
+        "An OData \"ceiling\" operation",
+        "@example ceiling(x.bandMembersCount)"
+    ],
+    "floor(lhs:number,result?:IntegerTypes):number;": [
+        "An OData \"floor\" operation",
+        "@example floor(x.bandMembersCount)"
+    ],
+    "round(lhs:number,result?:IntegerTypes):number;": [
+        "An OData \"round\" operation",
+        "@example round(x.bandMembersCount)"
+    ],
+    "negate(op:number|EdmDuration,group?:boolean):Filter;": [
+        "An OData \"-\" operation. Add a \"-\" to the beginning of a property",
+        "@param group If true will surroud the property with ( ) before negating",
+        "@example negate(x.bandMembersCount)"
+    ],
+    "concatString(lhs:string,rhs:string):string;": [
+        "An OData \"concat\" operation",
+        "@example concatString(x.bandMember, \" Starr\")"
+    ],
+    "containsString(lhs:string,rhs:string|string):boolean;": [
+        "An OData \"contains\" operation",
+        "@example containsString(x.bandMember, \"Rin\")"
+    ],
+    "containsString(lhs:string|string,rhs:string):boolean;": [
+        "An OData \"contains\" operation",
+        "@example containsString(\"Drummer: Ringo\", x.bandMember)"
+    ],
+    "matchesPattern(string:string,pattern:string|string):boolean;": [
+        "An OData \"matchesPattern\" operation",
+        "@example matchesPattern(x.bandMember, \"^Rin*\")"
+    ],
+    "matchesPattern(string:string|string,pattern:string):boolean;": [
+        "An OData \"matchesPattern\" operation",
+        "@example matchesPattern(\"Drummer: Ringo\", x.bandMemberRegex)"
+    ],
+    "toLower(string:string):string;": [
+        "An OData \"tolower\" operation",
+        "@example toLower(x.bandMember)"
+    ],
+    "toUpper(string:string):string;": [
+        "An OData \"toupper\" operation",
+        "@example toUpper(x.bandMember)"
+    ],
+    "trim(string:string):string;": [
+        "An OData \"trim\" operation",
+        "@example trim(x.bandMember)"
+    ],
+    "startsWithString(lhs:string,rhs:string|string):boolean;": [
+        "An OData \"startswith\" operation",
+        "@example startsWithString(x.bandMember, \"Rin\")"
+    ],
+    "startsWithString(lhs:string|string,rhs:string):boolean;": [
+        "An OData \"startswith\" operation",
+        "@example startsWithString(\"Ringo Starr\", x.bandMember)"
+    ],
+    "endsWithString(lhs:string,rhs:string|string):boolean;": [
+        "An OData \"endswith\" operation",
+        "@example endsWithString(x.bandMember, \"Starr\")"
+    ],
+    "endsWithString(lhs:string|string,rhs:string):boolean;": [
+        "An OData \"endswith\" operation",
+        "@example endsWithString(\"Drummer: Ringo\", x.bandMember)"
+    ],
+    "indexOfString(lhs:string,rhs:string|string):number;": [
+        "An OData \"indexof\" operation",
+        "@example indexOfString(x.bandMember, \"Starr\")"
+    ],
+    "indexOfString(lhs:string|string,rhs:string):number;": [
+        "An OData \"indexof\" operation",
+        "@example indexOfString(\"Ringo Startt\", x.bandMember)"
+    ],
+    "lengthString(value:string):number;": [
+        "An OData \"length\" operation",
+        "@example length(x.bandMember)"
+    ],
+    "subString(value:string,start:number,end?:number):string;": [
+        "An OData \"substring\" operation",
+        "@example subString(x.bandMember, 5, 6)"
+    ],
+    "addDateTimeOffset(lhs:EdmDateTimeOffset,rhs:EdmDuration|EdmDuration):Filter;": [
+        "An OData \"add\" operation for Edm.DateTimeOffset",
+        "@example addDateTimeOffset(x.concertTime, new ODataDuration({m: 30}))"
+    ],
+    "addDateTimeOffset(lhs:EdmDateTimeOffset|EdmDateTimeOffset,rhs:EdmDuration):Filter;": [
+        "An OData \"add\" operation for Edm.DateTimeOffset",
+        "@example addDateTimeOffset(new Date(), x.concertLength)"
+    ],
+    "subDateTimeOffset(lhs:EdmDateTimeOffset,rhs:EdmDuration|EdmDuration):Filter;": [
+        "An OData \"sub\" operation for Edm.DateTimeOffset",
+        "@example subDateTimeOffset(x.concertTime, new ODataDuration({m: 30}))"
+    ],
+    "subDateTimeOffset(lhs:EdmDateTimeOffset|EdmDateTimeOffset,rhs:EdmDuration):Filter;": [
+        "An OData \"sub\" operation for Edm.DateTimeOffset",
+        "@example subDateTimeOffset(new Date(), x.concertLength)"
+    ],
+    "addDate(lhs:EdmDate,rhs:EdmDuration|EdmDuration):Filter;": [
+        "An OData \"add\" operation for Edm.Date",
+        "@example addDate(x.concertTime, new ODataDuration({d: 2}))"
+    ],
+    "addDate(lhs:EdmDate|EdmDate,rhs:EdmDuration):Filter;": [
+        "An OData \"add\" operation for Edm.Date",
+        "@example addDate(new Date(), x.concertMovedDays)"
+    ],
+    "subDate(lhs:EdmDate,rhs:EdmDuration|EdmDuration):Filter;": [
+        "An OData \"sub\" operation for Edm.Date",
+        "@example subDate(x.concertTime, new ODataDuration({d: 2}))"
+    ],
+    "subDate(lhs:EdmDate|EdmDate,rhs:EdmDuration):Filter;": [
+        "An OData \"sub\" operation for Edm.Date",
+        "@example subDate(new Date(2020, 1, 1), x.concertMovedDays)"
+    ],
+    "addDuration(lhs:EdmDuration|EdmDuration,rhs:EdmDuration):Filter;": [
+        "An OData \"add\" operation for Edm.Duration",
+        "@example addDuration(new ODataDuration({m: 20}), x.concertMovedDays)"
+    ],
+    "addDuration(lhs:EdmDuration,rhs:EdmDuration|EdmDuration):Filter;": [
+        "An OData \"add\" operation for Edm.Duration",
+        "@example addDuration(x.concertMovedDays, new ODataDuration({m: 20}))"
+    ],
+    "subDuration(lhs:EdmDuration|EdmDuration,rhs:EdmDuration):Filter;": [
+        "An OData \"sub\" operation for Edm.Duration",
+        "@example subDuration(new ODataDuration({m: 20}), x.concertMovedDays)"
+    ],
+    "subDuration(lhs:EdmDuration,rhs:EdmDuration|EdmDuration):Filter;": [
+        "An OData \"sub\" operation for Edm.Duration",
+        "@example subDuration(x.concertMovedDays, new ODataDuration({m: 20}))"
+    ],
+    "mulDuration(lhs:EdmDuration|EdmDuration,rhs:number):Filter;": [
+        "An OData \"mul\" operation for Edm.Duration",
+        "@example mulDuration(x.concertMovedDays, 10)"
+    ],
+    "mulDuration(lhs:EdmDuration,rhs:number):Filter;": [
+        "An OData \"mul\" operation for Edm.Duration",
+        "@example mulDuration(new ODataDuration({d: 1}), x.concertMovedDays)"
+    ],
+    "divDuration(lhs:EdmDuration|EdmDuration,rhs:number):Filter;": [
+        "An OData \"div\" operation for Edm.Duration",
+        "@example divDuration(x.concertMovedDays, 10)"
+    ],
+    "divDuration(lhs:EdmDuration,rhs:number):Filter;": [
+        "An OData \"div\" operation for Edm.Duration",
+        "@example divDuration(new ODataDuration({h: 10}), x.numberOfClients)"
+    ],
+    "divByDuration(lhs:EdmDuration|EdmDuration,rhs:number):Filter;": [
+        "An OData \"divby\" operation for Edm.Duration",
+        "@example divDuration(x.normalWaitTime, 10)"
+    ],
+    "divByDuration(lhs:EdmDuration,rhs:number):Filter;": [
+        "An OData \"divby\" operation for Edm.Duration",
+        "@example divDuration(new ODataDuration({h: 10}), x.numberOfClients)"
+    ],
+    "now():Filter": [
+        "An OData \"now\" operation"
+    ],
+    "maxDateTime():Filter": [
+        "An OData \"maxdatetime\" operation"
+    ],
+    "minDateTime():Filter": [
+        "An OData \"mindatetime\" operation"
+    ],
+    "date(date:EdmDateTimeOffset):Filter": [
+        "An OData \"date\" operation"
+    ],
+    "time(date:EdmDateTimeOffset):Filter": [
+        "An OData \"time\" operation"
+    ],
+    "totalOffsetMinutes(date:EdmDateTimeOffset):number": [
+        "An OData \"totaloffsetminutes\" operation"
+    ],
+    "totalSeconds(date:EdmDuration):number": [
+        "An OData \"totalseconds\" operation"
+    ],
+    "month(date:EdmDateTimeOffset|EdmDate):number": [
+        "An OData \"month\" operation"
+    ],
+    "day(date:EdmDateTimeOffset|EdmDate):number": [
+        "An OData \"day\" operation"
+    ],
+    "year(date:EdmDateTimeOffset|EdmDate):number": [
+        "An OData \"year\" operation"
+    ],
+    "fractionalSeconds(date:EdmDateTimeOffset|EdmTimeOfDay):number": [
+        "An OData \"fractionalSeconds\" operation"
+    ],
+    "minute(date:EdmDateTimeOffset|EdmTimeOfDay):number": [
+        "An OData \"minute\" operation"
+    ],
+    "hour(date:EdmDateTimeOffset|EdmTimeOfDay):number": [
+        "An OData \"hour\" operation"
+    ],
+    "second(date:EdmDateTimeOffset|EdmTimeOfDay):number": [
+        "An OData \"second\" operation"
+    ],
+    "caseExpression(...cases:[Filter|true,Filter][]):Filter": [
+        "An OData \"case\" operation",
+        "",
+        "@example ",
+        "caseExpression(",
+        " [eq(x.favouriteBeatle, \"John\"), filterRaw(\"'Incorrect'\", NonNumericTypes.String)],",
+        " [eq(x.favouriteBeatle, \"Ringo\"), filterRaw(\"'Correct'\", NonNumericTypes.String)],",
+        " [true, filterRaw(\"'Inconclusive'\", NonNumericTypes.String)])"
+    ],
+    "$root(filter:(root:TRoot)=>IUriBuilder):Filter": [
+        "Use the OData $root operation",
+        "http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part2-url-conventions.html#sec_root",
+        "",
+        "Use the filter to do another separate OData query which can be incorporated into the current query",
+        "",
+        "@example eq(x.bandName, $root(root => root.bands.withKey(k => k.key(\"TheBeatles\")).subPath(u => u.badName))"
+    ],
+    "expandRaw(expand:string):Expand;": [
+        "Add a custom expand string",
+        "@example expandRaw(\"property1\")"
+    ],
+    "expand<T>(obj:T|T[],and?:((x:T)=>Query|Query[])):Expand;": [
+        "Expand an object or array of objects.",
+        "@param obj An object to expand.",
+        "Entities can be deeply expanded by inputting nested properties.",
+        "Entities in a collection will need to use the second arg of this method for deep expansion",
+        "@param and A list of further expansions, transforms and filters to apply",
+        "@example expand(my.user)",
+        "@example expand(my.user.blogPosts)",
+        "@example expand(my.user.blogPosts, p => [ gt(p.likes, 10), select(p.title), $count() ])"
+    ],
+    "expandCount<T>(obj:T[],and?:((x:T)=>Query|Query[])):Expand;": [
+        "Expand the count of array of objects. Equivelant of $expand=my/blogPosts/$count",
+        "@param obj An object to count.",
+        "Entities can be deeply expanded by inputting nested properties.",
+        "Filter before counting by using the second arg of this method",
+        "@param and A list of further expansions, transforms and filters to apply",
+        "@example expandCount(my.blogPosts)",
+        "@example expandCount(my.blogPosts, p => gt(p.likes, 10))"
+    ],
+    "combine(...expansions:Expand[]):Expand;": [
+        "Combine multiple expanded properties",
+        "@example combine(expand(my.property1), expand(my.property2))"
+    ],
+    "expandAll():Expand;": [
+        "Expand all properties of an object",
+        "$expand=*"
+    ],
+    "expandRef():Expand;": [
+        "Expand all properties of an object by $ref",
+        "$expand=* /$ref"
+    ]
+}

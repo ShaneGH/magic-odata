@@ -99,7 +99,7 @@ describe("Query.Expand", function () {
             expect((result.Comments![0] as any)["@odata.id"]).toBe(`Comments('${ctxt.comment.Id}')`);
         });
 
-        it("Should work correctly with entity collection and inner expand (1)", ex1.bind(null, true));
+        it.only("Should work correctly with entity collection and inner expand (1)", ex1.bind(null, true));
         it("Should work correctly with entity collection and inner expand (2)", ex1.bind(null, false));
 
         async function ex1(hasResults: boolean) {
@@ -109,13 +109,15 @@ describe("Query.Expand", function () {
                 .withKey(x => x.key(ctxt.blogPost.Id))
                 .withQuery((p, { $filter: { eq }, $expand: { expandCount } }) =>
                     expandCount(p.Comments, c => eq(c.Id, hasResults ? ctxt.comment.Id : "asdasd")))
-                .get();
+                .get({ request: loggingFetcher });
 
             if (hasResults) {
                 expect((result.Comments![0] as any)["@odata.id"]).toBe(`Comments('${ctxt.comment.Id}')`);
             } else {
                 expect(result.Comments?.length).toBe(0)
             }
+
+            throw new Error("TODO: use a property in the inner mapper that does not exist on the outer obj");
         }
 
         it("Should work correctly with navigation property (1)", ex2.bind(null, true));
@@ -184,6 +186,29 @@ describe("Query.Expand", function () {
 
                 expect(result.Blog!.Name).toBe(ctxt.blog.Name);
                 expect(result.Blog!.User!.Name).toBe(ctxt.blogUser.Name);
+            }
+        });
+
+        describe("multiple and clauses", () => {
+
+            it("Should work correctly (1)", execute.bind(null, true));
+            it("Should work correctly (2)", execute.bind(null, false));
+
+            async function execute(twoCalls: boolean) {
+
+                throw new Error("todo")
+                // const ctxt = await addFullUserChain();
+                // const result = await client.BlogPosts
+                //     .withKey(x => x.key(ctxt.blogPost.Id))
+                //     .withQuery((p, { $expand: { expand } }) => {
+                //         return twoCalls
+                //             ? expand(p.Blog, b => expand(b.User))
+                //             : expand(p.Blog.User);
+                //     })
+                //     .get();
+
+                // expect(result.Blog!.Name).toBe(ctxt.blog.Name);
+                // expect(result.Blog!.User!.Name).toBe(ctxt.blogUser.Name);
             }
         });
 
@@ -404,6 +429,25 @@ describe("Query.Expand", function () {
 
             expect(result.Blog!.Name).toBe(ctxt.blog.Name);
             expect(result.Comments![0].Title).toBe(ctxt.comment.Title);
+        });
+
+
+        testCase("expand and combine", function () {
+            it("Should work correctly", async () => {
+                throw new Error("Also maybe $expand=Blogs($filter=true)")
+
+                // const ctxt = await addFullUserChain();
+                // const result = await client.BlogPosts
+                //     .withKey(x => x.key(ctxt.blogPost.Id))
+                //     .withQuery((p, { $expand: { expand, combine } }) =>
+                //         combine(
+                //             expand(p.Blog),
+                //             expand(p.Comments)))
+                //     .get();
+
+                // expect(result.Blog!.Name).toBe(ctxt.blog.Name);
+                // expect(result.Comments![0].Title).toBe(ctxt.comment.Title);
+            });
         });
     });
 });

@@ -13,7 +13,7 @@ export type OrderingUtils = {
      * Order results. Use an array to group properties with their direction if necessary
      * @example expand(my.prop1, [my.prop2, "desc"], my.collection.$count)
      */
-    orderBy(...properties: Property[]): OrderBy
+    orderBy(...properties: (any | [any, "asc" | "desc"])[]): OrderBy
 }
 
 function orderByRaw(orderByString: string): OrderBy {

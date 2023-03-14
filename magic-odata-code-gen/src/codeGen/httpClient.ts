@@ -83,7 +83,9 @@ function httpClientForSchema(
     const getCasterName = buildGetCasterName(settings)
     const getSubPathName = buildGetSubPathName(settings)
     const httpClientType = buildHttpClientType(serviceConfig.schemaNamespaces, keywords, tab, settings || null);
-    const constructor = `constructor(private ${keywords._httpClientArgs}: ${keywords.RequestTools}<${requestToolsGenerics.join(", ")}>) { }`;
+    const constructor = `constructor(${keywords._httpClientArgs}: ${keywords.RequestTools}<${requestToolsGenerics.join(", ")}>) {
+${tab(buildConstructor())}
+}`;
     const name = httpClientName(settings)
 
     const module = `/**
@@ -97,6 +99,9 @@ ${tab(entitySets(true))}
  * The http client which serves as an entry point to the ${schemaName && `${schemaName} `}OData schema
  */
 export class ${name} implements ${entitySetsName(settings)} {
+
+${tab(`private readonly ${keywords._schema}: ${entitySetsName(settings)}`)}
+
 ${tab(constructor)}
 
 ${tab(entitySets(false))}
@@ -109,6 +114,21 @@ ${tab(entitySets(false))}
  */
 export module ${ns} {\n${tab(module)}\n}`
         : module
+
+    function buildConstructor() {
+        const args = {
+            requestTools: keywords._httpClientArgs,
+            defaultResponseInterceptor: keywords.responseParser,
+            schema: `${keywords.toODataSchema}("${schemaName}")`,
+            root: keywords.rootConfig
+        }
+
+        return [
+            `const args = ${toTs(args)}`,
+            "",
+            `this.${keywords._schema} = ${keywords.schema}<${entitySetsName(settings)}>(args, "${schemaName}")`
+        ].join("\n")
+    }
 
     function entitySets(isForInterface: boolean) {
 
@@ -146,22 +166,14 @@ export module ${ns} {\n${tab(module)}\n}`
         var containerName = (entitySets.value || []).map(x => x.type === "Function" ? x.containerName : null).filter(x => x != null)[0]
         const functions = (containerName != null && getFunctions(isForInterface, first, schemaName, containerName)) || ""
 
-        const cacheArgs = !isForInterface && first
-            // TODO: weird error. If I remove the ";" from this.${keywords._httpClientArgs};, the last letter of 
-            // _httpClientArgs also disappears
-            ? `const ${keywords._httpClientArgs} = this.${keywords._httpClientArgs};\n`
-            : ""
-
         const subPaths = Object
             .keys(entitySets.children)
             .map(c => !isForInterface
                 ? `get ${c}() {
-${tab(`${cacheArgs}return {
-${tab(methodsForEntitySetNamespace(schemaName, entitySetName.concat([c]), isForInterface, entitySets.children[c], false))}
-}`)}
+${tab(`return this.${keywords._schema}.${c}`)}
 }`
                 : `${c}: {
-${tab(methodsForEntitySetNamespace(schemaName, entitySetName.concat([c]), isForInterface, entitySets.children[c], false))}
+        ${tab(methodsForEntitySetNamespace(schemaName, entitySetName.concat([c]), isForInterface, entitySets.children[c], false))}
 }`)
 
         return [
@@ -172,7 +184,8 @@ ${tab(methodsForEntitySetNamespace(schemaName, entitySetName.concat([c]), isForI
     }
 
     function getFunctions(isForInterface: boolean, first: boolean, schemaName: string, containerName: string): string | undefined {
-        const { async, fetchResponse } = getFetchResult(keywords, settings || null)
+
+        //         const { async, fetchResponse } = getFetchResult(keywords, settings || null)
         const unboundFunctions = getUnboundFunctionsName(settings);
         const sanitizedNs = sanitizeNamespace(schemaName)
         const schema = `${sanitizedNs && `${sanitizedNs}.`}${unboundFunctions}["${containerName}"]`
@@ -190,27 +203,27 @@ ${tab(selectorParams)}) => ${keywords.SubPathSelection}<TNewEntityQuery>): TNewE
             return signature
         }
 
-        const generics = [
-            entitySetsName(settings),
-            schema,
-            `${async}<${fetchResponse}>`
-        ]
+        //         const generics = [
+        //             entitySetsName(settings),
+        //             schema,
+        //             `${async}<${fetchResponse}>`
+        //         ]
 
-        const args = {
-            root: "rootConfig",
-            schemaName: `"${schemaName}"`,
-            containerName: `"${containerName}"`,
-            requestTools: `${(first && "this.") || ""}_httpClientArgs`,
-            defaultResponseInterceptor: "responseParser"
-        }
+        //         const args = {
+        //             root: "rootConfig",
+        //             schemaName: `"${schemaName}"`,
+        //             containerName: `"${containerName}"`,
+        //             requestTools: `${(first && "this.") || ""}_httpClientArgs`,
+        //             defaultResponseInterceptor: "responseParser"
+        //         }
 
-        const body = `const args = ${toTs(args)}
+        //         const body = `const args = ${toTs(args)}
 
-const entitySet = new ${keywords.UnboundFunctionSet}<${generics.join(", ")}>(args)
+        // const entitySet = new ${keywords.UnboundFunctionSet}<${generics.join(", ")}>(args)
 
-return entitySet.subPath(selector)`
+        // return entitySet.subPath(selector)`
 
-        return `${signature} {\n\n${tab(body)}\n}`
+        return `${signature} {\n\n${tab(`return this.${keywords._schema}.unboundFunctions(selector)`)}\n}`
     }
 
     function toTs(obj: Dict<string>) {
@@ -252,10 +265,7 @@ return entitySet.subPath(selector)`
         args = `const args = {\n${tab(args)}\n}`
 
         return `get ${entitySet.name}() : \n${tab(interfaceType)} {
-
-${tab(args)}
-
-${tab(`return new ${instanceType}(args, ${entitySetArg});`)}
+${tab(`return this.${keywords._schema}.${entitySet.name}`)}
 }`
     }
 

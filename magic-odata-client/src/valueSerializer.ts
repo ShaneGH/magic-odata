@@ -244,6 +244,18 @@ export function serialize_legacy(value: any, type?: ODataTypeRef, serviceConfig?
         }
     }
 
+    if (type.namespace === "") {
+        switch (type.name) {
+            case "string":
+            case "boolean":
+            case "number": return basicSerialize(value);
+            default:
+                console.warn(`Unknown type found when serializing value for filter. `
+                    + `Ignoring type info. This may lead to incorrect serializaton of values in filtering`, type);
+                return basicSerialize(value);
+        }
+    }
+
     if (type.namespace === "Edm") {
         // https://github.com/ShaneGH/magic-odata/issues/7
         switch (type.name) {

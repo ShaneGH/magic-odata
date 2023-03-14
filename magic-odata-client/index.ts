@@ -39,6 +39,10 @@ export {
 } from "./src/requestBuilder.js"
 
 export {
+    schema
+} from "./src/proxy_impl/schema.js"
+
+export {
     UnboundFunctionSet
 } from "./src/unboundFunctionSet.js"
 
