@@ -1,13 +1,13 @@
 import { Dict, ODataComplexType, ODataEntitySet, ODataEnum, ODataSchema, ODataServiceConfig, ODataTypeName, ODataTypeRef } from "magic-odata-shared"
-import { Query } from "../queryBuilder.js"
-import { typeNameString } from "../utils.js"
-import { ParameterDefinition } from "../valueSerializer.js"
+import { QbEmit, Query } from "../queryBuilder.js"
+import { typeNameString, Writer } from "../utils.js"
+import { AtParam, ParameterDefinition } from "../valueSerializer.js"
 import { DefaultResponseInterceptor, RequestTools } from "./requestTools.js"
 
 export type RequestBuilderData<TFetchResult, TResult> = {
     tools: SchemaTools<TFetchResult, TResult>
     entitySet: ODataEntitySet | null
-    state: EntityQueryState
+    state: Writer<EntityQueryState, QbEmit>
 }
 
 export type SchemaTools<TFetchResult, TResult> = {
@@ -29,10 +29,6 @@ export const defaultAccept = Accept.Json
 export type EntityQueryState = {
     path: string[]
     accept: Accept
-    /** This dataParams contains arrays that might mutate. Make sure to use it after all
-     * other operations are complete
-     */
-    mutableDataParams: ParameterDefinition[][]
     query: {
         query: Query[]
         urlEncode: boolean

@@ -1,7 +1,8 @@
 import { Dict, ODataSchema, ODataTypeName, ODataTypeRef } from "magic-odata-shared";
 import { Params } from "../entitySetInterfaces.js";
-import { typeNameString } from "../utils.js";
-import { serialize_legacy } from "../valueSerializer.js";
+import { QbEmit } from "../queryBuilder.js";
+import { typeNameString, Writer } from "../utils.js";
+import { AtParam, serialize } from "../valueSerializer.js";
 import { params } from "./params.js";
 import { RequestBuilderData, lookupComplex, tryFindBaseType, tryFindPropertyType } from "./utils.js";
 
@@ -70,25 +71,25 @@ function keyExpr(keyTypes: KeyType[], key: any, keyEmbedType: WithKeyType, servi
 
     if (keyTypes.length === 1) {
         const result = keyEmbedType === WithKeyType.FunctionCall
-            ? { appendToLatest: true, value: `(${serialize_legacy(key, keyTypes[0].type, serviceConfig)})` }
+            ? serialize(key, keyTypes[0].type, serviceConfig).map(x => ({ appendToLatest: true, value: `(${x})` }))
             : keyEmbedType === WithKeyType.PathSegment
-                ? { appendToLatest: false, value: `${serialize_legacy(key, keyTypes[0].type, serviceConfig)}` }
+                ? serialize(key, keyTypes[0].type, serviceConfig).map(x => ({ appendToLatest: false, value: `${x}` }))
                 : null;
 
         if (!result) {
             throw new Error(`Invalid WithKeyType: ${keyEmbedType}`);
         }
 
-        return {
-            ...result,
+        return result.map(x => ({
+            ...x,
             // TODO: should not be always encoded???  
-            value: encodeURIComponent(result.value)
-        }
+            value: encodeURIComponent(x.value)
+        }))
     }
 
     const kvp = keyTypes
         .map(t => Object.prototype.hasOwnProperty.call(key, t.name)
-            ? { key: t.name, value: serialize_legacy(key[t.name], t.type, serviceConfig) }
+            ? serialize(key[t.name], t.type, serviceConfig).map(x => ({ key: t.name, value: x }))
             : t.name);
 
     const missingKeys = kvp.filter(x => typeof x === "string") as string[]
@@ -102,15 +103,16 @@ function keyExpr(keyTypes: KeyType[], key: any, keyEmbedType: WithKeyType, servi
         keyEmbedType = WithKeyType.FunctionCall;
     }
 
-    const value = (kvp as { key: string, value: string }[])
-        .map(({ key, value }) => `${key}=${value}`)
-        .join(",")
+    const value = Writer.traverse(kvp as Writer<{ key: string, value: string }, [AtParam, ODataTypeRef][]>[], [])
+        .map(xs => xs
+            .map(({ key, value }) => `${key}=${value}`)
+            .join(","))
 
-    return {
+    return value.map(value => ({
         appendToLatest: true,
         // TODO: should not be always encoded???
         value: `(${encodeURIComponent(value)})`
-    }
+    }))
 }
 
 function keyRaw(key: string): KeySelection<any> {
@@ -133,15 +135,9 @@ function keyStructured(key: any, keyEmbedType?: WithKeyType.FunctionCall): KeySe
 
 export function recontextDataForKey<TRoot, TFetchResult, TResult, TNewEntityQuery, TKeyBuilder>(
     data: RequestBuilderData<TFetchResult, TResult>,
-    key: (builder: TKeyBuilder, params: Params<TRoot>) => KeySelection<TNewEntityQuery>): RequestBuilderData<TFetchResult, TResult> {
+    key: (builder: TKeyBuilder, params: Params<TRoot>) => KeySelection<TNewEntityQuery>)
+    : RequestBuilderData<TFetchResult, TResult> {
 
-    if (data.state.query.query.length) {
-        throw new Error("You cannot add query components before doing a key lookup");
-    }
-
-    if (!data.state.path.length) {
-        throw new Error("Invalid path");
-    }
 
     if (!data.tools.type.isCollection) {
         throw new Error("Cannot search for a single type by key. You must search a collection instead");
@@ -151,34 +147,52 @@ export function recontextDataForKey<TRoot, TFetchResult, TResult, TNewEntityQuer
         throw new Error("Cannot search a collection of collections by key. You must search a collection instead");
     }
 
-    const [mutableParamDefinitions, paramsBuilder] = params<TRoot>(data.tools.requestTools.uriRoot,
-        data.tools.root, data.tools.schema);
-    const keyResult = key({ keyRaw, key: keyStructured } as any, paramsBuilder);
-    const keyTypes = tryFindKeyTypes(data.tools.type.collectionType, data.tools.root.schemaNamespaces);
-    const keyPath = keyResult.raw
-        ? { value: keyResult.key, appendToLatest: keyResult.key[0] === "(" }
-        : keyExpr(keyTypes, keyResult.key, keyResult.keyEmbedType, data.tools.root.schemaNamespaces);
+    const collectionType = data.tools.type.collectionType
+    const state = data.state.bind(state => {
 
-    const path = keyPath.appendToLatest
-        ? [
-            ...data.state.path.slice(0, data.state.path.length - 1),
-            `${data.state.path[data.state.path.length - 1]}${keyPath.value}`
-        ]
-        : [
-            ...data.state.path,
-            keyPath.value
-        ]
+        if (state.query.query.length) {
+            throw new Error("You cannot add query components before doing a key lookup");
+        }
+
+        if (!state.path.length) {
+            throw new Error("Invalid path");
+        }
+
+        const [mutableParamDefinitions, paramsBuilder] = params<TRoot>(data.tools.requestTools.uriRoot,
+            data.tools.root, data.tools.schema);
+        const keyResult = key({ keyRaw, key: keyStructured } as any, paramsBuilder);
+        const keyTypes = tryFindKeyTypes(collectionType, data.tools.root.schemaNamespaces);
+        const keyPath = keyResult.raw
+            ? Writer.create({ value: keyResult.key, appendToLatest: keyResult.key[0] === "(" }, [] as [AtParam, ODataTypeRef][])
+            : keyExpr(keyTypes, keyResult.key, keyResult.keyEmbedType, data.tools.root.schemaNamespaces);
+
+        return keyPath
+            .mapAcc(x => QbEmit.maybeZero([mutableParamDefinitions], x))
+            .map(keyPath => {
+
+                const path = keyPath.appendToLatest
+                    ? [
+                        ...state.path.slice(0, state.path.length - 1),
+                        `${state.path[state.path.length - 1]}${keyPath.value}`
+                    ]
+                    : [
+                        ...state.path,
+                        keyPath.value
+                    ]
+
+                return {
+                    ...state,
+                    path
+                }
+            })
+    })
 
     return {
         tools: {
             ...data.tools,
-            type: data.tools.type.collectionType
+            type: collectionType
         },
         entitySet: data.entitySet,
-        state: {
-            ...data.state,
-            mutableDataParams: [...data.state.mutableDataParams, mutableParamDefinitions],
-            path
-        }
+        state
     }
 }

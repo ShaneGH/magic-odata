@@ -145,7 +145,7 @@ export function $filter<TRoot, T, TQuery extends QueryObject<T>>(collection: Que
                             $$output: x.$$output,
                             $$filter: `${x.$$filter}/$filter(${$$filter})`
                         })),
-                    new QbEmit([mutableParamDefinitions])
+                    new QbEmit([mutableParamDefinitions], [])
                 ]
             }))
         .bind(x => x)

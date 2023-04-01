@@ -74,7 +74,6 @@ function combineTools<TFetchResult, TResult>(
 
 function _buildUri<TFetchResult, TResult>(
     data: RequestBuilderData<TFetchResult, TResult>,
-    relativePath: string,
     tools: RequestTools<TFetchResult, TResult>): ODataUriParts {
 
     const buildUri = tools.uriInterceptor || defaultUriInterceptor
@@ -86,35 +85,36 @@ function _buildUri<TFetchResult, TResult>(
         schema: data.tools.schema
     }
 
+    const [state, qbEmit] = data.state.execute()
+
     return {
         uriRoot: tools.uriRoot,
         // if namespace === "", give null instead
         entitySetContainerName: data.entitySet?.containerName || null,
         entitySetName: data.entitySet?.name || null,
-        relativePath: relativePath,
-        query: buildQuery(data.tools.root.schemaNamespaces, buildUri, data.state.query.query, filterEnv, data.state.mutableDataParams, data.state.query.urlEncode)
+        relativePath: state.path.join("/"),
+        query: buildQuery(data.tools.root.schemaNamespaces, buildUri, qbEmit, state.query.query, filterEnv, state.query.urlEncode)
     }
 }
 
 export function buildUri<TFetchResult, TResult>(
-    data: RequestBuilderData<TFetchResult, TResult>,
-    relativePath: string): ODataUriParts {
+    data: RequestBuilderData<TFetchResult, TResult>): ODataUriParts {
 
     const tools = combineTools(data, undefined)
-    return _buildUri(data, relativePath, tools);
+    return _buildUri(data, tools);
 }
 
 export function executeRequest<TFetchResult, TResult>(
     data: RequestBuilderData<TFetchResult, TResult>,
-    relativePath: string,
     overrideRequestTools: Partial<RequestTools<TFetchResult, TResult>> | undefined): TResult {
 
+    const [stateXYX, qbEmit] = data.state.execute()
     const requestTools = combineTools(data, overrideRequestTools)
 
     const uri = requestTools.uriInterceptor!(
-        _buildUri({ ...data, tools: { ...data.tools, requestTools } }, relativePath, requestTools));
+        _buildUri({ ...data, tools: { ...data.tools, requestTools } }, requestTools));
 
-    const acceptHeader = !data.state.accept || data.state.accept === Accept.Json
+    const acceptHeader = !stateXYX.accept || stateXYX.accept === Accept.Json
         ? "application/json"
         : "text/plain"
 
@@ -128,7 +128,7 @@ export function executeRequest<TFetchResult, TResult>(
         ]
     });
 
-    const stringParser = buildStringParser(data.state.accept, requestTools.ignoreWarnings ? acceptHeader : undefined)
+    const stringParser = buildStringParser(stateXYX.accept, requestTools.ignoreWarnings ? acceptHeader : undefined)
     return buildResponseInterceptorChain(data, stringParser, overrideRequestTools)(requestTools.request(uri, init), uri, init)
 }
 

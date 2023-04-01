@@ -1,6 +1,6 @@
 import { ODataComplexType, ODataSingleTypeRef, ODataTypeRef } from "magic-odata-shared";
 import { typeNameString } from "../utils.js";
-import { RequestBuilderData, getDeepTypeRef } from "./utils.js";
+import { RequestBuilderData, getDeepTypeRef, EntityQueryState } from "./utils.js";
 
 
 // https://github.com/ShaneGH/magic-odata/issues/4
@@ -74,18 +74,26 @@ export function recontextDataForCasting<TFetchResult, TResult, TCaster, TNewEnti
     data: RequestBuilderData<TFetchResult, TResult>,
     cast: (caster: TCaster) => CastSelection<TNewEntityQuery>) {
 
-    if (data.state.query.query.length) {
-        throw new Error("You cannot add query components before casting");
-    }
+    const stateXYX = data.state
+        .map(state => {
 
-    const newT = cast(buildCaster(data));
-    const type = getCastingTypeRef(newT.type);
+            if (state.query.query.length) {
+                throw new Error("You cannot add query components before casting");
+            }
 
-    const fullyQualifiedName = typeNameString(type, ".");
-    const path = data.state.path?.length ? [...data.state.path, fullyQualifiedName] : [fullyQualifiedName];
+            const newT = cast(buildCaster(data));
+            const type = getCastingTypeRef(newT.type);
+
+            const fullyQualifiedName = typeNameString(type, ".");
+            const path = state.path?.length ? [...state.path, fullyQualifiedName] : [fullyQualifiedName];
+
+            return [{ ...state, path }, newT.type] as [EntityQueryState, ODataTypeRef]
+        })
+
+    const newTXYX = stateXYX.execute()[0][1]
 
     return {
-        tools: { ...data.tools, type: newT.type },
-        state: { ...data.state, path }
+        tools: { ...data.tools, type: newTXYX },
+        state: stateXYX.map(([x]) => x)
     };
 }

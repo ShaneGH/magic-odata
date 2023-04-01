@@ -259,6 +259,13 @@ public class Program
         wordCount3.Parameter<string>("countThisWord");
         wordCount3.Returns<int>();
 
+        // NOTE: not implemented in controller layer
+        var acceptsGuid = builder
+            .EntityType<Blog>()
+            .Function("AcceptsGuid");
+        acceptsGuid.Parameter<Guid>("theGuid");
+        acceptsGuid.Returns<Guid>();
+
         builder
             .EntityType<Blog>()
             .Collection.Function("Top10BlogsByName")

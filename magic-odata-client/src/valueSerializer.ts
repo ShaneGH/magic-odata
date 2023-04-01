@@ -207,7 +207,6 @@ export function serialize(value: any, type?: ODataTypeRef, serviceConfig?: Dict<
     return Writer.create(asString, [[value, type]])
 }
 
-// eventually will be made private
 export function serialize_legacy(value: any, type?: ODataTypeRef, serviceConfig?: Dict<ODataSchema>, allowJsonForComplexTypes = false): string {
 
     if (value == null) {
@@ -262,7 +261,6 @@ export function serialize_legacy(value: any, type?: ODataTypeRef, serviceConfig?
             case "TimeOfDay": return serializeTime(value);
             case "Date": return serializeDate(value);
             case "DateTimeOffset": return serializeDateTimeOffset(value);
-            case "Duration":
             case "Guid": return value.toString()
             default:
                 console.warn(`Unknown type found when serializing value for filter. `

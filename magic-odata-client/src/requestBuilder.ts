@@ -1,6 +1,6 @@
 import { defaultAccept, EntityQueryState, RequestBuilderData, SchemaTools } from "./entitySet/utils.js";
 import { Utils } from "./query/queryUtils.js";
-import { Query } from "./queryBuilder.js";
+import { QbEmit, Query } from "./queryBuilder.js";
 import { ODataUriParts, RequestTools } from "./entitySet/requestTools.js";
 import { KeySelection, recontextDataForKey } from "./entitySet/selectByKey.js";
 import { recontextDataForRootQuery } from "./entitySet/addQuery.js";
@@ -9,6 +9,7 @@ import { recontextDataForSubPath, SubPathSelection } from "./entitySet/subPath.j
 import { buildUri, executeRequest } from "./entitySet/executeRequest.js";
 import { ODataEntitySet, ODataTypeRef } from "../index.js";
 import { IEntitySet, OperationIsNotPossibleAfterQuery, Params } from "./entitySetInterfaces.js";
+import { Writer } from "./utils.js";
 
 export class RequestBuilder<TRoot, TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSubPath, TFetchResult>
     implements IEntitySet<TRoot, TEntity, TResult, TKeyBuilder, TQueryable, TCaster, TSubPath, TFetchResult> {
@@ -20,21 +21,20 @@ export class RequestBuilder<TRoot, TEntity, TResult, TKeyBuilder, TQueryable, TC
     constructor(
         tools: SchemaTools<TFetchResult, TResult>,
         entitySet: ODataEntitySet | null,
-        state: EntityQueryState | undefined = undefined,
+        state: Writer<EntityQueryState, QbEmit> | undefined = undefined,
         private disableHttp = false) {
 
         this.state = {
             tools,
             entitySet,
-            state: state || {
+            state: state || Writer.create({
                 accept: defaultAccept,
                 path: entitySet ? [entitySet.name] : [],
-                mutableDataParams: [],
                 query: {
                     urlEncode: true,
                     query: []
                 }
-            }
+            }, QbEmit.zero)
         }
     }
 
@@ -78,7 +78,7 @@ export class RequestBuilder<TRoot, TEntity, TResult, TKeyBuilder, TQueryable, TC
             throw new Error("This entity set has http requests disabled");
         }
 
-        return executeRequest(this.state, this.path(), overrideRequestTools)
+        return executeRequest(this.state, overrideRequestTools)
     }
 
     uri(encodeQueryParts?: boolean): ODataUriParts {
@@ -87,27 +87,15 @@ export class RequestBuilder<TRoot, TEntity, TResult, TKeyBuilder, TQueryable, TC
             ? this.state
             : {
                 ...this.state,
-                state: {
-                    ...this.state.state,
+                state: this.state.state.map(state => ({
+                    ...state,
                     query: {
-                        ...this.state.state.query,
+                        ...state.query,
                         urlEncode: encodeQueryParts
                     }
-                }
+                }))
             }
 
-        return buildUri(state, this.path())
-    }
-
-    private path(append?: string[] | string | undefined) {
-
-        let path = this.state.state.path;
-        if (typeof append === "string") {
-            path = [...path, append]
-        } else if (Array.isArray(append)) {
-            path = [...path, ...append]
-        }
-
-        return path.join("/");
+        return buildUri(state)
     }
 }

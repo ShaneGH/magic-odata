@@ -1,4 +1,4 @@
-import { buildPartialQuery, Expand, FilterEnv, Query } from "../queryBuilder.js"
+import { buildPartialQuery, Expand, FilterEnv, QbEmit, Query } from "../queryBuilder.js"
 import { Writer } from "../utils.js";
 import { ParameterDefinition } from "../valueSerializer.js";
 import { PathSegment, QueryCollection, QueryComplexObject, QueryObjectType, reContext } from "./queryComplexObjectBuilder.js"
@@ -57,21 +57,21 @@ function expandRaw(expand: string): Expand {
 
     return {
         $$oDataQueryObjectType: "Expand",
-        $$expand: _ => Writer.create(expand, [])
+        $$expand: _ => Writer.create(expand, QbEmit.zero)
     }
 }
 
 function expandAll(): Expand {
     return {
         $$oDataQueryObjectType: "Expand",
-        $$expand: _ => Writer.create("*", [])
+        $$expand: _ => Writer.create("*", QbEmit.zero)
     }
 }
 
 function expandRef(): Expand {
     return {
         $$oDataQueryObjectType: "Expand",
-        $$expand: _ => Writer.create("*/$ref", [])
+        $$expand: _ => Writer.create("*/$ref", QbEmit.zero)
     }
 }
 
@@ -93,7 +93,7 @@ function _expand<T>(
     return {
         $$oDataQueryObjectType: "Expand",
         $$expand: filterEnv => {
-            const inner = (and && innerBit(filterEnv, obj, and)) || Writer.create(null as string | null, [] as ParameterDefinition[][])
+            const inner = (and && innerBit(filterEnv, obj, and)) || Writer.create(null as string | null, QbEmit.zero)
             return inner.map(inner => {
 
                 const innerExpand = inner && addPath
@@ -153,7 +153,7 @@ function combine(...expansions: Expand[]): Expand {
     return {
         $$oDataQueryObjectType: "Expand",
         $$expand: env => Writer.traverse(expansions
-            .map(x => x.$$expand(env)), [])
+            .map(x => x.$$expand(env)), QbEmit.zero)
             .map(x => x.join(","))
     }
 }

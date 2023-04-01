@@ -21,7 +21,7 @@ function processSubPath(subPath: SubPathSelection<any>): Filter {
     return ReaderWriter.retn<FilterEnv, FilterResult, QbEmit>({
         $$filter: subPath.propertyName,
         $$output: subPath.outputType || rawType
-    }, QbEmit.zero)
+    }, QbEmit.maybeZero(null, subPath.atParamTypes))
 }
 
 export function operableToFilter<T>(op: Operable<T> | QueryCollection<QueryObject<T>, T>): Filter {
@@ -47,7 +47,7 @@ export function operableToFilter<T>(op: Operable<T> | QueryCollection<QueryObjec
                     : pathParts.join("/"),
                 $$output: op.$$oDataQueryMetadata.typeRef
             },
-            QbEmit.zero
+            QbEmit.maybeZero(null, op.$$oDataQueryMetadata.atParamTypeMap)
         ]
     });
 }

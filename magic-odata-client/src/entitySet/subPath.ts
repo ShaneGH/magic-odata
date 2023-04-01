@@ -1,10 +1,11 @@
 import { ODataComplexType, ODataTypeRef, Function as ODataFunction, ODataEntitySet, Dict, ODataSchema, ODataServiceConfig, Function } from "magic-odata-shared";
 import { Params } from "../entitySetInterfaces.js";
-import { asOperable } from "../query/filtering/operable0.js";
-import { serialize_legacy } from "../valueSerializer.js";
+import { QbEmit } from "../queryBuilder.js";
+import { Writer } from "../utils.js";
+import { AtParam, serialize } from "../valueSerializer.js";
 import { params } from "./params.js";
 import { DefaultResponseInterceptor, RequestTools } from "./requestTools.js";
-import { Accept, RequestBuilderData, lookup, tryFindBaseType, tryFindPropertyType, defaultAccept } from "./utils.js";
+import { Accept, RequestBuilderData, lookup, tryFindBaseType, tryFindPropertyType, defaultAccept, EntityQueryState } from "./utils.js";
 
 const $count = {};
 const $value = {};
@@ -44,9 +45,9 @@ function buildSubPathProperties<TFetchResult, TResult, TSubPath>(
     }
 }
 
-export function functionUriBuilder(functionName: string, root: Dict<ODataSchema>, functions: Function[], encodeUri: boolean) {
+export function functionUriBuilder(functionName: string, root: Dict<ODataSchema>, functions: Function[], encodeUri: boolean): (x: any) => SubPathSelection<any> {
 
-    const _serialize: typeof serialize_legacy = (x, y, z) => {
+    const _serialize: typeof serialize = (x, y, z) => {
 
         // TODO: This is a hack. Serializing $$oDataQueryObjectType objects
         // needs to be done within a FilterEnv Reader for the rootContext
@@ -54,17 +55,20 @@ export function functionUriBuilder(functionName: string, root: Dict<ODataSchema>
             && x.$$oDataQueryMetadata
             && Array.isArray(x.$$oDataQueryMetadata.path)) {
 
-            return x.$$oDataQueryMetadata.path.map((x: any) => x?.path).filter((x: any) => !!x).join("/")
+            return Writer.create(x.$$oDataQueryMetadata.path
+                .map((x: any) => x?.path)
+                .filter((x: any) => !!x)
+                .join("/"), [])
         }
 
         return encodeUri
-            ? encodeURIComponent(serialize_legacy(x, y, z, true))
-            : serialize_legacy(x, y, z, true)
+            ? serialize(x, y, z, true).map(encodeURIComponent)
+            : serialize(x, y, z, true)
     }
 
     return (x: any) => {
 
-        const fn = functions.filter(fn => {
+        const fn = functions.find(fn => {
             const argNames = ((x && Object.keys(x)) || [])
             const fnParams = fn.params.filter(x => !x.isBindingParameter)
 
@@ -78,19 +82,24 @@ export function functionUriBuilder(functionName: string, root: Dict<ODataSchema>
             }
 
             return argNames.length === 0
-        })[0]
+        })
 
         if (!fn) {
             throw new Error(`Unknown function args for function ${functionName}(${(x && Object.keys(x)) || ""})`);
         }
 
-        const params = fn.params
-            .filter(x => !x.isBindingParameter)
-            .map(param => `${param.name}=${_serialize(x[param.name], param.type, root)}`)
-            .join(",");
+        const [xs, atParamTypes] = Writer
+            .traverse(fn.params
+                .filter(x => !x.isBindingParameter)
+                .map(param => _serialize(x[param.name], param.type, root)
+                    .map(x => `${param.name}=${x}`)), [])
+            .execute()
 
-        const output: SubPathSelection<any> = { propertyName: `${functionName}(${params})`, outputType: fn.returnType }
-        return output
+        return {
+            propertyName: `${functionName}(${xs.join(",")})`,
+            outputType: fn.returnType,
+            atParamTypes
+        }
     }
 }
 
@@ -108,7 +117,7 @@ function listAllEntityFunctionsGrouped(
     type: ODataComplexType,
     root: Dict<ODataSchema>,
     encodeUri: boolean,
-    includeParent = true): [string, (x: any) => SubPathSelection<any>][] {
+    includeParent = true) {
 
     const groupedFunctions = groupFunctions(listAllEntityFunctionsUngrouped(type, root, includeParent))
     return buildFunctions(groupedFunctions, root, encodeUri)
@@ -118,7 +127,7 @@ function listUnboundFunctionsGrouped(
     root: Dict<ODataSchema>,
     schemaName: string,
     containerName: string,
-    encodeUri: boolean): [string, (x: any) => SubPathSelection<any>][] {
+    encodeUri: boolean) {
 
     const groupedFunctions = groupFunctions(root[schemaName].entityContainers[containerName].unboundFunctions)
     return buildFunctions(groupedFunctions, root, encodeUri)
@@ -140,7 +149,7 @@ function groupFunctions(functions: ODataFunction[]) {
 function listAllEntitySetFunctionsGrouped(
     entitySet: ODataEntitySet,
     root: Dict<ODataSchema>,
-    encodeUri: boolean): [string, (x: any) => SubPathSelection<any>][] {
+    encodeUri: boolean) {
 
     const groupedFunctions = groupFunctions(entitySet.collectionFunctions)
     return buildFunctions(groupedFunctions, root, encodeUri)
@@ -179,59 +188,69 @@ function listAllProperties(
 
 export type SubPathSelection<TNewEntityQuery> = {
     propertyName: string,
-    outputType?: ODataTypeRef
+    outputType?: ODataTypeRef,
+    atParamTypes: [AtParam, ODataTypeRef][]
 }
 
 export function recontextDataForSubPath<TRoot, TFetchResult, TResult, TSubPath, TNewEntityQuery>(
     data: RequestBuilderData<TFetchResult, TResult>,
     subPath: (pathSelector: TSubPath, params: Params<TRoot>) => SubPathSelection<TNewEntityQuery>): RequestBuilderData<TFetchResult, TResult> {
 
-    if (data.state.query.query.length) {
-        throw new Error("You cannot add query components before navigating a sub path");
-    }
+    const stateXYX = data.state
+        .bind(state => {
+            if (state.query.query.length) {
+                throw new Error("You cannot add query components before navigating a sub path");
+            }
 
-    let propType: ODataTypeRef | null = null
-    const [mutableParamDefinitions, paramsBuilder] = params<TRoot>(data.tools.requestTools.uriRoot,
-        data.tools.root, data.tools.schema);
+            let propType: ODataTypeRef | null = null
+            const [mutableParamDefinitions, paramsBuilder] = params<TRoot>(data.tools.requestTools.uriRoot,
+                data.tools.root, data.tools.schema);
 
-    const newT = subPath(buildSubPathProperties(data, data.tools.type, true), paramsBuilder);
-    if (newT === $value) {
-        propType = data.tools.type
-    } else if (newT === $count && data.tools.type.isCollection) {
-        propType = data.tools.type.collectionType
-    } else if (newT.outputType) {
-        propType = newT.outputType
-    } else if (!data.tools.type.isCollection) {
-        propType = tryFindPropertyType(data.tools.type, newT.propertyName, data.tools.root.schemaNamespaces)
-    }
+            const newT = subPath(buildSubPathProperties(data, data.tools.type, true), paramsBuilder)
+            if (newT === $value) {
+                propType = data.tools.type
+            } else if (newT === $count && data.tools.type.isCollection) {
+                propType = data.tools.type.collectionType
+            } else if (newT.outputType) {
+                propType = newT.outputType
+            } else if (!data.tools.type.isCollection) {
+                propType = tryFindPropertyType(data.tools.type, newT.propertyName, data.tools.root.schemaNamespaces)
+            }
 
-    if (!propType) {
-        throw new Error(`Invalid property ${newT.propertyName}`);
-    }
+            if (!propType) {
+                throw new Error(`Invalid property ${newT.propertyName}`);
+            }
 
-    const propName = newT === $value
-        ? "$value"
-        : newT === $count
-            ? "$count"
-            : newT.propertyName
+            const propName = newT === $value
+                ? "$value"
+                : newT === $count
+                    ? "$count"
+                    : newT.propertyName
 
-    const path = data.state.path?.length
-        ? [...data.state.path, propName]
-        : [propName];
+            const path = state.path?.length
+                ? [...state.path, propName]
+                : [propName];
+
+            const atParamTypes = newT.atParamTypes instanceof QbEmit ? newT.atParamTypes : QbEmit.zero
+            return Writer.create([
+                {
+                    ...state,
+                    path,
+                    accept: newT === $value
+                        ? Accept.Raw
+                        : newT === $count
+                            ? Accept.Integer
+                            : state.accept,
+                }, propType] as [EntityQueryState, ODataTypeRef]
+                , atParamTypes.concat(QbEmit.maybeZero([mutableParamDefinitions])))
+        })
+
+    const propTypeXYX = stateXYX.execute()[0][1]
 
     return {
-        tools: { ...data.tools, type: propType },
+        tools: { ...data.tools, type: propTypeXYX },
         entitySet: data.entitySet,
-        state: {
-            ...data.state,
-            path,
-            mutableDataParams: [...data.state.mutableDataParams, mutableParamDefinitions],
-            accept: newT === $value
-                ? Accept.Raw
-                : newT === $count
-                    ? Accept.Integer
-                    : data.state.accept,
-        }
+        state: stateXYX.map(([x]) => x)
     }
 }
 
@@ -252,7 +271,7 @@ export function recontextDataForUnboundFunctions<TRoot, TFetchResult, TResult, T
 
     const functions = listUnboundFunctionsGrouped(data.root.schemaNamespaces, data.schemaName, data.containerName, true)
         .reduce((s, x) => ({ ...s, [x[0]]: x[1] }), {} as any)
-    const newT = subPath(functions, paramsBuilder);
+    const newT = subPath(functions, paramsBuilder)
     if (!newT.outputType) {
         throw new Error(`Invalid property ${newT.propertyName}`);
     }
@@ -266,14 +285,13 @@ export function recontextDataForUnboundFunctions<TRoot, TFetchResult, TResult, T
             root: data.root
         },
         entitySet: null,
-        state: {
+        state: Writer.create({
             path: [newT.propertyName],
             accept: defaultAccept,
-            mutableDataParams: [mutableParamDefinitions],
             query: {
                 query: [],
                 urlEncode: true
             }
-        }
+        }, QbEmit.maybeZero([mutableParamDefinitions], newT.atParamTypes))
     }
 }

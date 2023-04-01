@@ -12,7 +12,7 @@ export function typeRefString(type: ODataTypeRef, delimiter = "/"): string {
 }
 
 export class Reader<TEnv, T> {
-    private constructor(private _func: (env: TEnv) => T) { }
+    private constructor(public readonly apply: (env: TEnv) => T) { }
 
     map<T1>(f: (env: T) => T1) {
         return new Reader<TEnv, T1>(env => f(this.apply(env)))
@@ -24,10 +24,6 @@ export class Reader<TEnv, T> {
 
     bind<T1>(f: (env: T) => Reader<TEnv, T1>) {
         return new Reader<TEnv, T1>(env => f(this.apply(env)).apply(env))
-    }
-
-    apply(env: TEnv) {
-        return this._func(env);
     }
 
     static create<TEnv, T>(f: (env: TEnv) => T) {
@@ -47,7 +43,7 @@ export class Reader<TEnv, T> {
 
 export class Writer<T, TSemigroup extends { concat: (x: TSemigroup) => TSemigroup }> {
 
-    constructor(private _result: T, private _writer: TSemigroup) { }
+    constructor(private readonly _result: T, private readonly _writer: TSemigroup) { }
 
     map<T1>(f: (x: T) => T1) {
         return new Writer<T1, TSemigroup>(
@@ -57,6 +53,11 @@ export class Writer<T, TSemigroup extends { concat: (x: TSemigroup) => TSemigrou
     mapAcc<TSemigroup1 extends { concat: (x: TSemigroup1) => TSemigroup1 }>(f: (x: TSemigroup) => TSemigroup1) {
         const [x, acc] = this.execute()
         return Writer.create<T, TSemigroup1>(x, f(acc))
+    }
+
+    tap(f: (result: T, writer: TSemigroup) => void) {
+        f(this._result, this._writer)
+        return this
     }
 
     bind<T1>(f: (x: T) => [T1, TSemigroup] | Writer<T1, TSemigroup>) {
@@ -93,7 +94,7 @@ export class Writer<T, TSemigroup extends { concat: (x: TSemigroup) => TSemigrou
 }
 
 export class ReaderWriter<TEnv, T, TSemigroup extends { concat: (x: TSemigroup) => TSemigroup }> {
-    private constructor(private readonly _f: (env: TEnv) => [T, TSemigroup]) { }
+    private constructor(public readonly execute: (env: TEnv) => [T, TSemigroup]) { }
 
     public static create<TEnv, T, TSemigroup extends { concat: (x: TSemigroup) => TSemigroup }>(f: (env: TEnv) => [T, TSemigroup]) {
         return new ReaderWriter<TEnv, T, TSemigroup>(f)
@@ -103,10 +104,6 @@ export class ReaderWriter<TEnv, T, TSemigroup extends { concat: (x: TSemigroup) 
     public static retn<T, TSemigroup extends { concat: (x: TSemigroup) => TSemigroup }>(data: T, zero: TSemigroup): ReaderWriter<any, T, TSemigroup>;
     public static retn<T, TSemigroup extends { concat: (x: TSemigroup) => TSemigroup }>(data: T, zero: TSemigroup): ReaderWriter<any, T, TSemigroup> {
         return new ReaderWriter<any, T, TSemigroup>(_ => [data, zero])
-    }
-
-    execute(env: TEnv) {
-        return this._f(env)
     }
 
     map<T1>(f: (x: T) => T1) {

@@ -291,6 +291,49 @@ describe("function calls", () => {
             expect(uri.query["@x"]).toBe("true")
         });
 
+        it("Serializes param values correctly when resolved from function input", () => {
+
+            const uri = oDataClient.Blogs
+                .withQuery((x, { $filter: { and, eq } }, params) =>
+                    and(
+                        eq(x.Id, "123"),
+                        eq(x.AcceptsGuid({ theGuid: params.createConst("x", "guid value 1") }), "guid value 2")))
+                .uri(false);
+
+            expect(uri.query["$filter"]).toBe("Id eq '123' and AcceptsGuid(theGuid=@x) eq guid value 2")
+            expect(uri.query["@x"]).toBe("guid value 1")
+        });
+
+        it("Serializes param values correctly when resolved from function input within a collection", () => {
+
+            const uri = oDataClient.Users
+                .withQuery((x, { $filter: { and, eq, $filter, count } }, params) =>
+                    and(
+                        eq(x.Id, "123"),
+                        eq(
+                            count(
+                                $filter(x.Blogs, b => eq(b.AcceptsGuid({ theGuid: params.createConst("x", "guid value 1") }), "guid value 2"))),
+                            4)))
+                .uri(false);
+
+            expect(uri.query["$filter"]).toBe("Id eq '123' and AcceptsGuid(theGuid=@x) eq guid value 2 ###")
+            expect(uri.query["@x"]).toBe("guid value 1")
+        });
+
+        it("Serializes param values correctly when resolved from function input within an expand and filter", () => {
+
+            const uri = oDataClient.Users
+                .withQuery((x, { $expand: { expand }, $filter: { and, eq } }, params) => [
+                    expand(x.Blogs, blog => and(
+                        eq(blog.Id, "123"),
+                        eq(blog.AcceptsGuid({ theGuid: params.createConst("x", "guid value 1") }), "guid value 2"))),
+                ])
+                .uri(false);
+
+            expect(uri.query["$expand"]).toBe("Blogs($filter=Id eq '123' and AcceptsGuid(theGuid=@x) eq guid value 2)")
+            expect(uri.query["@x"]).toBe("guid value 1")
+        });
+
         // https://github.com/ShaneGH/magic-odata/issues/72
         // it("Should call unbound function", () => {
 

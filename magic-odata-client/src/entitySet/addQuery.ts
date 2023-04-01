@@ -1,6 +1,6 @@
 import { Dict, ODataComplexType, ODataEnum, ODataSchema, ODataTypeName } from "magic-odata-shared";
 import { Utils, utils as queryUtils } from "../query/queryUtils.js";
-import { Query } from "../queryBuilder.js";
+import { QbEmit, Query } from "../queryBuilder.js";
 import { buildComplexTypeRef, QueryComplexObject, QueryEnum, QueryObjectType, QueryPrimitive } from "../query/queryComplexObjectBuilder.js";
 import { RequestBuilderData, getDeepTypeRef, lookup } from "./utils.js";
 import { Params } from "../entitySetInterfaces.js";
@@ -25,7 +25,8 @@ function executePrimitiveQueryBuilder<TRoot, TEntity, TQuery>(
             },
             queryAliases: {},
             rootContext,
-            path: []
+            path: [],
+            atParamTypeMap: []
         }
     };
 
@@ -60,7 +61,8 @@ function executeEnumQueryBuilder<TRoot, TEntity, TQuery>(
                 name: type.name
             },
             queryAliases: {},
-            path: []
+            path: [],
+            atParamTypeMap: []
         }
     };
 
@@ -89,30 +91,34 @@ export function recontextDataForRootQuery<TRoot, TFetchResult, TResult, TQueryab
     queryBuilder: (entity: TQueryable, utils: Utils<TRoot>, params: Params<TRoot>) => Query | Query[],
     urlEncode?: boolean): RequestBuilderData<TFetchResult, TResult> {
 
-    if (data.state.query.query.length) {
-        throw new Error("This request already has a query");
-    }
+    const state = data.state.bind(state => {
 
-    const typeRef = getDeepTypeRef(data.tools.type);
-    if (typeRef.collectionDepth > 1) {
-        throw new Error("Querying of collections of collections is not supported");
-    }
+        if (state.query.query.length) {
+            throw new Error("This request already has a query");
+        }
 
-    const [mutableParamDefinitions, paramsBuilder] = params<TRoot>(
-        data.tools.requestTools.uriRoot, data.tools.root, data.tools.schema);
-    const t = lookup(typeRef, data.tools.root.schemaNamespaces)
-    const query = executeQueryBuilder(t.type, data.tools.root.schemaNamespaces, queryBuilder, "$it", paramsBuilder)
+        const typeRef = getDeepTypeRef(data.tools.type);
+        if (typeRef.collectionDepth > 1) {
+            throw new Error("Querying of collections of collections is not supported");
+        }
 
-    return {
-        tools: data.tools,
-        entitySet: data.entitySet,
-        state: {
-            ...data.state,
-            mutableDataParams: [...data.state.mutableDataParams, mutableParamDefinitions],
+        const [mutableParamDefinitions, paramsBuilder] = params<TRoot>(
+            data.tools.requestTools.uriRoot, data.tools.root, data.tools.schema);
+        const t = lookup(typeRef, data.tools.root.schemaNamespaces)
+        const query = executeQueryBuilder(t.type, data.tools.root.schemaNamespaces, queryBuilder, "$it", paramsBuilder)
+
+        return [{
+            ...state,
             query: {
                 query: Array.isArray(query) ? query : [query],
                 urlEncode: urlEncode == undefined ? true : urlEncode
             }
-        }
-    };
+        }, QbEmit.maybeZero([mutableParamDefinitions])];
+    })
+
+    return {
+        tools: data.tools,
+        entitySet: data.entitySet,
+        state
+    }
 }

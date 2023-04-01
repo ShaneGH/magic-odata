@@ -1,6 +1,6 @@
 import { buildQuery, ODataUriParts, Query, QueryComplexObject } from "magic-odata-client";
 import { buildComplexTypeRef } from "magic-odata-client/dist/src/query/queryComplexObjectBuilder.js";
-import { FilterEnv } from "magic-odata-client/dist/src/queryBuilder.js";
+import { FilterEnv, QbEmit } from "magic-odata-client/dist/src/queryBuilder.js";
 import { ODataClient, rootConfigExporter } from "../generatedCode.js";
 
 export const oDataClient = new ODataClient({
@@ -46,7 +46,9 @@ export function queryBuilder<T>(fullName: string, q: (x: QueryComplexObject<T>) 
         schema: rootConfig.schemaNamespaces[namespace]
     }
 
-    return buildQuery(rootConfig.schemaNamespaces, defaultUriInterceptor, q(typeRef), env, [], false)
+    // TODO:
+    const qbEmit = QbEmit.zero
+    return buildQuery(rootConfig.schemaNamespaces, defaultUriInterceptor, qbEmit, q(typeRef), env, false)
 }
 
 // copied from magic-odata-client\src\entitySet\executeRequest.ts

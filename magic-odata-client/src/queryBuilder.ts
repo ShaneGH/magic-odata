@@ -2,7 +2,7 @@ import { ODataSchema, ODataServiceConfig, ODataTypeRef } from "magic-odata-share
 import { ODataUriParts } from "./entitySet/requestTools.js";
 import { NonNumericTypes, resolveOutputType } from "./query/filtering/queryPrimitiveTypes0.js";
 import { groupBy, mapDict, ReaderWriter, removeNulls, Writer } from "./utils.js";
-import { ParameterDefinition, serialize_legacy } from "./valueSerializer.js";
+import { AtParam, ParameterDefinition, serialize } from "./valueSerializer.js";
 
 type Dict<T> = { [key: string]: T }
 
@@ -30,7 +30,7 @@ export type Count = {
     $$oDataQueryObjectType: "Count"
 }
 
-export type ExpandResult = Writer<string, ParameterDefinition[][]>
+export type ExpandResult = Writer<string, QbEmit>
 
 export type Expand = {
     $$oDataQueryObjectType: "Expand"
@@ -74,18 +74,30 @@ export type FilterEnv = {
 }
 
 export class QbEmit {
-    static readonly zero = new QbEmit([])
+    static readonly zero = new QbEmit([], [])
 
     /** @param params: the inner list might mutate */
-    constructor(public readonly params: ParameterDefinition[][]) {
+    constructor(
+        public readonly params: ParameterDefinition[][],
+        public readonly paramTypes: [AtParam, ODataTypeRef][]) {
 
+    }
+
+    static maybeZero(params?: ParameterDefinition[][] | null, paramTypes?: [AtParam, ODataTypeRef][]) {
+        if (params?.length || paramTypes?.length) {
+            return new QbEmit(params || [], paramTypes || [])
+        }
+
+        return QbEmit.zero
     }
 
     concat(other: QbEmit) {
         if (this === QbEmit.zero) return other
         if (other === QbEmit.zero) return this
 
-        return new QbEmit(this.params.concat(other.params))
+        return new QbEmit(
+            this.params.concat(other.params),
+            this.paramTypes.concat(other.paramTypes))
     }
 }
 
@@ -93,7 +105,7 @@ export type Filter = ReaderWriter<FilterEnv, FilterResult, QbEmit>
 
 export type Query = Top | Skip | Count | Expand | OrderBy | Select | Filter | Custom | Search
 
-type QueryAccumulator = Writer<Dict<string>, ParameterDefinition[][]>
+type QueryAccumulator = Writer<Dict<string>, QbEmit>
 
 function maybeAdd(encode: boolean, s: QueryAccumulator, stateProp: string, inputProp: string | undefined,
     errorMessage: string): QueryAccumulator {
@@ -137,7 +149,6 @@ export function buildPartialQuery(q: Query | Query[], filterEnv: FilterEnv, enco
             if (x instanceof ReaderWriter) {
                 return x
                     .asWriter(filterEnv)
-                    .mapAcc(x => x.params)
                     .bind(applied => maybeAdd(encode, s, "$filter", applied.$$filter,
                         "Multiple expansions detected. Combine multipe expansions with the $filter.and or $filter.or utils"))
             }
@@ -174,46 +185,68 @@ export function buildPartialQuery(q: Query | Query[], filterEnv: FilterEnv, enco
             }
 
             return maybeAdd(encode, s, "$skip", x.$$skip.toString(), "Multiple skip clauses detected");
-        }, Writer.create<Dict<string>, ParameterDefinition[][]>({}, []));
+        }, Writer.create<Dict<string>, QbEmit>({}, QbEmit.zero));
 }
 
-export function buildQuery(types: Dict<ODataSchema>, buildUri: BuildUri, q: Query | Query[], filterEnv: FilterEnv, mutableDataParams: ParameterDefinition[][], encode = true): Dict<string> {
+export function buildQuery(types: Dict<ODataSchema>, buildUri: BuildUri,
+    qbEmit: QbEmit, q: Query | Query[], filterEnv: FilterEnv, encode = true): Dict<string> {
 
     const pq = buildPartialQuery(q, filterEnv, encode)
-        .bind(x => Writer.create(x, mutableDataParams))
+        .bind(x => Writer.create(x, qbEmit))
 
     return merge(types, buildUri, pq, encode)
 }
 
+function appendTypes(dataParams: ParameterDefinition[], paramTypeResolutions: [AtParam, ODataTypeRef][]) {
+    return dataParams
+        .map(x => {
+            if (x.type !== "Const" || x.data.paramType) return x
+
+            const t = paramTypeResolutions.find(m => m[0].name === x.data.name)
+            if (!t) return x
+
+            return {
+                ...x,
+                data: {
+                    ...x.data,
+                    paramType: t[1]
+                }
+            }
+        })
+}
+
 const stringT = resolveOutputType(NonNumericTypes.String)
 
-function merge(types: Dict<ODataSchema>, buildUri: BuildUri, acc: QueryAccumulator, encode: boolean): Dict<string> {
+function merge(types: Dict<ODataSchema>, buildUri: BuildUri,
+    acc: QueryAccumulator, encode: boolean): Dict<string> {
     const [params, _dataParams] = acc.execute()
 
-    // once the partial query is built, mutableDataParams **should** be finished mutating
-    const dataParams = _dataParams.reduce((s, x) => [...s, ...x], [])
+    let dataParams = appendTypes(_dataParams.params.reduce((s, x) => [...s, ...x], []), _dataParams.paramTypes)
     verifyAllParamsAreDefined(dataParams)
 
     const stringify = encode
         ? (x: any) => encodeURIComponent(JSON.stringify(x))
         : (x: any) => JSON.stringify(x)
 
-    const _serialize: typeof serialize_legacy = encode
-        ? (x, y, z) => encodeURIComponent(serialize_legacy(x, y, z))
-        : (x, y, z) => serialize_legacy(x, y, z)
+    const _serialize: typeof serialize = encode
+        ? (x, y, z) => serialize(x, y, z, true).map(encodeURIComponent)
+        : (x, y, z) => serialize(x, y, z, true)
 
     const serializedDataParams = removeNulls(dataParams
         .map(d => d.type === "Const"
             ? {
                 k: d.data.name,
                 v: d.data.paramType
-                    ? _serialize(d.data.value, d.data.paramType, types)
+                    ? _serialize(d.data.value, d.data.paramType, types).execute()[0]
                     : typeof d.data.value === "string"
-                        ? _serialize(d.data.value, stringT, types)
+                        ? _serialize(d.data.value, stringT, types).execute()[0]
                         : stringify(d.data.value)
             }
             : d.type === "Ref"
-                ? { k: d.data.name, v: stringify({ "@odata.id": buildUri(d.data.uri.uri(false)) }) }
+                ? {
+                    k: d.data.name,
+                    v: stringify({ "@odata.id": buildUri(d.data.uri.uri(false)) })
+                }
                 : null))
 
     const newParamsDict = mapDict(
