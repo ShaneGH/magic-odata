@@ -236,10 +236,10 @@ return entitySet.subPath(selector)`
         const ths = hasThisContext ? "this." : ""
         const instanceType = httpClientType(generics, false);
         const entitySetArg = `${keywords.toODataEntitySet}("${entitySet.namespace || ""}", "${entitySet.containerName || ""}", "${entitySet.name}")`
+        const entitySetType = `${keywords.toODataTypeRef}(${!entitySet.isSingleton}, "${entitySet.forType.namespace || ""}", "${entitySet.forType.name}")`
         const constructorArgs = {
             requestTools: `${ths}${keywords._httpClientArgs}`,
             defaultResponseInterceptor: keywords.responseParser,
-            type: `${keywords.toODataTypeRef}(${!entitySet.isSingleton}, "${entitySet.forType.namespace || ""}", "${entitySet.forType.name}")`,
             schema: `${keywords.toODataSchema}("${entitySet.namespace || ""}")`,
             root: keywords.rootConfig
         } as any
@@ -255,7 +255,7 @@ return entitySet.subPath(selector)`
 
 ${tab(args)}
 
-${tab(`return new ${instanceType}(args, ${entitySetArg});`)}
+${tab(`return new ${instanceType}(args, ${entitySetArg}, ${entitySetType});`)}
 }`
     }
 

@@ -1,19 +1,18 @@
 import { Dict, ODataComplexType, ODataEntitySet, ODataEnum, ODataSchema, ODataServiceConfig, ODataTypeName, ODataTypeRef } from "magic-odata-shared"
 import { QbEmit, Query } from "../queryBuilder.js"
 import { typeNameString, Writer } from "../utils.js"
-import { AtParam, ParameterDefinition } from "../valueSerializer.js"
 import { DefaultResponseInterceptor, RequestTools } from "./requestTools.js"
 
 export type RequestBuilderData<TFetchResult, TResult> = {
     tools: SchemaTools<TFetchResult, TResult>
     entitySet: ODataEntitySet | null
+    // NOTE: see comment in getOutputType() method if changing this type
     state: Writer<EntityQueryState, QbEmit>
 }
 
 export type SchemaTools<TFetchResult, TResult> = {
     requestTools: RequestTools<TFetchResult, TResult>,
     defaultResponseInterceptor: DefaultResponseInterceptor<TFetchResult, TResult>,
-    type: ODataTypeRef,
     root: ODataServiceConfig
     schema: ODataSchema
 }
@@ -29,6 +28,7 @@ export const defaultAccept = Accept.Json
 export type EntityQueryState = {
     path: string[]
     accept: Accept
+    type: ODataTypeRef,
     query: {
         query: Query[]
         urlEncode: boolean

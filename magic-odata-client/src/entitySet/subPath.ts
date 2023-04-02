@@ -194,9 +194,9 @@ export type SubPathSelection<TNewEntityQuery> = {
 
 export function recontextDataForSubPath<TRoot, TFetchResult, TResult, TSubPath, TNewEntityQuery>(
     data: RequestBuilderData<TFetchResult, TResult>,
-    subPath: (pathSelector: TSubPath, params: Params<TRoot>) => SubPathSelection<TNewEntityQuery>): RequestBuilderData<TFetchResult, TResult> {
+    subPath: (pathSelector: TSubPath, params: Params<TRoot>) => SubPathSelection<TNewEntityQuery>): Writer<EntityQueryState, QbEmit> {
 
-    const stateXYX = data.state
+    return data.state
         .bind(state => {
             if (state.query.query.length) {
                 throw new Error("You cannot add query components before navigating a sub path");
@@ -206,15 +206,15 @@ export function recontextDataForSubPath<TRoot, TFetchResult, TResult, TSubPath, 
             const [mutableParamDefinitions, paramsBuilder] = params<TRoot>(data.tools.requestTools.uriRoot,
                 data.tools.root, data.tools.schema);
 
-            const newT = subPath(buildSubPathProperties(data, data.tools.type, true), paramsBuilder)
+            const newT = subPath(buildSubPathProperties(data, state.type, true), paramsBuilder)
             if (newT === $value) {
-                propType = data.tools.type
-            } else if (newT === $count && data.tools.type.isCollection) {
-                propType = data.tools.type.collectionType
+                propType = state.type
+            } else if (newT === $count && state.type.isCollection) {
+                propType = state.type.collectionType
             } else if (newT.outputType) {
                 propType = newT.outputType
-            } else if (!data.tools.type.isCollection) {
-                propType = tryFindPropertyType(data.tools.type, newT.propertyName, data.tools.root.schemaNamespaces)
+            } else if (!state.type.isCollection) {
+                propType = tryFindPropertyType(state.type, newT.propertyName, data.tools.root.schemaNamespaces)
             }
 
             if (!propType) {
@@ -232,26 +232,19 @@ export function recontextDataForSubPath<TRoot, TFetchResult, TResult, TSubPath, 
                 : [propName];
 
             const atParamTypes = newT.atParamTypes instanceof QbEmit ? newT.atParamTypes : QbEmit.zero
-            return Writer.create([
+            return Writer.create(
                 {
                     ...state,
                     path,
+                    type: propType,
                     accept: newT === $value
                         ? Accept.Raw
                         : newT === $count
                             ? Accept.Integer
                             : state.accept,
-                }, propType] as [EntityQueryState, ODataTypeRef]
+                }
                 , atParamTypes.concat(QbEmit.maybeZero([mutableParamDefinitions])))
         })
-
-    const propTypeXYX = stateXYX.execute()[0][1]
-
-    return {
-        tools: { ...data.tools, type: propTypeXYX },
-        entitySet: data.entitySet,
-        state: stateXYX.map(([x]) => x)
-    }
 }
 
 export type UnboundFunctionSetTools<TFetchResult, TResult> = {
@@ -264,7 +257,7 @@ export type UnboundFunctionSetTools<TFetchResult, TResult> = {
 
 export function recontextDataForUnboundFunctions<TRoot, TFetchResult, TResult, TSubPath, TNewEntityQuery>(
     data: UnboundFunctionSetTools<TFetchResult, TResult>,
-    subPath: (pathSelector: TSubPath, params: Params<TRoot>) => SubPathSelection<TNewEntityQuery>): RequestBuilderData<TFetchResult, TResult> {
+    subPath: (pathSelector: TSubPath, params: Params<TRoot>) => SubPathSelection<TNewEntityQuery>): Writer<EntityQueryState, QbEmit> {
 
     const [mutableParamDefinitions, paramsBuilder] = params<TRoot>(data.requestTools.uriRoot,
         data.root, data.root.schemaNamespaces[data.schemaName]);
@@ -276,22 +269,13 @@ export function recontextDataForUnboundFunctions<TRoot, TFetchResult, TResult, T
         throw new Error(`Invalid property ${newT.propertyName}`);
     }
 
-    return {
-        tools: {
-            requestTools: data.requestTools,
-            defaultResponseInterceptor: data.defaultResponseInterceptor,
-            type: newT.outputType,
-            schema: data.root.schemaNamespaces[data.schemaName],
-            root: data.root
-        },
-        entitySet: null,
-        state: Writer.create({
-            path: [newT.propertyName],
-            accept: defaultAccept,
-            query: {
-                query: [],
-                urlEncode: true
-            }
-        }, QbEmit.maybeZero([mutableParamDefinitions], newT.atParamTypes))
-    }
+    return Writer.create({
+        path: [newT.propertyName],
+        accept: defaultAccept,
+        type: newT.outputType,
+        query: {
+            query: [],
+            urlEncode: true
+        }
+    }, QbEmit.maybeZero([mutableParamDefinitions], newT.atParamTypes))
 }

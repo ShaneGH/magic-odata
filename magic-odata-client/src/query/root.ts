@@ -1,4 +1,4 @@
-import { Dict, ODataEntitySet, ODataSchema, ODataServiceConfig } from "magic-odata-shared";
+import { Dict, ODataEntitySet, ODataSchema, ODataServiceConfig, ODataTypeRef } from "magic-odata-shared";
 import { RequestBuilder } from "../requestBuilder.js";
 import { SchemaTools } from "../entitySet/utils.js";
 import { IUriBuilder } from "../entitySetInterfaces.js";
@@ -139,15 +139,16 @@ function methodsForEntitySetNamespace(
                     throw new Error("Unexpected error");
                 }
 
+                const type: ODataTypeRef = entitySets[key].isSingleton
+                    ? entitySets[key].forType
+                    : { isCollection: true, collectionType: entitySets[key].forType }
+
                 const tools: SchemaTools<any, any> = {
                     requestTools: {
                         request() { throw new Error("This entity set has http requests disabled") },
                         uriRoot: uriRoot
                     },
                     defaultResponseInterceptor: () => { throw new Error("This entity set has http requests disabled") },
-                    type: entitySets[key].isSingleton
-                        ? entitySets[key].forType
-                        : { isCollection: true, collectionType: entitySets[key].forType },
                     schema,
                     root: serviceConfig
                 }
@@ -158,7 +159,7 @@ function methodsForEntitySetNamespace(
                         ...s.data,
                         [key]: {
                             t: "EntitySet",
-                            data: new RequestBuilder<any, any, any, any, any, any, any, any>(tools, entitySets[key], undefined, true)
+                            data: new RequestBuilder<any, any, any, any, any, any, any, any>(tools, entitySets[key], type, undefined, true)
                         }
                     }
                 }

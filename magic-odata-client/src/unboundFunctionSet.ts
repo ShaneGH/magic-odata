@@ -11,7 +11,14 @@ export class UnboundFunctionSet<TRoot, TSubPath, TFetchResult> {
 
     subPath<TNewEntityQuery>(
         selector: (entity: TSubPath, params: Params<TRoot>) => SubPathSelection<TNewEntityQuery>): TNewEntityQuery {
-        const { state, tools } = recontextDataForUnboundFunctions(this.tools, selector)
-        return new RequestBuilder<TRoot, any, any, any, any, any, any, any>(tools, null, state, this.disableHttp) as TNewEntityQuery;
+        const state = recontextDataForUnboundFunctions(this.tools, selector)
+        const tools = {
+            requestTools: this.tools.requestTools,
+            defaultResponseInterceptor: this.tools.defaultResponseInterceptor,
+            schema: this.tools.root.schemaNamespaces[this.tools.schemaName],
+            root: this.tools.root
+        }
+
+        return new RequestBuilder<TRoot, any, any, any, any, any, any, any>(tools, null, null, state, this.disableHttp) as TNewEntityQuery;
     }
 }

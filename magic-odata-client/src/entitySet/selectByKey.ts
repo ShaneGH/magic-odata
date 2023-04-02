@@ -4,7 +4,7 @@ import { QbEmit } from "../queryBuilder.js";
 import { typeNameString, Writer } from "../utils.js";
 import { AtParam, serialize } from "../valueSerializer.js";
 import { params } from "./params.js";
-import { RequestBuilderData, lookupComplex, tryFindBaseType, tryFindPropertyType } from "./utils.js";
+import { RequestBuilderData, lookupComplex, tryFindBaseType, tryFindPropertyType, EntityQueryState } from "./utils.js";
 
 /**
  * Specified how to format an entity key in a url
@@ -136,19 +136,18 @@ function keyStructured(key: any, keyEmbedType?: WithKeyType.FunctionCall): KeySe
 export function recontextDataForKey<TRoot, TFetchResult, TResult, TNewEntityQuery, TKeyBuilder>(
     data: RequestBuilderData<TFetchResult, TResult>,
     key: (builder: TKeyBuilder, params: Params<TRoot>) => KeySelection<TNewEntityQuery>)
-    : RequestBuilderData<TFetchResult, TResult> {
+    : Writer<EntityQueryState, QbEmit> {
 
+    return data.state.bind(state => {
+        if (!state.type.isCollection) {
+            throw new Error("Cannot search for a single type by key. You must search a collection instead");
+        }
 
-    if (!data.tools.type.isCollection) {
-        throw new Error("Cannot search for a single type by key. You must search a collection instead");
-    }
+        if (state.type.collectionType.isCollection) {
+            throw new Error("Cannot search a collection of collections by key. You must search a collection instead");
+        }
 
-    if (data.tools.type.collectionType.isCollection) {
-        throw new Error("Cannot search a collection of collections by key. You must search a collection instead");
-    }
-
-    const collectionType = data.tools.type.collectionType
-    const state = data.state.bind(state => {
+        const collectionType = state.type.collectionType
 
         if (state.query.query.length) {
             throw new Error("You cannot add query components before doing a key lookup");
@@ -182,17 +181,9 @@ export function recontextDataForKey<TRoot, TFetchResult, TResult, TNewEntityQuer
 
                 return {
                     ...state,
+                    type: collectionType,
                     path
                 }
             })
     })
-
-    return {
-        tools: {
-            ...data.tools,
-            type: collectionType
-        },
-        entitySet: data.entitySet,
-        state
-    }
 }

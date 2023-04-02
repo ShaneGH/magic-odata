@@ -1,13 +1,14 @@
 import { ODataComplexType, ODataSingleTypeRef, ODataTypeRef } from "magic-odata-shared";
-import { typeNameString } from "../utils.js";
+import { QbEmit } from "../queryBuilder.js";
+import { typeNameString, Writer } from "../utils.js";
 import { RequestBuilderData, getDeepTypeRef, EntityQueryState } from "./utils.js";
 
 
 // https://github.com/ShaneGH/magic-odata/issues/4
 function buildCaster<TFetchResult, TResult, TCaster>(
-    data: RequestBuilderData<TFetchResult, TResult>): TCaster {
+    data: RequestBuilderData<TFetchResult, TResult>, fromType: ODataTypeRef): TCaster {
 
-    const { namespace, name, isCollection } = getCastingTypeRef(data.tools.type);
+    const { namespace, name, isCollection } = getCastingTypeRef(fromType);
 
     const inherits = Object
         .keys(data.tools.root.schemaNamespaces)
@@ -72,28 +73,21 @@ export type CastSelection<TNewEntityQuery> = {
 
 export function recontextDataForCasting<TFetchResult, TResult, TCaster, TNewEntityQuery>(
     data: RequestBuilderData<TFetchResult, TResult>,
-    cast: (caster: TCaster) => CastSelection<TNewEntityQuery>) {
+    cast: (caster: TCaster) => CastSelection<TNewEntityQuery>): Writer<EntityQueryState, QbEmit> {
 
-    const stateXYX = data.state
+    return data.state
         .map(state => {
 
             if (state.query.query.length) {
                 throw new Error("You cannot add query components before casting");
             }
 
-            const newT = cast(buildCaster(data));
+            const newT = cast(buildCaster(data, state.type));
             const type = getCastingTypeRef(newT.type);
 
             const fullyQualifiedName = typeNameString(type, ".");
             const path = state.path?.length ? [...state.path, fullyQualifiedName] : [fullyQualifiedName];
 
-            return [{ ...state, path }, newT.type] as [EntityQueryState, ODataTypeRef]
+            return { ...state, path, type: newT.type }
         })
-
-    const newTXYX = stateXYX.execute()[0][1]
-
-    return {
-        tools: { ...data.tools, type: newTXYX },
-        state: stateXYX.map(([x]) => x)
-    };
 }

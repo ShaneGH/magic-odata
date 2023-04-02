@@ -2,9 +2,10 @@ import { Dict, ODataComplexType, ODataEnum, ODataSchema, ODataTypeName } from "m
 import { Utils, utils as queryUtils } from "../query/queryUtils.js";
 import { QbEmit, Query } from "../queryBuilder.js";
 import { buildComplexTypeRef, QueryComplexObject, QueryEnum, QueryObjectType, QueryPrimitive } from "../query/queryComplexObjectBuilder.js";
-import { RequestBuilderData, getDeepTypeRef, lookup } from "./utils.js";
+import { RequestBuilderData, getDeepTypeRef, lookup, EntityQueryState } from "./utils.js";
 import { Params } from "../entitySetInterfaces.js";
 import { params } from "./params.js";
+import { Writer } from "../utils.js";
 
 type ComplexQueryBuilder<TRoot, TEntity, TQuery> = (entity: QueryComplexObject<TEntity>, utils: Utils<TRoot>, params: Params<TRoot>) => TQuery
 type PrimitiveQueryBuilder<TRoot, TEntity, TQuery> = (entity: QueryPrimitive<TEntity>, utils: Utils<TRoot>, params: Params<TRoot>) => TQuery
@@ -89,15 +90,15 @@ export function executeQueryBuilder<TRoot, TQueryable, TQuery>(
 export function recontextDataForRootQuery<TRoot, TFetchResult, TResult, TQueryable>(
     data: RequestBuilderData<TFetchResult, TResult>,
     queryBuilder: (entity: TQueryable, utils: Utils<TRoot>, params: Params<TRoot>) => Query | Query[],
-    urlEncode?: boolean): RequestBuilderData<TFetchResult, TResult> {
+    urlEncode?: boolean): Writer<EntityQueryState, QbEmit> {
 
-    const state = data.state.bind(state => {
+    return data.state.bind(state => {
 
         if (state.query.query.length) {
             throw new Error("This request already has a query");
         }
 
-        const typeRef = getDeepTypeRef(data.tools.type);
+        const typeRef = getDeepTypeRef(state.type);
         if (typeRef.collectionDepth > 1) {
             throw new Error("Querying of collections of collections is not supported");
         }
@@ -115,10 +116,4 @@ export function recontextDataForRootQuery<TRoot, TFetchResult, TResult, TQueryab
             }
         }, QbEmit.maybeZero([mutableParamDefinitions])];
     })
-
-    return {
-        tools: data.tools,
-        entitySet: data.entitySet,
-        state
-    }
 }

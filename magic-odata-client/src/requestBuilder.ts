@@ -21,8 +21,17 @@ export class RequestBuilder<TRoot, TEntity, TResult, TKeyBuilder, TQueryable, TC
     constructor(
         tools: SchemaTools<TFetchResult, TResult>,
         entitySet: ODataEntitySet | null,
+        queryType: ODataTypeRef | null,
         state: Writer<EntityQueryState, QbEmit> | undefined = undefined,
         private disableHttp = false) {
+
+        if (!state && !queryType) {
+            throw new Error("You must specify state or a type");
+        }
+
+        if (state && queryType) {
+            throw new Error("You must specify state or a type, but not both");
+        }
 
         this.state = {
             tools,
@@ -30,6 +39,7 @@ export class RequestBuilder<TRoot, TEntity, TResult, TKeyBuilder, TQueryable, TC
             state: state || Writer.create({
                 accept: defaultAccept,
                 path: entitySet ? [entitySet.name] : [],
+                type: queryType!,
                 query: {
                     urlEncode: true,
                     query: []
@@ -39,35 +49,36 @@ export class RequestBuilder<TRoot, TEntity, TResult, TKeyBuilder, TQueryable, TC
     }
 
     getOutputType(): ODataTypeRef {
-        return this.state.tools.type
+        // NOTE: this is fine if the state is a Writer and not something lazy like a reader
+        return this.state.state.execute()[0].type
     }
 
     withKey<TNewEntityQuery>(key: (builder: TKeyBuilder, params: Params<TRoot>) => KeySelection<TNewEntityQuery>): TNewEntityQuery {
 
-        const { state, tools } = recontextDataForKey(this.state, key)
-        return new RequestBuilder<TRoot, any, any, any, any, any, any, any>(tools, this.state.entitySet, state, this.disableHttp) as TNewEntityQuery;
+        const state = recontextDataForKey(this.state, key)
+        return new RequestBuilder<TRoot, any, any, any, any, any, any, any>(this.state.tools, this.state.entitySet, null, state, this.disableHttp) as TNewEntityQuery;
     }
 
     cast<TNewEntityQuery>(
         cast: (caster: TCaster) => CastSelection<TNewEntityQuery>): TNewEntityQuery {
 
-        const { tools, state } = recontextDataForCasting(this.state, cast)
-        return new RequestBuilder<TRoot, any, any, any, any, any, any, any>(tools, this.state.entitySet, state, this.disableHttp) as TNewEntityQuery;
+        const state = recontextDataForCasting(this.state, cast)
+        return new RequestBuilder<TRoot, any, any, any, any, any, any, any>(this.state.tools, this.state.entitySet, null, state, this.disableHttp) as TNewEntityQuery;
     }
 
     subPath<TNewEntityQuery>(
         selector: (entity: TSubPath, params: Params<TRoot>) => SubPathSelection<TNewEntityQuery>): TNewEntityQuery {
 
-        const { state, tools } = recontextDataForSubPath(this.state, selector)
-        return new RequestBuilder<TRoot, any, any, any, any, any, any, any>(tools, this.state.entitySet, state, this.disableHttp) as TNewEntityQuery;
+        const state = recontextDataForSubPath(this.state, selector)
+        return new RequestBuilder<TRoot, any, any, any, any, any, any, any>(this.state.tools, this.state.entitySet, null, state, this.disableHttp) as TNewEntityQuery;
     }
 
     // https://github.com/ShaneGH/magic-odata/issues/2
     withQuery(queryBuilder: (entity: TQueryable, utils: Utils<TRoot>, params: Params<TRoot>) => Query | Query[], urlEncode?: boolean) {
 
-        const { tools, state } = recontextDataForRootQuery(this.state, queryBuilder, urlEncode)
+        const state = recontextDataForRootQuery(this.state, queryBuilder, urlEncode)
         return new RequestBuilder<TRoot, TEntity, TResult, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, TFetchResult>(
-            tools, this.state.entitySet, state, this.disableHttp);
+            this.state.tools, this.state.entitySet, null, state, this.disableHttp);
     }
 
     get(overrideRequestTools?: Partial<RequestTools<TFetchResult, TResult>>): TResult;
