@@ -424,7 +424,7 @@ public class UsersController : ODataControllerBase<User>
         return new[] { any }.AsQueryable().AsSingleResult();
     }
 
-    [HttpGet("Users({key})/IsType(userType={userProfileType})")]
+    [HttpGet("Users({key})/IsType(userProfileType={userProfileType})")]
     [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
     public SingleResult<bool> IsProfileType([FromODataUri] string key, [FromODataUri] UserProfileType userProfileType)
     {

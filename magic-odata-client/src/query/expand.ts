@@ -1,6 +1,5 @@
 import { buildPartialQuery, Expand, FilterEnv, QbEmit, Query } from "../queryBuilder.js"
 import { Writer } from "../utils.js";
-import { ParameterDefinition } from "../valueSerializer.js";
 import { PathSegment, QueryCollection, QueryComplexObject, QueryObjectType, reContext } from "./queryComplexObjectBuilder.js"
 
 export type ExpandUtils = {

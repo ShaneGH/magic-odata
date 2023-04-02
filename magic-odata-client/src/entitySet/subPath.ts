@@ -98,7 +98,7 @@ export function functionUriBuilder(functionName: string, root: Dict<ODataSchema>
         return {
             propertyName: `${functionName}(${xs.join(",")})`,
             outputType: fn.returnType,
-            atParamTypes
+            qbEmit: QbEmit.maybeZero(atParamTypes)
         }
     }
 }
@@ -189,7 +189,7 @@ function listAllProperties(
 export type SubPathSelection<TNewEntityQuery> = {
     propertyName: string,
     outputType?: ODataTypeRef,
-    atParamTypes: [AtParam, ODataTypeRef][]
+    qbEmit: QbEmit
 }
 
 export function recontextDataForSubPath<TRoot, TFetchResult, TResult, TSubPath, TNewEntityQuery>(
@@ -203,7 +203,7 @@ export function recontextDataForSubPath<TRoot, TFetchResult, TResult, TSubPath, 
             }
 
             let propType: ODataTypeRef | null = null
-            const [mutableParamDefinitions, paramsBuilder] = params<TRoot>(data.tools.requestTools.uriRoot,
+            const paramsBuilder = params<TRoot>(data.tools.requestTools.uriRoot,
                 data.tools.root, data.tools.schema);
 
             const newT = subPath(buildSubPathProperties(data, state.type, true), paramsBuilder)
@@ -231,7 +231,7 @@ export function recontextDataForSubPath<TRoot, TFetchResult, TResult, TSubPath, 
                 ? [...state.path, propName]
                 : [propName];
 
-            const atParamTypes = newT.atParamTypes instanceof QbEmit ? newT.atParamTypes : QbEmit.zero
+            const qbEmit = newT.qbEmit instanceof QbEmit ? newT.qbEmit : QbEmit.zero
             return Writer.create(
                 {
                     ...state,
@@ -243,7 +243,7 @@ export function recontextDataForSubPath<TRoot, TFetchResult, TResult, TSubPath, 
                             ? Accept.Integer
                             : state.accept,
                 }
-                , atParamTypes.concat(QbEmit.maybeZero([mutableParamDefinitions])))
+                , qbEmit)
         })
 }
 
@@ -259,7 +259,7 @@ export function recontextDataForUnboundFunctions<TRoot, TFetchResult, TResult, T
     data: UnboundFunctionSetTools<TFetchResult, TResult>,
     subPath: (pathSelector: TSubPath, params: Params<TRoot>) => SubPathSelection<TNewEntityQuery>): Writer<EntityQueryState, QbEmit> {
 
-    const [mutableParamDefinitions, paramsBuilder] = params<TRoot>(data.requestTools.uriRoot,
+    const paramsBuilder = params<TRoot>(data.requestTools.uriRoot,
         data.root, data.root.schemaNamespaces[data.schemaName]);
 
     const functions = listUnboundFunctionsGrouped(data.root.schemaNamespaces, data.schemaName, data.containerName, true)
@@ -277,5 +277,5 @@ export function recontextDataForUnboundFunctions<TRoot, TFetchResult, TResult, T
             query: [],
             urlEncode: true
         }
-    }, QbEmit.maybeZero([mutableParamDefinitions], newT.atParamTypes))
+    }, newT.qbEmit)
 }

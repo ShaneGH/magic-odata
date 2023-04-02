@@ -306,17 +306,37 @@ describe("function calls", () => {
 
         it("Serializes param values correctly when resolved from function input within a collection", () => {
 
+            let xxx = false
             const uri = oDataClient.Users
                 .withQuery((x, { $filter: { and, eq, $filter, count } }, params) =>
                     and(
                         eq(x.Id, "123"),
                         eq(
                             count(
-                                $filter(x.Blogs, b => eq(b.AcceptsGuid({ theGuid: params.createConst("x", "guid value 1") }), "guid value 2"))),
+                                $filter(x.Blogs, b => {
+                                    if (xxx) throw new Error("####")
+                                    xxx = true
+                                    return eq(b.AcceptsGuid({ theGuid: params.createConst("x", "guid value 1") }), "guid value 2");
+                                })),
                             4)))
                 .uri(false);
 
-            expect(uri.query["$filter"]).toBe("Id eq '123' and AcceptsGuid(theGuid=@x) eq guid value 2 ###")
+            expect(uri.query["$filter"]).toBe("Id eq '123' and Blogs/$filter(AcceptsGuid(theGuid=@x) eq guid value 2)/$count eq 4")
+            expect(uri.query["@x"]).toBe("guid value 1")
+        });
+
+        it("Serializes param values correctly when resolved from function input within a collection (2)", () => {
+
+            const uri = oDataClient.Users
+                .withQuery((x, { $filter: { and, eq, any } }, params) =>
+                    and(
+                        eq(x.Id, "123"),
+                        any(x.Blogs, b => eq(
+                            b.AcceptsGuid({ theGuid: params.createConst("x", "guid value 1") }),
+                            "guid value 2"))))
+                .uri(false);
+
+            expect(uri.query["$filter"]).toBe("Id eq '123' and Blogs/any(b:b/AcceptsGuid(theGuid=@x) eq guid value 2)")
             expect(uri.query["@x"]).toBe("guid value 1")
         });
 

@@ -27,7 +27,7 @@ function executePrimitiveQueryBuilder<TRoot, TEntity, TQuery>(
             queryAliases: {},
             rootContext,
             path: [],
-            atParamTypeMap: []
+            qbEmit: QbEmit.zero
         }
     };
 
@@ -63,7 +63,7 @@ function executeEnumQueryBuilder<TRoot, TEntity, TQuery>(
             },
             queryAliases: {},
             path: [],
-            atParamTypeMap: []
+            qbEmit: QbEmit.zero
         }
     };
 
@@ -103,7 +103,7 @@ export function recontextDataForRootQuery<TRoot, TFetchResult, TResult, TQueryab
             throw new Error("Querying of collections of collections is not supported");
         }
 
-        const [mutableParamDefinitions, paramsBuilder] = params<TRoot>(
+        const paramsBuilder = params<TRoot>(
             data.tools.requestTools.uriRoot, data.tools.root, data.tools.schema);
         const t = lookup(typeRef, data.tools.root.schemaNamespaces)
         const query = executeQueryBuilder(t.type, data.tools.root.schemaNamespaces, queryBuilder, "$it", paramsBuilder)
@@ -114,6 +114,6 @@ export function recontextDataForRootQuery<TRoot, TFetchResult, TResult, TQueryab
                 query: Array.isArray(query) ? query : [query],
                 urlEncode: urlEncode == undefined ? true : urlEncode
             }
-        }, QbEmit.maybeZero([mutableParamDefinitions])];
+        }, QbEmit.zero];
     })
 }

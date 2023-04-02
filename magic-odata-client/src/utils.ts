@@ -11,19 +11,36 @@ export function typeRefString(type: ODataTypeRef, delimiter = "/"): string {
         : typeNameString(type, delimiter)
 }
 
+const nonMemoized = {}
+function memoize<F extends Function>(f: F): F {
+
+    let result = nonMemoized
+    return function () {
+        if (result === nonMemoized) {
+            result = f.apply(null, arguments)
+        }
+
+        return result
+    } as any
+}
+
 export class Reader<TEnv, T> {
-    private constructor(public readonly apply: (env: TEnv) => T) { }
+    private constructor(public readonly execute: (env: TEnv) => T) {
+        // memoization allows using the reader like a cache
+        // which can be passed around and accessed when required
+        this.execute = memoize(execute)
+    }
 
     map<T1>(f: (env: T) => T1) {
-        return new Reader<TEnv, T1>(env => f(this.apply(env)))
+        return new Reader<TEnv, T1>(env => f(this.execute(env)))
     }
 
     mapEnv<TEnv1>(f: (env: TEnv1) => TEnv) {
-        return new Reader<TEnv1, T>(env => this.apply(f(env)))
+        return new Reader<TEnv1, T>(env => this.execute(f(env)))
     }
 
     bind<T1>(f: (env: T) => Reader<TEnv, T1>) {
-        return new Reader<TEnv, T1>(env => f(this.apply(env)).apply(env))
+        return new Reader<TEnv, T1>(env => f(this.execute(env)).execute(env))
     }
 
     static create<TEnv, T>(f: (env: TEnv) => T) {
@@ -37,7 +54,7 @@ export class Reader<TEnv, T> {
     }
 
     static traverse<TEnv, T>(...readers: Reader<TEnv, T>[]) {
-        return new Reader<TEnv, T[]>(env => readers.map(r => r.apply(env)))
+        return new Reader<TEnv, T[]>(env => readers.map(r => r.execute(env)))
     }
 }
 
@@ -94,39 +111,40 @@ export class Writer<T, TSemigroup extends { concat: (x: TSemigroup) => TSemigrou
 }
 
 export class ReaderWriter<TEnv, T, TSemigroup extends { concat: (x: TSemigroup) => TSemigroup }> {
-    private constructor(public readonly execute: (env: TEnv) => [T, TSemigroup]) { }
+
+    public constructor(private readonly reader: Reader<TEnv, Writer<T, TSemigroup>>) { }
 
     public static create<TEnv, T, TSemigroup extends { concat: (x: TSemigroup) => TSemigroup }>(f: (env: TEnv) => [T, TSemigroup]) {
-        return new ReaderWriter<TEnv, T, TSemigroup>(f)
+        return new ReaderWriter<TEnv, T, TSemigroup>(Reader.create(env => Writer.create(...f(env))))
     }
 
     public static retn<TEnv, T, TSemigroup extends { concat: (x: TSemigroup) => TSemigroup }>(data: T, zero: TSemigroup): ReaderWriter<TEnv, T, TSemigroup>;
     public static retn<T, TSemigroup extends { concat: (x: TSemigroup) => TSemigroup }>(data: T, zero: TSemigroup): ReaderWriter<any, T, TSemigroup>;
     public static retn<T, TSemigroup extends { concat: (x: TSemigroup) => TSemigroup }>(data: T, zero: TSemigroup): ReaderWriter<any, T, TSemigroup> {
-        return new ReaderWriter<any, T, TSemigroup>(_ => [data, zero])
+        return new ReaderWriter<any, T, TSemigroup>(Reader.create(_ => Writer.create(data, zero)))
     }
 
-    map<T1>(f: (x: T) => T1) {
-        return new ReaderWriter<TEnv, T1, TSemigroup>(env => {
-            const [x, wr] = this.execute(env)
-            return [f(x), wr]
-        })
+    execute(env: TEnv) {
+        return this.reader.execute(env).execute()
+    }
+
+    map<T1>(f: (x: T) => T1): ReaderWriter<TEnv, T1, TSemigroup> {
+        return new ReaderWriter(this.reader.map(x => x.map(f)))
     }
 
     mapEnv<TEnv1>(f: (env: TEnv1) => TEnv) {
-        return new ReaderWriter<TEnv1, T, TSemigroup>(env => this.execute(f(env)))
+        return ReaderWriter.create<TEnv1, T, TSemigroup>(env => this.execute(f(env)))
     }
 
     bind<T1>(f: (x: T) => ReaderWriter<TEnv, T1, TSemigroup>) {
-        return new ReaderWriter<TEnv, T1, TSemigroup>(env => {
-            const [x, wr1] = this.execute(env)
-            const [y, wr2] = f(x).execute(env)
-            return [y, wr1.concat(wr2)]
-        })
-    }
 
-    asReader() {
-        return Reader.create<TEnv, [T, TSemigroup]>(env => this.execute(env))
+        return ReaderWriter.create<TEnv, T1, TSemigroup>(env => {
+            const [x, wr1] = this.execute(env)
+            return f(x)
+                .asWriter(env)
+                .mapAcc(acc => wr1.concat(acc))
+                .execute()
+        })
     }
 
     asWriter(env: TEnv) {
@@ -134,10 +152,10 @@ export class ReaderWriter<TEnv, T, TSemigroup extends { concat: (x: TSemigroup) 
         return Writer.create(wr, result)
     }
 
-    observe() {
+    observe(message?: any) {
         return ReaderWriter.create<TEnv, T, TSemigroup>(env => {
             const result = this.execute(env)
-            console.log(result)
+            console.log(result, message)
             return result
         })
     }
@@ -182,4 +200,9 @@ export function mapDict<T, T1>(items: Dict<T>, mapper: (x: T) => T1, keyMapper?:
                 [newK]: mapper(items[x])
             }
         }, {} as Dict<T1>)
+}
+
+export function dir<T>(x: T, ...messages: any[]) {
+    console.dir(messages.length ? [x, ...messages] : x, { depth: 100 })
+    return x
 }

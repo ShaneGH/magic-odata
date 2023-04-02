@@ -157,7 +157,7 @@ export function recontextDataForKey<TRoot, TFetchResult, TResult, TNewEntityQuer
             throw new Error("Invalid path");
         }
 
-        const [mutableParamDefinitions, paramsBuilder] = params<TRoot>(data.tools.requestTools.uriRoot,
+        const paramsBuilder = params<TRoot>(data.tools.requestTools.uriRoot,
             data.tools.root, data.tools.schema);
         const keyResult = key({ keyRaw, key: keyStructured } as any, paramsBuilder);
         const keyTypes = tryFindKeyTypes(collectionType, data.tools.root.schemaNamespaces);
@@ -166,7 +166,7 @@ export function recontextDataForKey<TRoot, TFetchResult, TResult, TNewEntityQuer
             : keyExpr(keyTypes, keyResult.key, keyResult.keyEmbedType, data.tools.root.schemaNamespaces);
 
         return keyPath
-            .mapAcc(x => QbEmit.maybeZero([mutableParamDefinitions], x))
+            .mapAcc(QbEmit.maybeZero)
             .map(keyPath => {
 
                 const path = keyPath.appendToLatest

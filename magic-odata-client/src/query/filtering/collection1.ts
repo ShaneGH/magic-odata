@@ -137,7 +137,7 @@ export function $filter<TRoot, T, TQuery extends QueryObject<T>>(collection: Que
                     throw new Error("Collections of collections are not supported");
                 }
 
-                const [mutableParamDefinitions, paramsBuilder] = params<TRoot>(env.rootUri, env.serviceConfig, env.schema);
+                const paramsBuilder = params<TRoot>(env.rootUri, env.serviceConfig, env.schema);
                 return [
                     executeQueryBuilder<TRoot, TQuery, Filter>(x.$$output.collectionType, env.serviceConfig.schemaNamespaces, itemFilter, "$this", paramsBuilder)
                         .mapEnv<FilterEnv>(env => ({ ...env, rootContext: "$this" }))
@@ -145,7 +145,7 @@ export function $filter<TRoot, T, TQuery extends QueryObject<T>>(collection: Que
                             $$output: x.$$output,
                             $$filter: `${x.$$filter}/$filter(${$$filter})`
                         })),
-                    new QbEmit([mutableParamDefinitions], [])
+                    QbEmit.zero
                 ]
             }))
         .bind(x => x)

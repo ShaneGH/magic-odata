@@ -183,31 +183,29 @@ describe("@Params", () => {
             it("Should add param to path (2)", executePath.bind(null, false))
 
             async function executePath(success: boolean) {
-                // https://github.com/ShaneGH/magic-odata/issues/66
-                // const user = await userP
+                const user = await userP
 
-                // const isType = await oDataClient.Users
-                //     .withKey(k => k.key(user.blogUser.Id))
-                //     .subPath((x, params) => x.IsType({
-                //         userType: params.createConst("x", success
-                //             ? My.Odata.Entities.UserType.Admin
-                //             : My.Odata.Entities.UserType.User)
-                //     }))
-                //     .get();
+                const isType = await oDataClient.Users
+                    .withKey(k => k.key(user.blogUser.Id))
+                    .subPath((x, params) => x.IsType({
+                        userType: params.createConst("x", success
+                            ? My.Odata.Entities.UserType.Admin
+                            : My.Odata.Entities.UserType.User)
+                    }))
+                    .get({ request: loggingFetcher });
 
-                // expect(isType.value).toBe(success);
+                expect(isType.value).toBe(success);
             }
 
-            it("Should add param to path (1)", executePathKey.bind(null, My.Odata.Entities.UserType.Admin))
-            it("Should add param to path (2)", executePathKey.bind(null, My.Odata.Entities.UserType.User))
+            it("Should add param to path key (1)", executePathKey.bind(null, My.Odata.Entities.UserType.Admin))
+            it("Should add param to path key (2)", executePathKey.bind(null, My.Odata.Entities.UserType.User))
 
             async function executePathKey(type: My.Odata.Entities.UserType) {
-                // https://github.com/ShaneGH/magic-odata/issues/66
-                // const result = await oDataClient.UserRoles
-                //     .withKey((x, params) => x.key(params.createConst("x", type)))
-                //     .get();
+                const result = await oDataClient.UserRoles
+                    .withKey((x, params) => x.key(params.createConst("x", type)))
+                    .get();
 
-                // expect(result.Key).toBe(type);
+                expect(result.Key).toBe(My.Odata.Entities.UserType[type]);
             }
         })
 

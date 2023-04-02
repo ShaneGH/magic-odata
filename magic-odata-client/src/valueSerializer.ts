@@ -199,7 +199,7 @@ const warnedEnumTypes = {} as { [k: string]: boolean }
 export const rawType: ODataSingleTypeRef = { isCollection: false, namespace: "magic-odata", name: "Raw" }
 
 export function serialize(value: any, type?: ODataTypeRef, serviceConfig?: Dict<ODataSchema>, allowJsonForComplexTypes = false): Writer<string, [AtParam, ODataTypeRef][]> {
-    const asString = serialize_legacy(value, type, serviceConfig, allowJsonForComplexTypes)
+    const asString = serializeToString(value, type, serviceConfig, allowJsonForComplexTypes)
     if (!type || !(value instanceof AtParam)) {
         return Writer.create(asString, [])
     }
@@ -207,7 +207,7 @@ export function serialize(value: any, type?: ODataTypeRef, serviceConfig?: Dict<
     return Writer.create(asString, [[value, type]])
 }
 
-export function serialize_legacy(value: any, type?: ODataTypeRef, serviceConfig?: Dict<ODataSchema>, allowJsonForComplexTypes = false): string {
+function serializeToString(value: any, type?: ODataTypeRef, serviceConfig?: Dict<ODataSchema>, allowJsonForComplexTypes = false): string {
 
     if (value == null) {
         return "null"
@@ -219,7 +219,7 @@ export function serialize_legacy(value: any, type?: ODataTypeRef, serviceConfig?
 
     if (Array.isArray(value)) {
         type = type?.isCollection ? type.collectionType : type
-        return `[${value.map(x => serialize_legacy(x, type, serviceConfig, allowJsonForComplexTypes))}]`
+        return `[${value.map(x => serializeToString(x, type, serviceConfig, allowJsonForComplexTypes))}]`
     }
 
     if (type?.isCollection) {

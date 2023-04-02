@@ -1,8 +1,8 @@
 import { ODataTypeRef } from "magic-odata-shared";
 import { Filter, FilterEnv, FilterResult, QbEmit } from "../../queryBuilder.js";
 import { QueryCollection, QueryEnum, QueryObject, QueryPrimitive } from "../queryComplexObjectBuilder.js";
-import { rawType, serialize_legacy } from "../../valueSerializer.js";
-import { ReaderWriter } from "../../utils.js";
+import { rawType, serialize } from "../../valueSerializer.js";
+import { ReaderWriter, Writer } from "../../utils.js";
 import { SubPathSelection } from "../../entitySet/subPath.js";
 import { IEntitySet } from "../../entitySetInterfaces.js";
 
@@ -21,7 +21,7 @@ function processSubPath(subPath: SubPathSelection<any>): Filter {
     return ReaderWriter.retn<FilterEnv, FilterResult, QbEmit>({
         $$filter: subPath.propertyName,
         $$output: subPath.outputType || rawType
-    }, QbEmit.maybeZero(null, subPath.atParamTypes))
+    }, subPath.qbEmit)
 }
 
 export function operableToFilter<T>(op: Operable<T> | QueryCollection<QueryObject<T>, T>): Filter {
@@ -47,7 +47,7 @@ export function operableToFilter<T>(op: Operable<T> | QueryCollection<QueryObjec
                     : pathParts.join("/"),
                 $$output: op.$$oDataQueryMetadata.typeRef
             },
-            QbEmit.maybeZero(null, op.$$oDataQueryMetadata.atParamTypeMap)
+            op.$$oDataQueryMetadata.qbEmit
         ]
     });
 }
@@ -68,14 +68,15 @@ export function filterize<T>(
 export function valueToFilter<T>(val: Filter | T, typeRef: ODataTypeRef, mapper: ((x: T) => string) | undefined) {
     if (val instanceof ReaderWriter) return val;
 
-    return ReaderWriter.create<FilterEnv, FilterResult, QbEmit>(env => [
-        {
-            $$filter: mapper
-                ? mapper(val)
-                : serialize_legacy(val, typeRef, env.serviceConfig.schemaNamespaces),
-            $$output: typeRef
-        },
-        QbEmit.zero])
+    return ReaderWriter.create<FilterEnv, FilterResult, QbEmit>(env =>
+        (mapper
+            ? Writer.create(mapper(val), QbEmit.zero)
+            : serialize(val, typeRef, env.serviceConfig.schemaNamespaces)
+                .mapAcc(QbEmit.maybeZero))
+            .map($$filter => ({
+                $$filter,
+                $$output: typeRef
+            })).execute())
 }
 
 export function asOperable<T>(x: Operable<T> | T): Filter | null {

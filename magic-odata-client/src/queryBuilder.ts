@@ -1,8 +1,8 @@
 import { ODataSchema, ODataServiceConfig, ODataTypeRef } from "magic-odata-shared";
 import { ODataUriParts } from "./entitySet/requestTools.js";
 import { NonNumericTypes, resolveOutputType } from "./query/filtering/queryPrimitiveTypes0.js";
-import { groupBy, mapDict, ReaderWriter, removeNulls, Writer } from "./utils.js";
-import { AtParam, ParameterDefinition, serialize } from "./valueSerializer.js";
+import { groupBy, ReaderWriter, removeNulls, Writer } from "./utils.js";
+import { AtParam, serialize } from "./valueSerializer.js";
 
 type Dict<T> = { [key: string]: T }
 
@@ -74,18 +74,16 @@ export type FilterEnv = {
 }
 
 export class QbEmit {
-    static readonly zero = new QbEmit([], [])
+    static readonly zero = new QbEmit([])
 
     /** @param params: the inner list might mutate */
     constructor(
-        public readonly params: ParameterDefinition[][],
         public readonly paramTypes: [AtParam, ODataTypeRef][]) {
-
     }
 
-    static maybeZero(params?: ParameterDefinition[][] | null, paramTypes?: [AtParam, ODataTypeRef][]) {
-        if (params?.length || paramTypes?.length) {
-            return new QbEmit(params || [], paramTypes || [])
+    static maybeZero(paramTypes?: [AtParam, ODataTypeRef][]) {
+        if (paramTypes?.length) {
+            return new QbEmit(paramTypes || [])
         }
 
         return QbEmit.zero
@@ -96,7 +94,6 @@ export class QbEmit {
         if (other === QbEmit.zero) return this
 
         return new QbEmit(
-            this.params.concat(other.params),
             this.paramTypes.concat(other.paramTypes))
     }
 }
@@ -123,19 +120,6 @@ function maybeAdd(encode: boolean, s: QueryAccumulator, stateProp: string, input
                 : inputProp
         } : state
     })
-}
-
-function verifyAllParamsAreDefined(allParams: ParameterDefinition[]) {
-    const grouped = groupBy(allParams, x => x.data.name)
-    const notDefined = Object
-        .keys(grouped)
-        .filter(param => grouped[param].every(x => x.type === "Param"))
-        .map(param => `Param ${param} is referenced but not defined`)
-        .join("\n")
-
-    if (notDefined) {
-        throw new Error(`${notDefined}\nUse the "createRef" or "createConst" methods to define a param`)
-    }
 }
 
 export function buildPartialQuery(q: Query | Query[], filterEnv: FilterEnv, encode = true): QueryAccumulator {
@@ -197,32 +181,9 @@ export function buildQuery(types: Dict<ODataSchema>, buildUri: BuildUri,
     return merge(types, buildUri, pq, encode)
 }
 
-function appendTypes(dataParams: ParameterDefinition[], paramTypeResolutions: [AtParam, ODataTypeRef][]) {
-    return dataParams
-        .map(x => {
-            if (x.type !== "Const" || x.data.paramType) return x
-
-            const t = paramTypeResolutions.find(m => m[0].name === x.data.name)
-            if (!t) return x
-
-            return {
-                ...x,
-                data: {
-                    ...x.data,
-                    paramType: t[1]
-                }
-            }
-        })
-}
-
 const stringT = resolveOutputType(NonNumericTypes.String)
 
-function merge(types: Dict<ODataSchema>, buildUri: BuildUri,
-    acc: QueryAccumulator, encode: boolean): Dict<string> {
-    const [params, _dataParams] = acc.execute()
-
-    let dataParams = appendTypes(_dataParams.params.reduce((s, x) => [...s, ...x], []), _dataParams.paramTypes)
-    verifyAllParamsAreDefined(dataParams)
+function processAtParams(qbEmit: QbEmit, encode: boolean, buildUri: BuildUri, types: Dict<ODataSchema>) {
 
     const stringify = encode
         ? (x: any) => encodeURIComponent(JSON.stringify(x))
@@ -232,39 +193,48 @@ function merge(types: Dict<ODataSchema>, buildUri: BuildUri,
         ? (x, y, z) => serialize(x, y, z, true).map(encodeURIComponent)
         : (x, y, z) => serialize(x, y, z, true)
 
-    const serializedDataParams = removeNulls(dataParams
-        .map(d => d.type === "Const"
-            ? {
-                k: d.data.name,
-                v: d.data.paramType
-                    ? _serialize(d.data.value, d.data.paramType, types).execute()[0]
-                    : typeof d.data.value === "string"
-                        ? _serialize(d.data.value, stringT, types).execute()[0]
-                        : stringify(d.data.value)
+    const grouped = groupBy(qbEmit.paramTypes, x => x[0].name)
+    return Object
+        .keys(grouped)
+        .map(name => {
+            const defs = removeNulls(grouped[name]
+                .map(([param, t]) => param.param.type !== "Param"
+                    ? { name: param.name, param: param.param, type: t }
+                    : null))
+
+            if (!defs.length) {
+                throw new Error(`Param ${name} is referenced but not defined`)
             }
-            : d.type === "Ref"
+
+            if (defs.length > 1
+                && defs.reduce((s, x) => s || x.param !== defs[0].param, false)) {
+                throw new Error(`Param ${name} is defined more than once`)
+            }
+
+            const def = defs[0]
+            const t = defs.map(x => x.type)[0]
+            return def.param.type === "Const"
                 ? {
-                    k: d.data.name,
-                    v: stringify({ "@odata.id": buildUri(d.data.uri.uri(false)) })
+                    k: def.name,
+                    v: def.param.data.paramType || t
+                        ? _serialize(def.param.data.value, def.param.data.paramType || t, types).execute()[0]
+                        : typeof def.param.data.value === "string"
+                            ? _serialize(def.param.data.value, stringT, types).execute()[0]
+                            : stringify(def.param.data.value)
                 }
-                : null))
+                : {
+                    k: def.param.data.name,
+                    v: stringify({ "@odata.id": buildUri(def.param.data.uri.uri(false)) })
+                }
+        })
 
-    const newParamsDict = mapDict(
-        groupBy(serializedDataParams, ({ k }) => k), vs => vs.map(({ v }) => v))
+}
 
-    const err = Object
-        .keys(newParamsDict)
-        .map(k => newParamsDict[k].length > 1 || params[k]
-            ? `Data parameter ${k} is defined more than once`
-            : null)
-        .filter(x => !!x)
-        .join("\n")
+function merge(types: Dict<ODataSchema>, buildUri: BuildUri,
+    acc: QueryAccumulator, encode: boolean): Dict<string> {
+    const [params, _dataParams] = acc.execute()
 
-    if (err) {
-        throw new Error(err);
-    }
-
-    return serializedDataParams
+    return processAtParams(_dataParams, encode, buildUri, types)
         .reduce((s, x) => ({
             ...s,
             [x.k]: x.v
