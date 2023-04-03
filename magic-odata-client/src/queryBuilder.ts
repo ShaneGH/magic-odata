@@ -106,12 +106,12 @@ export type Query = Top | Skip | Count | Expand | OrderBy | Select | Filter | Cu
 type QueryAccumulator = Writer<Dict<string>, QbEmit>
 
 function maybeAdd(encode: boolean, s: QueryAccumulator, stateProp: string, inputProp: string | undefined,
-    errorMessage: string): QueryAccumulator {
+    errorMessage = ""): QueryAccumulator {
 
     return s.map(state => {
 
         if (state[stateProp]) {
-            throw new Error(errorMessage)
+            throw new Error(`Multiple ${stateProp} clauses detected` + (errorMessage && `. ${errorMessage}`))
         }
 
         return inputProp ? {
@@ -135,41 +135,41 @@ export function buildPartialQuery(q: Query | Query[], filterEnv: FilterEnv, enco
                 return x
                     .asWriter(filterEnv)
                     .bind(applied => maybeAdd(encode, s, "$filter", applied.$$filter,
-                        "Multiple expansions detected. Combine multipe expansions with the $filter.and or $filter.or utils"))
+                        "Combine multiple filters with the `$filter.and` or `$filter.or` utils"))
             }
 
             if (x.$$oDataQueryObjectType === "Expand") {
                 return x
                     .$$expand(filterEnv)
                     .bind(applied => maybeAdd(encode, s, "$expand", applied,
-                        "Multiple expansions detected. Combine multipe expansions with the $expand.combine util"));
+                        "Combine multiple expansions with the `$expand.combine` util"));
             }
 
             if (x.$$oDataQueryObjectType === "OrderBy") {
-                return maybeAdd(encode, s, "$orderBy", x.$$orderBy, "Multiple order by clauses detected");
+                return maybeAdd(encode, s, "$orderBy", x.$$orderBy);
             }
 
             if (x.$$oDataQueryObjectType === "Select") {
-                return maybeAdd(encode, s, "$select", x.$$select, "Multiple select clauses detected");
+                return maybeAdd(encode, s, "$select", x.$$select);
             }
 
             if (x.$$oDataQueryObjectType === "Custom") {
-                return maybeAdd(encode, s, x.$$key, x.$$value, "Multiple custom clauses detected");
+                return maybeAdd(encode, s, x.$$key, x.$$value);
             }
 
             if (x.$$oDataQueryObjectType === "Search") {
-                return maybeAdd(encode, s, "$search", x.$$search, "Multiple search clauses detected");
+                return maybeAdd(encode, s, "$search", x.$$search);
             }
 
             if (x.$$oDataQueryObjectType === "Top") {
-                return maybeAdd(encode, s, "$top", x.$$top.toString(), "Multiple top clauses detected");
+                return maybeAdd(encode, s, "$top", x.$$top.toString());
             }
 
             if (x.$$oDataQueryObjectType === "Count") {
-                return maybeAdd(encode, s, "$count", "true", "Multiple count clauses detected");
+                return maybeAdd(encode, s, "$count", "true");
             }
 
-            return maybeAdd(encode, s, "$skip", x.$$skip.toString(), "Multiple skip clauses detected");
+            return maybeAdd(encode, s, "$skip", x.$$skip.toString());
         }, Writer.create<Dict<string>, QbEmit>({}, QbEmit.zero));
 }
 
