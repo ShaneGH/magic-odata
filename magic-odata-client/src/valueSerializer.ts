@@ -1,7 +1,8 @@
 import { ComplexTypeOrEnum, Dict, ODataEnum, ODataSchema, ODataSingleTypeRef, ODataTypeRef } from "magic-odata-shared";
 import { ODataDate, ODataDuration, ODataTimeOfDay, ODataDateTimeOffset } from "./edmTypes.js";
 import { IUriBuilder } from "./entitySetInterfaces.js";
-import { typeRefString, Writer } from "./utils.js";
+import { typeNameString, typeRefString, Writer } from "./utils.js";
+import { delimiter } from "path";
 
 export type ParameterDefinition =
     | { type: "Ref", data: { name: string, uri: IUriBuilder } }
@@ -198,8 +199,14 @@ const warnedCollectionTypes = {} as { [k: string]: boolean }
 const warnedEnumTypes = {} as { [k: string]: boolean }
 export const rawType: ODataSingleTypeRef = { isCollection: false, namespace: "magic-odata", name: "Raw" }
 
-export function serialize(value: any, type?: ODataTypeRef, serviceConfig?: Dict<ODataSchema>, allowJsonForComplexTypes = false): Writer<string, [AtParam, ODataTypeRef][]> {
-    const asString = serializeToString(value, type, serviceConfig, allowJsonForComplexTypes)
+export type SerializerSettings = {
+    serviceConfig: Dict<ODataSchema>,
+    allowJsonForComplexTypes?: boolean,
+    shortenEnumNames?: boolean
+}
+
+export function serialize(value: any, type: ODataTypeRef | null | undefined, settings: SerializerSettings): Writer<string, [AtParam, ODataTypeRef][]> {
+    const asString = serializeToString(value, type, settings)
     if (!type || !(value instanceof AtParam)) {
         return Writer.create(asString, [])
     }
@@ -207,7 +214,7 @@ export function serialize(value: any, type?: ODataTypeRef, serviceConfig?: Dict<
     return Writer.create(asString, [[value, type]])
 }
 
-function serializeToString(value: any, type?: ODataTypeRef, serviceConfig?: Dict<ODataSchema>, allowJsonForComplexTypes = false): string {
+function serializeToString(value: any, type: ODataTypeRef | null | undefined, settings: SerializerSettings): string {
 
     if (value == null) {
         return "null"
@@ -219,7 +226,7 @@ function serializeToString(value: any, type?: ODataTypeRef, serviceConfig?: Dict
 
     if (Array.isArray(value)) {
         type = type?.isCollection ? type.collectionType : type
-        return `[${value.map(x => serializeToString(x, type, serviceConfig, allowJsonForComplexTypes))}]`
+        return `[${value.map(x => serializeToString(x, type, settings))}]`
     }
 
     if (type?.isCollection) {
@@ -269,14 +276,15 @@ function serializeToString(value: any, type?: ODataTypeRef, serviceConfig?: Dict
         }
     }
 
-    if (!serviceConfig) {
+    if (!settings.serviceConfig) {
         return basicSerialize(value);
     }
 
+    const serviceConfig = settings.serviceConfig
     const enumType: ComplexTypeOrEnum | undefined = serviceConfig[type.namespace] && serviceConfig[type.namespace].types[type.name]
     if (!enumType || enumType.containerType !== "Enum") {
 
-        if (enumType && allowJsonForComplexTypes) {
+        if (enumType && settings.allowJsonForComplexTypes) {
             return JSON.stringify(value)
         }
 
@@ -290,12 +298,13 @@ function serializeToString(value: any, type?: ODataTypeRef, serviceConfig?: Dict
         return basicSerialize(value);
     }
 
+    const ns = settings.shortenEnumNames ? "" : typeNameString(type, ".")
     if (typeof value === "string") {
-        return `'${value}'`
+        return `${ns}'${value}'`
     }
 
     if (typeof value === "number") {
-        return `'${enumMemberName(enumType.type, value)}'`
+        return `${ns}'${enumMemberName(enumType.type, value)}'`
     }
 
     return basicSerialize(value);

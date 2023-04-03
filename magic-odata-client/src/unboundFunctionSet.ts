@@ -16,7 +16,8 @@ export class UnboundFunctionSet<TRoot, TSubPath, TFetchResult> {
             requestTools: this.tools.requestTools,
             defaultResponseInterceptor: this.tools.defaultResponseInterceptor,
             schema: this.tools.root.schemaNamespaces[this.tools.schemaName],
-            root: this.tools.root
+            root: this.tools.root,
+            serializerSettings: this.tools.serializerSettings
         }
 
         return new RequestBuilder<TRoot, any, any, any, any, any, any, any>(tools, null, null, state, this.disableHttp) as TNewEntityQuery;

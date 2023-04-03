@@ -107,5 +107,6 @@ export {
     $ValueAnd$CountTypesCanNotBeOperatedOn,
     PrimitiveSubPath,
     CollectionSubPath,
-    EntitySetSubPath
+    EntitySetSubPath,
+    SerializerSettings
 } from "./src/exportedTypes.js"

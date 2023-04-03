@@ -1,29 +1,33 @@
-import { buildQuery, ODataUriParts, Query, QueryComplexObject } from "magic-odata-client";
+import { buildQuery, ODataUriParts, Query, QueryComplexObject, SerializerSettings } from "magic-odata-client";
 import { buildComplexTypeRef } from "magic-odata-client/dist/src/query/queryComplexObjectBuilder.js";
 import { FilterEnv, QbEmit } from "magic-odata-client/dist/src/queryBuilder.js";
 import { ODataClient, rootConfigExporter } from "../generatedCode.js";
 
-export const oDataClient = new ODataClient({
-    request: fetch,
-    uriRoot: "http://localhost:5432/odata/test-entities",
-    responseInterceptor: (result, uri, reqValues, defaultParser) => {
-        return defaultParser(result, uri, reqValues)
-            .catch(async _ => {
+export function oDataClientFactory(serializerSettings?: SerializerSettings) {
+    return new ODataClient({
+        request: fetch,
+        uriRoot: "http://localhost:5432/odata/test-entities",
+        responseInterceptor: (result, uri, reqValues, defaultParser) => {
+            return defaultParser(result, uri, reqValues)
+                .catch(async _ => {
 
-                const r = await result
-                const err = {
-                    uri,
-                    code: r.status,
-                    statusText: r.statusText,
-                    headers: r.headers,
-                    errorBody: await r.text(),
-                    reqValues
-                }
+                    const r = await result
+                    const err = {
+                        uri,
+                        code: r.status,
+                        statusText: r.statusText,
+                        headers: r.headers,
+                        errorBody: await r.text(),
+                        reqValues
+                    }
 
-                throw new Error(JSON.stringify(err, null, 2));
-            })
-    }
-}).My.Odata.Container;
+                    throw new Error(JSON.stringify(err, null, 2));
+                })
+        }
+    }, serializerSettings).My.Odata.Container;
+}
+
+export const oDataClient = oDataClientFactory()
 
 const rootConfig = rootConfigExporter();
 
@@ -37,18 +41,18 @@ export function queryBuilder<T>(fullName: string, q: (x: QueryComplexObject<T>) 
         throw new Error(fullName);
     }
 
-    const typeRef: QueryComplexObject<T> = buildComplexTypeRef(type.type, rootConfig.schemaNamespaces, "$it");
+    const serializerSettings = { serviceConfig: rootConfig.schemaNamespaces }
+    const typeRef: QueryComplexObject<T> = buildComplexTypeRef(type.type, serializerSettings, "$it");
     const env: FilterEnv = {
         rootUri: "URI",
         buildUri: defaultUriInterceptor,
         serviceConfig: rootConfig,
         rootContext: "$it",
-        schema: rootConfig.schemaNamespaces[namespace]
+        schema: rootConfig.schemaNamespaces[namespace],
+        serializerSettings
     }
 
-    // TODO:
-    const qbEmit = QbEmit.zero
-    return buildQuery(rootConfig.schemaNamespaces, defaultUriInterceptor, qbEmit, q(typeRef), env, false)
+    return buildQuery(serializerSettings, defaultUriInterceptor, QbEmit.zero, q(typeRef), env, false)
 }
 
 // copied from magic-odata-client\src\entitySet\executeRequest.ts

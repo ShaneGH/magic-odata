@@ -118,8 +118,8 @@ function innerBit<T>(
     and: ((x: QueryComplexObject<T>) => Query | Query[])) {
 
     const reContexted = obj.$$oDataQueryObjectType === QueryObjectType.QueryCollection
-        ? reContext(obj.childObjConfig, filterEnv.serviceConfig.schemaNamespaces)
-        : reContext(obj, filterEnv.serviceConfig.schemaNamespaces);
+        ? reContext(obj.childObjConfig, filterEnv.serializerSettings)
+        : reContext(obj, filterEnv.serializerSettings);
 
     filterEnv = {
         ...filterEnv,

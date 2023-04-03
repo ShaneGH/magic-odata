@@ -175,7 +175,7 @@ describe("SubPath", function () {
                         responseInterceptor: x => x
                     });
 
-                expect(cache).toBe("http://localhost:5432/odata/test-entities/UserRoles('Admin')");
+                expect(cache).toBe("http://localhost:5432/odata/test-entities/UserRoles(My.Odata.Entities.UserType'Admin')");
             });
 
             it("Should work with number enum", async () => {
@@ -191,7 +191,7 @@ describe("SubPath", function () {
                         responseInterceptor: x => x
                     });
 
-                expect(cache).toBe("http://localhost:5432/odata/test-entities/UserProfiles('Advanced')");
+                expect(cache).toBe("http://localhost:5432/odata/test-entities/UserProfiles(My.Odata.Entities.UserProfileType'Advanced')");
             });
         });
 

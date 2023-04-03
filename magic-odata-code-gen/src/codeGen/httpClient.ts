@@ -83,7 +83,11 @@ function httpClientForSchema(
     const getCasterName = buildGetCasterName(settings)
     const getSubPathName = buildGetSubPathName(settings)
     const httpClientType = buildHttpClientType(serviceConfig.schemaNamespaces, keywords, tab, settings || null);
-    const constructor = `constructor(private ${keywords._httpClientArgs}: ${keywords.RequestTools}<${requestToolsGenerics.join(", ")}>) { }`;
+    const constructorArgs = [
+        `\nprivate ${keywords._httpClientArgs}: ${keywords.RequestTools}<${requestToolsGenerics.join(", ")}>`,
+        `\nprivate ${keywords.serializerSettings}?: ${keywords.SerializerSettings}`
+    ]
+    const constructor = `constructor(${constructorArgs.map(tab).join(",")}) { }`;
     const name = httpClientName(settings)
 
     const module = `/**
@@ -149,7 +153,10 @@ export module ${ns} {\n${tab(module)}\n}`
         const cacheArgs = !isForInterface && first
             // TODO: weird error. If I remove the ";" from this.${keywords._httpClientArgs};, the last letter of 
             // _httpClientArgs also disappears
-            ? `const ${keywords._httpClientArgs} = this.${keywords._httpClientArgs};\n`
+            ? [
+                `const ${keywords._httpClientArgs} = this.${keywords._httpClientArgs};\n`,
+                `const ${keywords.serializerSettings} = this.${keywords.serializerSettings};\n`
+            ].join("")
             : ""
 
         const subPaths = Object
@@ -201,7 +208,11 @@ ${tab(selectorParams)}) => ${keywords.SubPathSelection}<TNewEntityQuery>): TNewE
             schemaName: `"${schemaName}"`,
             containerName: `"${containerName}"`,
             requestTools: `${(first && "this.") || ""}_httpClientArgs`,
-            defaultResponseInterceptor: "responseParser"
+            defaultResponseInterceptor: "responseParser",
+            serializerSettings: {
+                shortenEnumNames: `${(first && "this.") || ""}${keywords.serializerSettings}?.shortenEnumNames`,
+                serviceConfig: "rootConfig.schemaNamespaces"
+            }
         }
 
         const body = `const args = ${toTs(args)}
@@ -213,10 +224,13 @@ return entitySet.subPath(selector)`
         return `${signature} {\n\n${tab(body)}\n}`
     }
 
-    function toTs(obj: Dict<string>) {
+    function toTs(obj: Dict<string | Dict<string>>): string {
         const props = Object
             .keys(obj)
-            .map(k => `${k}: ${obj[k]}`)
+            .map(k => {
+                const val = obj[k]
+                return `${k}: ${typeof val === "string" ? val : toTs(val)}`;
+            })
             .join(",\n")
 
         return !props.length ? "{}" : `{\n${tab(props)}\n}`
@@ -237,19 +251,18 @@ return entitySet.subPath(selector)`
         const instanceType = httpClientType(generics, false);
         const entitySetArg = `${keywords.toODataEntitySet}("${entitySet.namespace || ""}", "${entitySet.containerName || ""}", "${entitySet.name}")`
         const entitySetType = `${keywords.toODataTypeRef}(${!entitySet.isSingleton}, "${entitySet.forType.namespace || ""}", "${entitySet.forType.name}")`
-        const constructorArgs = {
+        const constructorArgs = toTs({
             requestTools: `${ths}${keywords._httpClientArgs}`,
             defaultResponseInterceptor: keywords.responseParser,
             schema: `${keywords.toODataSchema}("${entitySet.namespace || ""}")`,
-            root: keywords.rootConfig
-        } as any
+            root: keywords.rootConfig,
+            serializerSettings: {
+                shortenEnumNames: `${ths}${keywords.serializerSettings}?.shortenEnumNames`,
+                serviceConfig: "rootConfig.schemaNamespaces"
+            }
+        })
 
-        let args = Object
-            .keys(constructorArgs)
-            .map(x => `${x}: ${constructorArgs[x]}`)
-            .join(",\n")
-
-        args = `const args = {\n${tab(args)}\n}`
+        const args = `const args = ${tab(constructorArgs)}`
 
         return `get ${entitySet.name}() : \n${tab(interfaceType)} {
 

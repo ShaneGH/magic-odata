@@ -1,6 +1,18 @@
 import { IEntitySet } from "./entitySetInterfaces.js"
 import { SubPathSelection } from "./entitySet/subPath.js"
 
+export type SerializerSettings = {
+  /** 
+   * If true, will add enum primitives to a query with only the name of the enum 
+   * @exmample @x='EnumValue'
+   * 
+   * If false will reference enums with their fully qualified namesapace
+   * @example @x=Namespace.TypeName'EnumValue'
+   * 
+   * @default false
+   * */
+  shortenEnumNames?: boolean
+}
 
 /*
  * It is not possible to select an item by key more than once

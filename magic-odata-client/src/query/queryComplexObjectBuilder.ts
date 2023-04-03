@@ -2,7 +2,7 @@ import { ODataComplexType, ODataTypeRef, ODataEnum, ODataSchema, ODataComplexTyp
 import { functionUriBuilder } from "../entitySet/subPath.js";
 import { QbEmit } from "../queryBuilder.js";
 import { groupBy, typeNameString, typeRefString } from "../utils.js";
-import { AtParam, rawType } from "../valueSerializer.js";
+import { AtParam, SerializerSettings, rawType } from "../valueSerializer.js";
 
 type Dict<T> = { [key: string]: T }
 
@@ -112,7 +112,7 @@ function buildArrayCount(arrayMetadata: QueryObjectMetadata): QueryPrimitive<num
     };
 }
 
-function buildPropertyTypeRef<T>(type: ODataTypeRef, root: Dict<ODataSchema>, rootContext: string, path: PathSegment[], queryAliases: Dict<boolean>, qbEmit: QbEmit): QueryObject<T> {
+function buildPropertyTypeRef<T>(type: ODataTypeRef, serializerSettings: SerializerSettings, rootContext: string, path: PathSegment[], queryAliases: Dict<boolean>, qbEmit: QbEmit): QueryObject<T> {
 
     if (type.isCollection) {
         if (!path.length) {
@@ -132,7 +132,7 @@ function buildPropertyTypeRef<T>(type: ODataTypeRef, root: Dict<ODataSchema>, ro
             $count: buildArrayCount($$oDataQueryMetadata),
             $$oDataQueryObjectType: QueryObjectType.QueryCollection,
             $$oDataQueryMetadata,
-            childObjConfig: buildPropertyTypeRef<T>(type.collectionType, root, newAliases.newAlias, [], newAliases.aliases, QbEmit.zero),
+            childObjConfig: buildPropertyTypeRef<T>(type.collectionType, serializerSettings, newAliases.newAlias, [], newAliases.aliases, QbEmit.zero),
             childObjAlias: newAliases.newAlias
         };
     }
@@ -150,6 +150,7 @@ function buildPropertyTypeRef<T>(type: ODataTypeRef, root: Dict<ODataSchema>, ro
         };
     }
 
+    const root = serializerSettings.serviceConfig
     const tLookup = root[type.namespace || ""] && root[type.namespace || ""].types[type.name];
     if (!tLookup) {
         throw new Error(`Could not find type ${typeNameString(type)}`);
@@ -222,7 +223,7 @@ function buildPropertyTypeRef<T>(type: ODataTypeRef, root: Dict<ODataSchema>, ro
                         }
 
                         if (x.type === "Function") {
-                            const fs = functionUriBuilder(x.key, root, x.functionGroup, false)
+                            const fs = functionUriBuilder(x.key, serializerSettings, x.functionGroup, false)
                             return propertyCache = function (args: any) {
                                 const { propertyName, outputType, qbEmit } = fs(args)
                                 const propPath = [
@@ -230,7 +231,7 @@ function buildPropertyTypeRef<T>(type: ODataTypeRef, root: Dict<ODataSchema>, ro
                                     { path: propertyName, navigationProperty: false }
                                 ];
 
-                                return buildPropertyTypeRef(outputType || rawType, root, rootContext, propPath, queryAliases, s.$$oDataQueryMetadata.qbEmit.concat(qbEmit))
+                                return buildPropertyTypeRef(outputType || rawType, serializerSettings, rootContext, propPath, queryAliases, s.$$oDataQueryMetadata.qbEmit.concat(qbEmit))
                             }
                         }
 
@@ -241,7 +242,7 @@ function buildPropertyTypeRef<T>(type: ODataTypeRef, root: Dict<ODataSchema>, ro
                                 navigationProperty: x.value.navigationProperty
                             }];
 
-                        return propertyCache = buildPropertyTypeRef(x.value.type, root, rootContext, propPath, queryAliases, s.$$oDataQueryMetadata.qbEmit);
+                        return propertyCache = buildPropertyTypeRef(x.value.type, serializerSettings, rootContext, propPath, queryAliases, s.$$oDataQueryMetadata.qbEmit);
                     }
                 });
 
@@ -288,14 +289,14 @@ type PropertyOrMethod =
     | { type: "Property", key: string, value: ODataComplexTypeProperty }
     | { type: "Function", key: string, functionGroup: Function[] }
 
-export function buildComplexTypeRef<T>(type: ODataComplexType, root: Dict<ODataSchema>,
+export function buildComplexTypeRef<T>(type: ODataComplexType, serializerSettings: SerializerSettings,
     rootContext: string): QueryComplexObject<T> {
 
     const typeRef = buildPropertyTypeRef<T>({
         name: type.name,
         namespace: type.namespace,
         isCollection: false
-    }, root, rootContext, [], {}, QbEmit.zero);
+    }, serializerSettings, rootContext, [], {}, QbEmit.zero);
 
     if (typeRef.$$oDataQueryObjectType !== QueryObjectType.QueryObject) {
         throw new Error(`Type ref is not a complex object: ${typeRef.$$oDataQueryObjectType}, ${typeRefString(typeRef.$$oDataQueryMetadata.typeRef)}`);
@@ -304,7 +305,7 @@ export function buildComplexTypeRef<T>(type: ODataComplexType, root: Dict<ODataS
     return typeRef;
 }
 
-export function reContext<T>(obj: QueryComplexObject<T>, root: Dict<ODataSchema>): QueryComplexObject<T> {
+export function reContext<T>(obj: QueryComplexObject<T>, serializerSettings: SerializerSettings): QueryComplexObject<T> {
 
     if (obj.$$oDataQueryMetadata.typeRef.isCollection) {
         throw new Error("Complex object has collection type ref");
@@ -316,7 +317,7 @@ export function reContext<T>(obj: QueryComplexObject<T>, root: Dict<ODataSchema>
         name: obj.$$oDataQueryMetadata.typeRef.name,
         namespace: obj.$$oDataQueryMetadata.typeRef.namespace,
         isCollection: false
-    }, root, "$this", [], obj.$$oDataQueryMetadata.queryAliases, obj.$$oDataQueryMetadata.qbEmit);
+    }, serializerSettings, "$this", [], obj.$$oDataQueryMetadata.queryAliases, obj.$$oDataQueryMetadata.qbEmit);
 
     if (typeRef.$$oDataQueryObjectType !== QueryObjectType.QueryObject) {
         throw new Error(`Type ref is not a complex object: ${typeRef.$$oDataQueryObjectType}, ${typeRefString(typeRef.$$oDataQueryMetadata.typeRef)}`);

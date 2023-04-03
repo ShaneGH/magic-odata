@@ -2,7 +2,7 @@ import { Dict, ODataSchema, ODataTypeName, ODataTypeRef } from "magic-odata-shar
 import { Params } from "../entitySetInterfaces.js";
 import { QbEmit } from "../queryBuilder.js";
 import { typeNameString, Writer } from "../utils.js";
-import { AtParam, serialize } from "../valueSerializer.js";
+import { AtParam, SerializerSettings, serialize } from "../valueSerializer.js";
 import { params } from "./params.js";
 import { RequestBuilderData, lookupComplex, tryFindBaseType, tryFindPropertyType, EntityQueryState } from "./utils.js";
 
@@ -65,15 +65,15 @@ function tryFindKeyNames(
     return (parent && tryFindKeyNames(parent, root)) || []
 }
 
-function keyExpr(keyTypes: KeyType[], key: any, keyEmbedType: WithKeyType, serviceConfig: Dict<ODataSchema>) {
+function keyExpr(keyTypes: KeyType[], key: any, keyEmbedType: WithKeyType, serializerSettings: SerializerSettings) {
 
     if (key === undefined) key = null;
 
     if (keyTypes.length === 1) {
         const result = keyEmbedType === WithKeyType.FunctionCall
-            ? serialize(key, keyTypes[0].type, serviceConfig).map(x => ({ appendToLatest: true, value: `(${x})` }))
+            ? serialize(key, keyTypes[0].type, serializerSettings).map(x => ({ appendToLatest: true, value: `(${x})` }))
             : keyEmbedType === WithKeyType.PathSegment
-                ? serialize(key, keyTypes[0].type, serviceConfig).map(x => ({ appendToLatest: false, value: `${x}` }))
+                ? serialize(key, keyTypes[0].type, serializerSettings).map(x => ({ appendToLatest: false, value: `${x}` }))
                 : null;
 
         if (!result) {
@@ -89,7 +89,7 @@ function keyExpr(keyTypes: KeyType[], key: any, keyEmbedType: WithKeyType, servi
 
     const kvp = keyTypes
         .map(t => Object.prototype.hasOwnProperty.call(key, t.name)
-            ? serialize(key[t.name], t.type, serviceConfig).map(x => ({ key: t.name, value: x }))
+            ? serialize(key[t.name], t.type, serializerSettings).map(x => ({ key: t.name, value: x }))
             : t.name);
 
     const missingKeys = kvp.filter(x => typeof x === "string") as string[]
@@ -158,12 +158,12 @@ export function recontextDataForKey<TRoot, TFetchResult, TResult, TNewEntityQuer
         }
 
         const paramsBuilder = params<TRoot>(data.tools.requestTools.uriRoot,
-            data.tools.root, data.tools.schema);
+            data.tools.root, data.tools.serializerSettings, data.tools.schema);
         const keyResult = key({ keyRaw, key: keyStructured } as any, paramsBuilder);
         const keyTypes = tryFindKeyTypes(collectionType, data.tools.root.schemaNamespaces);
         const keyPath = keyResult.raw
             ? Writer.create({ value: keyResult.key, appendToLatest: keyResult.key[0] === "(" }, [] as [AtParam, ODataTypeRef][])
-            : keyExpr(keyTypes, keyResult.key, keyResult.keyEmbedType, data.tools.root.schemaNamespaces);
+            : keyExpr(keyTypes, keyResult.key, keyResult.keyEmbedType, data.tools.serializerSettings);
 
         return keyPath
             .mapAcc(QbEmit.maybeZero)

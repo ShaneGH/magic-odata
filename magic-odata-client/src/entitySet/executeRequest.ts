@@ -79,6 +79,7 @@ function _buildUri<TFetchResult, TResult>(
     const buildUri = tools.uriInterceptor || defaultUriInterceptor
     const filterEnv = {
         buildUri,
+        serializerSettings: data.tools.serializerSettings,
         rootUri: data.tools.requestTools.uriRoot,
         serviceConfig: data.tools.root,
         rootContext: "$it",
@@ -93,7 +94,7 @@ function _buildUri<TFetchResult, TResult>(
         entitySetContainerName: data.entitySet?.containerName || null,
         entitySetName: data.entitySet?.name || null,
         relativePath: state.path.join("/"),
-        query: buildQuery(data.tools.root.schemaNamespaces, buildUri, qbEmit, state.query.query, filterEnv, state.query.urlEncode)
+        query: buildQuery(data.tools.serializerSettings, buildUri, qbEmit, state.query.query, filterEnv, state.query.urlEncode)
     }
 }
 

@@ -4,19 +4,21 @@ import { SchemaTools } from "../entitySet/utils.js";
 import { IUriBuilder } from "../entitySetInterfaces.js";
 import { FilterEnv, FilterResult, QbEmit } from "../queryBuilder.js";
 import { ReaderWriter } from "../utils.js";
+import { SerializerSettings } from "../valueSerializer.js";
 
 type RBuilder = RequestBuilder<any, any, any, any, any, any, any, any>
 
 export type RootQuery<TRoot> = (filter: TRoot) => IUriBuilder
 
 // TODO: this (+ deps) should not really be in $root anymore. It is used by a few different things
-export function buildUriBuilderRoot(uriRoot: string, serviceConfig: ODataServiceConfig, schema: ODataSchema) {
+export function buildUriBuilderRoot(uriRoot: string, serializerSettings: SerializerSettings, serviceConfig: ODataServiceConfig, schema: ODataSchema) {
 
     const entitySetTree = Object
         .keys(schema.entityContainers)
         .map(ns => methodsForEntitySetNamespace(
             uriRoot,
             serviceConfig,
+            serializerSettings,
             schema,
             ns.replace(/[^a-zA-Z0-9$._]/g, ".").split("."),
             schema.entityContainers[ns].entitySets))
@@ -32,7 +34,7 @@ export function $root(filter: (root: any) => IUriBuilder) {
 
     return ReaderWriter.create<FilterEnv, FilterResult, QbEmit>(env => {
 
-        const entitySets = buildUriBuilderRoot("$root/", env.serviceConfig, env.schema)
+        const entitySets = buildUriBuilderRoot("$root/", env.serializerSettings, env.serviceConfig, env.schema)
         const entitySet = filter(entitySets)
         return [
             {
@@ -124,6 +126,7 @@ type Node =
 function methodsForEntitySetNamespace(
     uriRoot: string,
     serviceConfig: ODataServiceConfig,
+    serializerSettings: SerializerSettings,
     schema: ODataSchema,
     entitySetNamespaceParts: string[],
     entitySets: Dict<ODataEntitySet>): Node {
@@ -149,6 +152,7 @@ function methodsForEntitySetNamespace(
                         uriRoot: uriRoot
                     },
                     defaultResponseInterceptor: () => { throw new Error("This entity set has http requests disabled") },
+                    serializerSettings,
                     schema,
                     root: serviceConfig
                 }
@@ -169,7 +173,7 @@ function methodsForEntitySetNamespace(
     return {
         t: "Namespace",
         data: {
-            [entitySetNamespaceParts[0]]: methodsForEntitySetNamespace(uriRoot, serviceConfig, schema, entitySetNamespaceParts.slice(1), entitySets)
+            [entitySetNamespaceParts[0]]: methodsForEntitySetNamespace(uriRoot, serviceConfig, serializerSettings, schema, entitySetNamespaceParts.slice(1), entitySets)
         }
     }
 }

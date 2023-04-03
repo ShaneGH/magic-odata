@@ -11,6 +11,7 @@
     * [$value and $count](#value-and-count)
     * [Functions](#function-calls)
  * [@Parameter Aliases](#parameter-aliases)
+ * [Enums](#enums)
  * [Query options](#query-options)
     * [$filter](#filter)
     * [$select](#select)
@@ -334,6 +335,15 @@ const userName = new MyOdataClient({...})
         blog: params.createRef("x", root => root.Blogs.withKey(x => x.key("some_blog_id")))
     }))
     .get()
+```
+
+# Enums
+
+Enum serialization can be configured when creating an oData client. See [SerializerSettings](https://github.com/ShaneGH/magic-odata/blob/main/magic-odata-client/src/exportedTypes.ts) for details
+
+```typescript
+// Tell the serializer to serialize enums with a short name
+const client = new MyOdataClient({...}, { shortenEnumNames: true })
 ```
 
 # Query Options

@@ -192,7 +192,7 @@ describe("@Params", () => {
                             ? My.Odata.Entities.UserType.Admin
                             : My.Odata.Entities.UserType.User)
                     }))
-                    .get({ request: loggingFetcher });
+                    .get();
 
                 expect(isType.value).toBe(success);
             }

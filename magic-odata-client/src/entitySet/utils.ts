@@ -2,6 +2,7 @@ import { Dict, ODataComplexType, ODataEntitySet, ODataEnum, ODataSchema, ODataSe
 import { QbEmit, Query } from "../queryBuilder.js"
 import { typeNameString, Writer } from "../utils.js"
 import { DefaultResponseInterceptor, RequestTools } from "./requestTools.js"
+import { SerializerSettings } from "../valueSerializer.js"
 
 export type RequestBuilderData<TFetchResult, TResult> = {
     tools: SchemaTools<TFetchResult, TResult>
@@ -11,6 +12,7 @@ export type RequestBuilderData<TFetchResult, TResult> = {
 }
 
 export type SchemaTools<TFetchResult, TResult> = {
+    serializerSettings: SerializerSettings,
     requestTools: RequestTools<TFetchResult, TResult>,
     defaultResponseInterceptor: DefaultResponseInterceptor<TFetchResult, TResult>,
     root: ODataServiceConfig

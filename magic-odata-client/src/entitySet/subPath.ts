@@ -2,7 +2,7 @@ import { ODataComplexType, ODataTypeRef, Function as ODataFunction, ODataEntityS
 import { Params } from "../entitySetInterfaces.js";
 import { QbEmit } from "../queryBuilder.js";
 import { Writer } from "../utils.js";
-import { AtParam, serialize } from "../valueSerializer.js";
+import { SerializerSettings, serialize } from "../valueSerializer.js";
 import { params } from "./params.js";
 import { DefaultResponseInterceptor, RequestTools } from "./requestTools.js";
 import { Accept, RequestBuilderData, lookup, tryFindBaseType, tryFindPropertyType, defaultAccept, EntityQueryState } from "./utils.js";
@@ -18,7 +18,7 @@ function buildSubPathProperties<TFetchResult, TResult, TSubPath>(
     if (type.isCollection) {
 
         const functions = data.entitySet
-            ? listAllEntitySetFunctionsGrouped(data.entitySet, data.tools.root.schemaNamespaces, encodeUri)
+            ? listAllEntitySetFunctionsGrouped(data.entitySet, data.tools.serializerSettings, encodeUri)
                 .reduce((s, x) => ({ ...s, [x[0]]: x[1] }), {} as any)
             : {};
 
@@ -36,7 +36,7 @@ function buildSubPathProperties<TFetchResult, TResult, TSubPath>(
     const props = listAllProperties(t.type, data.tools.root.schemaNamespaces, true)
         .reduce((s, x) => ({ ...s, [x]: { propertyName: x } }), {} as any);
 
-    const functions = listAllEntityFunctionsGrouped(t.type, data.tools.root.schemaNamespaces, encodeUri)
+    const functions = listAllEntityFunctionsGrouped(t.type, data.tools.serializerSettings, encodeUri)
         .reduce((s, x) => ({ ...s, [x[0]]: x[1] }), {} as any);
 
     return {
@@ -45,7 +45,7 @@ function buildSubPathProperties<TFetchResult, TResult, TSubPath>(
     }
 }
 
-export function functionUriBuilder(functionName: string, root: Dict<ODataSchema>, functions: Function[], encodeUri: boolean): (x: any) => SubPathSelection<any> {
+export function functionUriBuilder(functionName: string, serializerSettings: SerializerSettings, functions: Function[], encodeUri: boolean): (x: any) => SubPathSelection<any> {
 
     const _serialize: typeof serialize = (x, y, z) => {
 
@@ -62,8 +62,8 @@ export function functionUriBuilder(functionName: string, root: Dict<ODataSchema>
         }
 
         return encodeUri
-            ? serialize(x, y, z, true).map(encodeURIComponent)
-            : serialize(x, y, z, true)
+            ? serialize(x, y, { ...z, allowJsonForComplexTypes: true }).map(encodeURIComponent)
+            : serialize(x, y, { ...z, allowJsonForComplexTypes: true })
     }
 
     return (x: any) => {
@@ -91,7 +91,7 @@ export function functionUriBuilder(functionName: string, root: Dict<ODataSchema>
         const [xs, atParamTypes] = Writer
             .traverse(fn.params
                 .filter(x => !x.isBindingParameter)
-                .map(param => _serialize(x[param.name], param.type, root)
+                .map(param => _serialize(x[param.name], param.type, serializerSettings)
                     .map(x => `${param.name}=${x}`)), [])
             .execute()
 
@@ -103,34 +103,35 @@ export function functionUriBuilder(functionName: string, root: Dict<ODataSchema>
     }
 }
 
-function buildFunctions(groupedFunctions: { [k: string]: ODataFunction[] }, root: Dict<ODataSchema>, encodeUri: boolean): [string, (x: any) => SubPathSelection<any>][] {
+function buildFunctions(groupedFunctions: { [k: string]: ODataFunction[] }, serializerSettings: SerializerSettings, encodeUri: boolean): [string, (x: any) => SubPathSelection<any>][] {
 
     return Object
         .keys(groupedFunctions)
         .map(key => [
             key,
-            functionUriBuilder(key, root, groupedFunctions[key], encodeUri)
+            functionUriBuilder(key, serializerSettings, groupedFunctions[key], encodeUri)
         ])
 }
 
 function listAllEntityFunctionsGrouped(
     type: ODataComplexType,
-    root: Dict<ODataSchema>,
+    serializerSettings: SerializerSettings,
     encodeUri: boolean,
     includeParent = true) {
 
-    const groupedFunctions = groupFunctions(listAllEntityFunctionsUngrouped(type, root, includeParent))
-    return buildFunctions(groupedFunctions, root, encodeUri)
+    const groupedFunctions = groupFunctions(listAllEntityFunctionsUngrouped(type, serializerSettings.serviceConfig, includeParent))
+    return buildFunctions(groupedFunctions, serializerSettings, encodeUri)
 }
 
 function listUnboundFunctionsGrouped(
     root: Dict<ODataSchema>,
+    serializerSettings: SerializerSettings,
     schemaName: string,
     containerName: string,
     encodeUri: boolean) {
 
     const groupedFunctions = groupFunctions(root[schemaName].entityContainers[containerName].unboundFunctions)
-    return buildFunctions(groupedFunctions, root, encodeUri)
+    return buildFunctions(groupedFunctions, serializerSettings, encodeUri)
 }
 
 function groupFunctions(functions: ODataFunction[]) {
@@ -148,11 +149,11 @@ function groupFunctions(functions: ODataFunction[]) {
 
 function listAllEntitySetFunctionsGrouped(
     entitySet: ODataEntitySet,
-    root: Dict<ODataSchema>,
+    serializerSettings: SerializerSettings,
     encodeUri: boolean) {
 
     const groupedFunctions = groupFunctions(entitySet.collectionFunctions)
-    return buildFunctions(groupedFunctions, root, encodeUri)
+    return buildFunctions(groupedFunctions, serializerSettings, encodeUri)
 }
 
 function listAllEntityFunctionsUngrouped(
@@ -204,7 +205,7 @@ export function recontextDataForSubPath<TRoot, TFetchResult, TResult, TSubPath, 
 
             let propType: ODataTypeRef | null = null
             const paramsBuilder = params<TRoot>(data.tools.requestTools.uriRoot,
-                data.tools.root, data.tools.schema);
+                data.tools.root, data.tools.serializerSettings, data.tools.schema);
 
             const newT = subPath(buildSubPathProperties(data, state.type, true), paramsBuilder)
             if (newT === $value) {
@@ -249,6 +250,7 @@ export function recontextDataForSubPath<TRoot, TFetchResult, TResult, TSubPath, 
 
 export type UnboundFunctionSetTools<TFetchResult, TResult> = {
     root: ODataServiceConfig
+    serializerSettings: SerializerSettings
     schemaName: string
     containerName: string
     requestTools: RequestTools<TFetchResult, TResult>
@@ -260,9 +262,9 @@ export function recontextDataForUnboundFunctions<TRoot, TFetchResult, TResult, T
     subPath: (pathSelector: TSubPath, params: Params<TRoot>) => SubPathSelection<TNewEntityQuery>): Writer<EntityQueryState, QbEmit> {
 
     const paramsBuilder = params<TRoot>(data.requestTools.uriRoot,
-        data.root, data.root.schemaNamespaces[data.schemaName]);
+        data.root, data.serializerSettings, data.root.schemaNamespaces[data.schemaName]);
 
-    const functions = listUnboundFunctionsGrouped(data.root.schemaNamespaces, data.schemaName, data.containerName, true)
+    const functions = listUnboundFunctionsGrouped(data.root.schemaNamespaces, data.serializerSettings, data.schemaName, data.containerName, true)
         .reduce((s, x) => ({ ...s, [x[0]]: x[1] }), {} as any)
     const newT = subPath(functions, paramsBuilder)
     if (!newT.outputType) {

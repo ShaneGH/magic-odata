@@ -137,9 +137,9 @@ export function $filter<TRoot, T, TQuery extends QueryObject<T>>(collection: Que
                     throw new Error("Collections of collections are not supported");
                 }
 
-                const paramsBuilder = params<TRoot>(env.rootUri, env.serviceConfig, env.schema);
+                const paramsBuilder = params<TRoot>(env.rootUri, env.serviceConfig, env.serializerSettings, env.schema);
                 return [
-                    executeQueryBuilder<TRoot, TQuery, Filter>(x.$$output.collectionType, env.serviceConfig.schemaNamespaces, itemFilter, "$this", paramsBuilder)
+                    executeQueryBuilder<TRoot, TQuery, Filter>(x.$$output.collectionType, env.serializerSettings, itemFilter, "$this", paramsBuilder)
                         .mapEnv<FilterEnv>(env => ({ ...env, rootContext: "$this" }))
                         .map(({ $$filter }) => ({
                             $$output: x.$$output,

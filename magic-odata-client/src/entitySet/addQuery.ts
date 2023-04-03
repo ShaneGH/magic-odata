@@ -6,6 +6,7 @@ import { RequestBuilderData, getDeepTypeRef, lookup, EntityQueryState } from "./
 import { Params } from "../entitySetInterfaces.js";
 import { params } from "./params.js";
 import { Writer } from "../utils.js";
+import { SerializerSettings } from "../valueSerializer.js";
 
 type ComplexQueryBuilder<TRoot, TEntity, TQuery> = (entity: QueryComplexObject<TEntity>, utils: Utils<TRoot>, params: Params<TRoot>) => TQuery
 type PrimitiveQueryBuilder<TRoot, TEntity, TQuery> = (entity: QueryPrimitive<TEntity>, utils: Utils<TRoot>, params: Params<TRoot>) => TQuery
@@ -36,12 +37,12 @@ function executePrimitiveQueryBuilder<TRoot, TEntity, TQuery>(
 
 function executeComplexQueryBuilder<TRoot, TEntity, TQuery>(
     type: ODataComplexType,
-    root: Dict<ODataSchema>,
+    serializerSettings: SerializerSettings,
     queryBuilder: ComplexQueryBuilder<TRoot, TEntity, TQuery>,
     rootContext: string,
     params: Params<TRoot>): TQuery {
 
-    const typeRef: QueryComplexObject<TEntity> = buildComplexTypeRef(type, root, rootContext);
+    const typeRef: QueryComplexObject<TEntity> = buildComplexTypeRef(type, serializerSettings, rootContext);
     return queryBuilder(typeRef, queryUtils(), params);
 }
 
@@ -72,16 +73,16 @@ function executeEnumQueryBuilder<TRoot, TEntity, TQuery>(
 
 export function executeQueryBuilder<TRoot, TQueryable, TQuery>(
     typeRef: ODataTypeName,
-    types: Dict<ODataSchema>,
+    serializerSettings: SerializerSettings,
     queryBuilder: (entity: TQueryable, utils: Utils<TRoot>, params: Params<TRoot>) => TQuery,
     rootContext: string,
     params: Params<TRoot>): TQuery {
 
     // There is a lot of trust in these 2 lines of code.
     // trust that the TEntity lines up with a typeRef in terms of being complex, primitive or enum
-    const t = lookup(typeRef, types)
+    const t = lookup(typeRef, serializerSettings.serviceConfig)
     return t.flag === "Complex"
-        ? executeComplexQueryBuilder(t.type, types, queryBuilder as any, rootContext, params)
+        ? executeComplexQueryBuilder(t.type, serializerSettings, queryBuilder as any, rootContext, params)
         : t.flag === "Primitive"
             ? executePrimitiveQueryBuilder(t.type, queryBuilder as any, rootContext, params)
             : executeEnumQueryBuilder(t.type, queryBuilder as any, rootContext, params);
@@ -104,9 +105,9 @@ export function recontextDataForRootQuery<TRoot, TFetchResult, TResult, TQueryab
         }
 
         const paramsBuilder = params<TRoot>(
-            data.tools.requestTools.uriRoot, data.tools.root, data.tools.schema);
+            data.tools.requestTools.uriRoot, data.tools.root, data.tools.serializerSettings, data.tools.schema);
         const t = lookup(typeRef, data.tools.root.schemaNamespaces)
-        const query = executeQueryBuilder(t.type, data.tools.root.schemaNamespaces, queryBuilder, "$it", paramsBuilder)
+        const query = executeQueryBuilder(t.type, data.tools.serializerSettings, queryBuilder, "$it", paramsBuilder)
 
         return [{
             ...state,

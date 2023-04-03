@@ -71,7 +71,7 @@ export function valueToFilter<T>(val: Filter | T, typeRef: ODataTypeRef, mapper:
     return ReaderWriter.create<FilterEnv, FilterResult, QbEmit>(env =>
         (mapper
             ? Writer.create(mapper(val), QbEmit.zero)
-            : serialize(val, typeRef, env.serviceConfig.schemaNamespaces)
+            : serialize(val, typeRef, env.serializerSettings)
                 .mapAcc(QbEmit.maybeZero))
             .map($$filter => ({
                 $$filter,

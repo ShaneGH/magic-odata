@@ -2,7 +2,7 @@ import { ODataSchema, ODataServiceConfig, ODataTypeRef } from "magic-odata-share
 import { ODataUriParts } from "./entitySet/requestTools.js";
 import { NonNumericTypes, resolveOutputType } from "./query/filtering/queryPrimitiveTypes0.js";
 import { groupBy, ReaderWriter, removeNulls, Writer } from "./utils.js";
-import { AtParam, serialize } from "./valueSerializer.js";
+import { AtParam, SerializerSettings, serialize } from "./valueSerializer.js";
 
 type Dict<T> = { [key: string]: T }
 
@@ -69,6 +69,7 @@ export type FilterEnv = {
     rootUri: string
     buildUri: BuildUri
     serviceConfig: ODataServiceConfig
+    serializerSettings: SerializerSettings
     schema: ODataSchema
     rootContext: string
 }
@@ -172,26 +173,26 @@ export function buildPartialQuery(q: Query | Query[], filterEnv: FilterEnv, enco
         }, Writer.create<Dict<string>, QbEmit>({}, QbEmit.zero));
 }
 
-export function buildQuery(types: Dict<ODataSchema>, buildUri: BuildUri,
+export function buildQuery(serializerSettings: SerializerSettings, buildUri: BuildUri,
     qbEmit: QbEmit, q: Query | Query[], filterEnv: FilterEnv, encode = true): Dict<string> {
 
     const pq = buildPartialQuery(q, filterEnv, encode)
         .bind(x => Writer.create(x, qbEmit))
 
-    return merge(types, buildUri, pq, encode)
+    return merge(serializerSettings, buildUri, pq, encode)
 }
 
 const stringT = resolveOutputType(NonNumericTypes.String)
 
-function processAtParams(qbEmit: QbEmit, encode: boolean, buildUri: BuildUri, types: Dict<ODataSchema>) {
+function processAtParams(qbEmit: QbEmit, encode: boolean, buildUri: BuildUri, serializerSettings: SerializerSettings) {
 
     const stringify = encode
         ? (x: any) => encodeURIComponent(JSON.stringify(x))
         : (x: any) => JSON.stringify(x)
 
     const _serialize: typeof serialize = encode
-        ? (x, y, z) => serialize(x, y, z, true).map(encodeURIComponent)
-        : (x, y, z) => serialize(x, y, z, true)
+        ? (x, y, z) => serialize(x, y, { ...z, allowJsonForComplexTypes: true }).map(encodeURIComponent)
+        : (x, y, z) => serialize(x, y, { ...z, allowJsonForComplexTypes: true })
 
     const grouped = groupBy(qbEmit.paramTypes, x => x[0].name)
     return Object
@@ -217,9 +218,9 @@ function processAtParams(qbEmit: QbEmit, encode: boolean, buildUri: BuildUri, ty
                 ? {
                     k: def.name,
                     v: def.param.data.paramType || t
-                        ? _serialize(def.param.data.value, def.param.data.paramType || t, types).execute()[0]
+                        ? _serialize(def.param.data.value, def.param.data.paramType || t, serializerSettings).execute()[0]
                         : typeof def.param.data.value === "string"
-                            ? _serialize(def.param.data.value, stringT, types).execute()[0]
+                            ? _serialize(def.param.data.value, stringT, serializerSettings).execute()[0]
                             : stringify(def.param.data.value)
                 }
                 : {
@@ -230,11 +231,11 @@ function processAtParams(qbEmit: QbEmit, encode: boolean, buildUri: BuildUri, ty
 
 }
 
-function merge(types: Dict<ODataSchema>, buildUri: BuildUri,
+function merge(serializerSettings: SerializerSettings, buildUri: BuildUri,
     acc: QueryAccumulator, encode: boolean): Dict<string> {
     const [params, _dataParams] = acc.execute()
 
-    return processAtParams(_dataParams, encode, buildUri, types)
+    return processAtParams(_dataParams, encode, buildUri, serializerSettings)
         .reduce((s, x) => ({
             ...s,
             [x.k]: x.v
