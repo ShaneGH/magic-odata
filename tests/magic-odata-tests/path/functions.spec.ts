@@ -354,21 +354,20 @@ describe("function calls", () => {
             expect(uri.query["@x"]).toBe("guid value 1")
         });
 
-        // https://github.com/ShaneGH/magic-odata/issues/72
-        // it("Should call unbound function", () => {
+        it("Should call unbound function", () => {
 
-        //     const uri = oDataClient.Users
-        //         .withQuery((x, { $filter: { eq, $root } }, params1) => eq(
-        //             $root(r => r.My.Odata.Container.unboundFunctions((f, params2) => {
-        //                 return f
-        //                     .Calculator2({ vals: [1, x.Score, params1.createConst("x", 2), params2.createConst("y", 3)] })
-        //             })),
-        //             2))
-        //         .uri(false);
+            const uri = oDataClient.Users
+                .withQuery((x, { $filter: { eq, $root } }, params1) => {
+                    return eq(
+                        $root(r => r.My.Odata.Container.unboundFunctions((f, params2) => f
+                            .Calculator2({ vals: [1, x.Score, params1.createConst("x", 2), params2.createConst("y", 3)] }))),
+                        2);
+                })
+                .uri(false);
 
-        //     expect(uri.query["$filter"]).toBe("Calculator2(vals=[1,Score,@x,@y]) eq 2")
-        //     expect(uri.query["@x"]).toBe("2")
-        //     expect(uri.query["@y"]).toBe("3")
-        // });
+            expect(uri.query["$filter"]).toBe("$root/Calculator2(vals=[1,Score,@x,@y]) eq 2")
+            expect(uri.query["@x"]).toBe("2")
+            expect(uri.query["@y"]).toBe("3")
+        });
     });
 })

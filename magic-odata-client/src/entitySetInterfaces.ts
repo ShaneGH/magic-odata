@@ -1,11 +1,12 @@
 import { Utils } from "./query/queryUtils.js";
 import { Query } from "./queryBuilder.js";
-import { ODataUriParts, RequestTools } from "./entitySet/requestTools.js";
+import { ODataUriParts, RequestTools, UriWithMetadata } from "./entitySet/requestTools.js";
 import { KeySelection } from "./entitySet/selectByKey.js";
 import { CastSelection } from "./entitySet/cast.js";
 import { SubPathSelection } from "./entitySet/subPath.js";
 import { ODataTypeRef } from "magic-odata-shared";
 import { OutputTypes } from "./query/filtering/queryPrimitiveTypes0.js";
+import { ParameterDefinition } from "./valueSerializer.js";
 
 export type ODataResultMetadata = Partial<{
 
@@ -34,10 +35,12 @@ export interface IUriBuilder {
     uri(encodeQueryParts?: boolean): ODataUriParts
 
     /**
-     * Get type info about the values returned from this query
+     * For internal use. Subject to breaking changes
      */
-    getOutputType(): ODataTypeRef
+    uriWithMetadata(encodeQueryParts?: boolean): UriWithMetadata
 }
+
+export type Param<T> = { param: ParameterDefinition } & T
 
 /**
  * Object to help with generating @ params in an OData Uri
@@ -56,14 +59,12 @@ export type Params<TRoot> = {
      *         return m.findMembersByBandName({ bandName })
      *     })
      */
-    createRef<T>(paramName: string, ref: (root: TRoot) => IEntitySet<any, T, any, any, any, any, any, any>): T
+    createRef<T>(paramName: string, ref: (root: TRoot) => IEntitySet<any, T, any, any, any, any, any, any>): Param<T>
     // TS bug on IEntitySet<any, T, any, any, any, any, any, any> ^^. 
     // Compiler is unable to resolve type T if a parent (or smaller) interface is used
 
-    // https://github.com/ShaneGH/magic-odata/issues/66
     /**
      * Create a new URI param.
-     * NOTE: enum values where the enum is represented by a number in typescript are currently not supported. Use `createRawConst` instead
      * @param paramName The name of the param in the uri. If the param is not prefixed with `@`, it will be added automatically
      * @param paramType this param might be needed to serialized primitive values correctly
      * @returns A reference to the param that can be used in the query
@@ -75,7 +76,7 @@ export type Params<TRoot> = {
      *         return m.findMembersByBandName({ bandName })
      *     })
      */
-    createConst<T>(paramName: string, value: T, paramType?: OutputTypes | undefined): T
+    createConst<T>(paramName: string, value: T, paramType?: OutputTypes | undefined): Param<T>
 
     /**
      * Create a new URI param without any type info
@@ -89,7 +90,7 @@ export type Params<TRoot> = {
      *         return m.findMembersByBandName({ bandName })
      *     })
      */
-    createRawConst(paramName: string, value: string): any
+    createRawConst(paramName: string, value: string): Param<any>
 
     /**
      * Use an existing URI param
@@ -102,7 +103,7 @@ export type Params<TRoot> = {
      *     .subPath((m, params) => m
      *         .findMembersByBandName({ bandName: params.param("x") }))
      */
-    param(paramName: string): any
+    param(paramName: string): Param<any>
 }
 
 /**

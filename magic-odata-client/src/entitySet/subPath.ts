@@ -124,13 +124,12 @@ function listAllEntityFunctionsGrouped(
 }
 
 function listUnboundFunctionsGrouped(
-    root: Dict<ODataSchema>,
     serializerSettings: SerializerSettings,
-    schemaName: string,
+    schema: ODataSchema,
     containerName: string,
     encodeUri: boolean) {
 
-    const groupedFunctions = groupFunctions(root[schemaName].entityContainers[containerName].unboundFunctions)
+    const groupedFunctions = groupFunctions(schema.entityContainers[containerName].unboundFunctions)
     return buildFunctions(groupedFunctions, serializerSettings, encodeUri)
 }
 
@@ -260,22 +259,29 @@ export function recontextDataForSubPath<TRoot, TFetchResult, TResult, TSubPath, 
 export type UnboundFunctionSetTools<TFetchResult, TResult> = {
     root: ODataServiceConfig
     serializerSettings: SerializerSettings
-    schemaName: string
+    schema: ODataSchema
     containerName: string
     requestTools: RequestTools<TFetchResult, TResult>
     defaultResponseInterceptor: DefaultResponseInterceptor<TFetchResult, TResult>
 }
 
+function getUnboundFunctions(containerName: string, schema: ODataSchema, serializerSettings: SerializerSettings, encodeUri: boolean) {
+
+    return listUnboundFunctionsGrouped(serializerSettings, schema, containerName, encodeUri)
+        .reduce((s, x) => ({ ...s, [x[0]]: x[1] }), {} as Dict<(x: any) => SubPathSelection<any>>)
+
+}
+
 export function recontextDataForUnboundFunctions<TRoot, TFetchResult, TResult, TSubPath, TNewEntityQuery>(
     data: UnboundFunctionSetTools<TFetchResult, TResult>,
-    subPath: (pathSelector: TSubPath, params: Params<TRoot>) => SubPathSelection<TNewEntityQuery>): Writer<EntityQueryState, QbEmit> {
+    subPath: (pathSelector: TSubPath, params: Params<TRoot>) => SubPathSelection<TNewEntityQuery>,
+    encodeUri: boolean): Writer<EntityQueryState, QbEmit> {
 
     const paramsBuilder = params<TRoot>(data.requestTools.uriRoot,
-        data.root, data.serializerSettings, data.root.schemaNamespaces[data.schemaName]);
+        data.root, data.serializerSettings, data.schema);
 
-    const functions = listUnboundFunctionsGrouped(data.root.schemaNamespaces, data.serializerSettings, data.schemaName, data.containerName, true)
-        .reduce((s, x) => ({ ...s, [x[0]]: x[1] }), {} as any)
-    const newT = subPath(functions, paramsBuilder)
+    const functions = getUnboundFunctions(data.containerName, data.schema, data.serializerSettings, encodeUri)
+    const newT = subPath(functions as any, paramsBuilder)
     if (!newT.outputType) {
         throw new Error(`Invalid property ${newT.propertyName}`);
     }

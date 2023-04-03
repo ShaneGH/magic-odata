@@ -1,4 +1,8 @@
-import { OrderBy } from "../queryBuilder.js"
+import { SubPathSelection, isSubPathSelection } from "../entitySet/subPath.js"
+import { Param } from "../entitySetInterfaces.js"
+import { OrderBy, QbEmit } from "../queryBuilder.js"
+import { Writer } from "../utils.js"
+import { AtParam } from "../valueSerializer.js"
 import { QueryEnum, QueryPrimitive } from "./queryComplexObjectBuilder.js"
 
 export type OrderingUtils = {
@@ -17,13 +21,38 @@ export type OrderingUtils = {
 }
 
 function orderByRaw(orderByString: string): OrderBy {
+    return _orderByRaw(Writer.create(orderByString, QbEmit.zero))
+}
+
+function _orderByRaw(orderBy: Writer<string, QbEmit>): OrderBy {
     return {
         $$oDataQueryObjectType: "OrderBy",
-        $$orderBy: orderByString
+        $$orderBy: orderBy
     }
 }
 
-type Property = QueryPrimitive<any> | QueryEnum<any> | [QueryPrimitive<any> | QueryEnum<any>, "asc" | "desc"]
+type OrderByProperty =
+    | QueryPrimitive<any>
+    | QueryEnum<any>
+    | SubPathSelection<any>
+    | Param<any>
+
+type Property = OrderByProperty | [OrderByProperty, "asc" | "desc"]
+
+function isParam<T>(x: T): x is Param<any> {
+    return x instanceof AtParam
+}
+
+function processParam<T>(x: Param<T>): [string, QbEmit] {
+    return [x.param.data.name, x instanceof AtParam ? QbEmit.maybeZero(undefined, [x]) : QbEmit.zero]
+}
+
+function processObjReference(x: QueryPrimitive<any> | QueryEnum<any>): [string, QbEmit] {
+    const str = x.$$oDataQueryMetadata.path.map((x: any) => x.path).join("/")
+        || x.$$oDataQueryMetadata.rootContext
+
+    return [str, x.$$oDataQueryMetadata.qbEmit]
+}
 
 function orderBy(...properties: Property[]): OrderBy {
 
@@ -31,21 +60,29 @@ function orderBy(...properties: Property[]): OrderBy {
         throw new Error("You must order by at least one property");
     }
 
-    const $$orderBy = properties
-        .map(x => {
-            if (!Array.isArray(x)) {
-                x = [x, "asc"]
-            }
+    const $$orderBy = Writer
+        .traverse(properties
+            .map(x => {
+                let direction = ""
+                if (Array.isArray(x)) {
+                    direction = ` ${x[1]}`
+                    x = x[0]
+                }
 
-            const order = x[0].$$oDataQueryMetadata.path.length
-                ? x[0].$$oDataQueryMetadata.path.map(x => x.path).join("/")
-                : x[0].$$oDataQueryMetadata.rootContext;
+                let order: [string, QbEmit] = isSubPathSelection(x)
+                    // not sure this condition is ever hit. The subpath selections (in type) are obj references in data
+                    ? [x.propertyName, x.qbEmit]
+                    : isParam(x)
+                        ? processParam(x)
+                        : processObjReference(x)
 
-            return `${order} ${x[1]}`
-        })
-        .join(",")
+                order = (direction && [`${order[0]}${direction}`, order[1]]) || order
 
-    return orderByRaw($$orderBy)
+                return Writer.create<string, QbEmit>(...order)
+            }), QbEmit.zero)
+        .map(x => x.join(","))
+
+    return _orderByRaw($$orderBy)
 }
 
 export function newUtils(): OrderingUtils {

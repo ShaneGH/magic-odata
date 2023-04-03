@@ -1,7 +1,7 @@
 import { defaultAccept, EntityQueryState, RequestBuilderData, SchemaTools } from "./entitySet/utils.js";
 import { Utils } from "./query/queryUtils.js";
 import { QbEmit, Query } from "./queryBuilder.js";
-import { ODataUriParts, RequestTools } from "./entitySet/requestTools.js";
+import { ODataUriParts, RequestTools, UriWithMetadata } from "./entitySet/requestTools.js";
 import { KeySelection, recontextDataForKey } from "./entitySet/selectByKey.js";
 import { recontextDataForRootQuery } from "./entitySet/addQuery.js";
 import { CastSelection, recontextDataForCasting } from "./entitySet/cast.js";
@@ -17,6 +17,7 @@ export class RequestBuilder<TRoot, TEntity, TResult, TKeyBuilder, TQueryable, TC
     // ^^NOTE^^: make sure that they stay in sync
 
     private state: RequestBuilderData<TFetchResult, TResult>
+    public readonly name: string | null
 
     constructor(
         tools: SchemaTools<TFetchResult, TResult>,
@@ -24,6 +25,8 @@ export class RequestBuilder<TRoot, TEntity, TResult, TKeyBuilder, TQueryable, TC
         queryType: ODataTypeRef | null,
         state: Writer<EntityQueryState, QbEmit> | undefined = undefined,
         private disableHttp = false) {
+
+        this.name = entitySet?.name || null
 
         if (!state && !queryType) {
             throw new Error("You must specify state or a type");
@@ -46,11 +49,6 @@ export class RequestBuilder<TRoot, TEntity, TResult, TKeyBuilder, TQueryable, TC
                 }
             }, QbEmit.zero)
         }
-    }
-
-    getOutputType(): ODataTypeRef {
-        // NOTE: this is fine if the state is a Writer and not something lazy like a reader
-        return this.state.state.execute()[0].type
     }
 
     withKey<TNewEntityQuery>(key: (builder: TKeyBuilder, params: Params<TRoot>) => KeySelection<TNewEntityQuery>): TNewEntityQuery {
@@ -94,6 +92,10 @@ export class RequestBuilder<TRoot, TEntity, TResult, TKeyBuilder, TQueryable, TC
 
     uri(encodeQueryParts?: boolean): ODataUriParts {
 
+        return this.uriWithMetadata(encodeQueryParts).uriParts
+    }
+
+    uriWithMetadata(encodeQueryParts?: boolean): UriWithMetadata {
         const state = typeof encodeQueryParts !== "boolean"
             ? this.state
             : {

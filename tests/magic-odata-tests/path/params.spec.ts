@@ -2,7 +2,7 @@
 import { My, ODataClient } from "../generatedCode.js";
 import { addBlog, addBlogPost, addComment, addFullUserChain, addUser } from "../utils/client.js";
 import { uniqueString } from "../utils/utils.js";
-import { ODataCollectionResult, WithKeyType } from "magic-odata-client";
+import { NonNumericTypes, ODataCollectionResult, WithKeyType } from "magic-odata-client";
 import { RequestOptions, ResponseInterceptor } from "magic-odata-client";
 import { defaultUriInterceptor, oDataClient, uriClient } from "../utils/odataClient.js";
 import { RootResponseInterceptor } from "magic-odata-client";
@@ -341,6 +341,34 @@ describe("@Params", () => {
                 .get()
 
             expect(result.value).toBe(2)
+        });
+    });
+
+    describe("Order by", () => {
+        it("Should work correctly", function () {
+            const result = oDataClient.Users
+                .withQuery((u, { $orderby: { orderBy } }, params) =>
+                    orderBy([params.createConst("x", "yyy", NonNumericTypes.String), "asc"]))
+                .uri(false)
+
+            expect(result.query.$orderBy).toBe("@x asc")
+            expect(result.query["@x"]).toBe("'yyy'")
+        });
+    });
+
+    describe("Order by function with param", () => {
+        it("Should work correctly", function () {
+            const result = oDataClient.Users
+                .withQuery((u, { $orderby: { orderBy } }, params) =>
+                    orderBy(u.HasBlog({
+                        blog: params
+                            .createRef("x", root => root.My.Odata.Container.Blogs
+                                .withKey(x => x.key("123132")))
+                    })))
+                .uri(false)
+
+            expect(result.query.$orderBy).toBe("HasBlog(blog=@x)")
+            expect(result.query["@x"]).toBe('{"@odata.id":"http://localhost:5432/odata/test-entities/Blogs(\'123132\')"}')
         });
     });
 });

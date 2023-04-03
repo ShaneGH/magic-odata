@@ -61,6 +61,11 @@ export type HasODataQueryMetadata = {
     $$oDataQueryMetadata: QueryObjectMetadata
 }
 
+export function hasODataQueryMetadata(x: any): x is HasODataQueryMetadata {
+    return typeof x.$$oDataQueryObjectType === "string"
+        && typeof x.$$oDataQueryMetadata === "object"
+}
+
 export type QueryComplexObject<T> = T & QueryComplexObjectBase
 
 export type QueryObject<T> = QueryPrimitive<T> | QueryCollection<QueryObject<T>, T> | QueryComplexObject<T> | QueryEnum<T>

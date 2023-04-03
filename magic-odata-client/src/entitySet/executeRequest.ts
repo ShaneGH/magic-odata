@@ -1,5 +1,5 @@
 import { buildQuery } from "../queryBuilder.js";
-import { ODataUriParts, RequestOptions, RequestTools, RootResponseInterceptor } from "./requestTools.js";
+import { ODataUriParts, RequestOptions, RequestTools, RootResponseInterceptor, UriWithMetadata } from "./requestTools.js";
 import { Accept, RequestBuilderData } from "./utils.js";
 
 export class HttpError extends Error {
@@ -74,7 +74,7 @@ function combineTools<TFetchResult, TResult>(
 
 function _buildUri<TFetchResult, TResult>(
     data: RequestBuilderData<TFetchResult, TResult>,
-    tools: RequestTools<TFetchResult, TResult>): ODataUriParts {
+    tools: RequestTools<TFetchResult, TResult>): UriWithMetadata {
 
     const buildUri = tools.uriInterceptor || defaultUriInterceptor
     const filterEnv = {
@@ -89,17 +89,22 @@ function _buildUri<TFetchResult, TResult>(
     const [state, qbEmit] = data.state.execute()
 
     return {
-        uriRoot: tools.uriRoot,
-        // if namespace === "", give null instead
-        entitySetContainerName: data.entitySet?.containerName || null,
-        entitySetName: data.entitySet?.name || null,
-        relativePath: state.path.join("/"),
-        query: buildQuery(data.tools.serializerSettings, buildUri, qbEmit, state.query.query, filterEnv, state.query.urlEncode)
+        qbEmit,
+        outputType: state.type,
+        accept: state.accept,
+        uriParts: {
+            uriRoot: tools.uriRoot,
+            // if namespace === "", give null instead
+            entitySetContainerName: data.entitySet?.containerName || null,
+            entitySetName: data.entitySet?.name || null,
+            relativePath: state.path.join("/"),
+            query: buildQuery(data.tools.serializerSettings, buildUri, qbEmit, state.query.query, filterEnv, state.query.urlEncode)
+        }
     }
 }
 
 export function buildUri<TFetchResult, TResult>(
-    data: RequestBuilderData<TFetchResult, TResult>): ODataUriParts {
+    data: RequestBuilderData<TFetchResult, TResult>): UriWithMetadata {
 
     const tools = combineTools(data, undefined)
     return _buildUri(data, tools);
@@ -109,13 +114,12 @@ export function executeRequest<TFetchResult, TResult>(
     data: RequestBuilderData<TFetchResult, TResult>,
     overrideRequestTools: Partial<RequestTools<TFetchResult, TResult>> | undefined): TResult {
 
-    const [stateXYX, qbEmit] = data.state.execute()
     const requestTools = combineTools(data, overrideRequestTools)
 
-    const uri = requestTools.uriInterceptor!(
-        _buildUri({ ...data, tools: { ...data.tools, requestTools } }, requestTools));
+    const { uriParts, accept } = _buildUri({ ...data, tools: { ...data.tools, requestTools } }, requestTools)
+    const uri = requestTools.uriInterceptor!(uriParts);
 
-    const acceptHeader = !stateXYX.accept || stateXYX.accept === Accept.Json
+    const acceptHeader = !accept || accept === Accept.Json
         ? "application/json"
         : "text/plain"
 
@@ -129,7 +133,7 @@ export function executeRequest<TFetchResult, TResult>(
         ]
     });
 
-    const stringParser = buildStringParser(stateXYX.accept, requestTools.ignoreWarnings ? acceptHeader : undefined)
+    const stringParser = buildStringParser(accept, requestTools.ignoreWarnings ? acceptHeader : undefined)
     return buildResponseInterceptorChain(data, stringParser, overrideRequestTools)(requestTools.request(uri, init), uri, init)
 }
 

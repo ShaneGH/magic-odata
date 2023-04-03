@@ -39,7 +39,7 @@ export type Expand = {
 
 export type OrderBy = {
     $$oDataQueryObjectType: "OrderBy"
-    $$orderBy: string
+    $$orderBy: Writer<string, QbEmit>
 }
 
 export type Custom = {
@@ -75,16 +75,20 @@ export type FilterEnv = {
 }
 
 export class QbEmit {
-    static readonly zero = new QbEmit([])
+    static readonly zero = new QbEmit([], [])
 
     /** @param params: the inner list might mutate */
     constructor(
-        public readonly paramTypes: [AtParam, ODataTypeRef][]) {
+        public readonly paramTypes: [AtParam, ODataTypeRef][],
+        public readonly untypedparamTypes: AtParam[]) {
     }
 
-    static maybeZero(paramTypes?: [AtParam, ODataTypeRef][]) {
-        if (paramTypes?.length) {
-            return new QbEmit(paramTypes || [])
+    static maybeZero(
+        paramTypes?: [AtParam, ODataTypeRef][],
+        untypedparamTypes?: AtParam[]) {
+
+        if (paramTypes?.length || untypedparamTypes?.length) {
+            return new QbEmit(paramTypes || [], untypedparamTypes || [])
         }
 
         return QbEmit.zero
@@ -95,7 +99,8 @@ export class QbEmit {
         if (other === QbEmit.zero) return this
 
         return new QbEmit(
-            this.paramTypes.concat(other.paramTypes))
+            this.paramTypes.concat(other.paramTypes),
+            this.untypedparamTypes.concat(other.untypedparamTypes))
     }
 }
 
@@ -146,7 +151,7 @@ export function buildPartialQuery(q: Query | Query[], filterEnv: FilterEnv, enco
             }
 
             if (x.$$oDataQueryObjectType === "OrderBy") {
-                return maybeAdd(encode, s, "$orderBy", x.$$orderBy);
+                return x.$$orderBy.bind(x => maybeAdd(encode, s, "$orderBy", x));
             }
 
             if (x.$$oDataQueryObjectType === "Select") {
@@ -194,7 +199,10 @@ function processAtParams(qbEmit: QbEmit, encode: boolean, buildUri: BuildUri, se
         ? (x, y, z) => serialize(x, y, { ...z, allowJsonForComplexTypes: true }).map(encodeURIComponent)
         : (x, y, z) => serialize(x, y, { ...z, allowJsonForComplexTypes: true })
 
-    const grouped = groupBy(qbEmit.paramTypes, x => x[0].name)
+    const params = qbEmit.untypedparamTypes
+        .map(x => [x, null] as [AtParam, ODataTypeRef | null])
+        .concat(qbEmit.paramTypes)
+    const grouped = groupBy(params, x => x[0].name)
     return Object
         .keys(grouped)
         .map(name => {

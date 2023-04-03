@@ -2,7 +2,7 @@ import { ComplexTypeOrEnum, Dict, ODataEnum, ODataSchema, ODataSingleTypeRef, OD
 import { ODataDate, ODataDuration, ODataTimeOfDay, ODataDateTimeOffset } from "./edmTypes.js";
 import { IUriBuilder } from "./entitySetInterfaces.js";
 import { typeNameString, typeRefString, Writer } from "./utils.js";
-import { delimiter } from "path";
+import { hasODataQueryMetadata } from "./query/queryComplexObjectBuilder.js";
 
 export type ParameterDefinition =
     | { type: "Ref", data: { name: string, uri: IUriBuilder } }
@@ -206,6 +206,14 @@ export type SerializerSettings = {
 }
 
 export function serialize(value: any, type: ODataTypeRef | null | undefined, settings: SerializerSettings): Writer<string, [AtParam, ODataTypeRef][]> {
+
+    if (Array.isArray(value)) {
+        type = type?.isCollection ? type.collectionType : type
+        return Writer.traverse(value
+            .map(x => serialize(x, type, settings)), [])
+            .map(x => `[${x.join(",")}]`)
+    }
+
     const asString = serializeToString(value, type, settings)
     if (!type || !(value instanceof AtParam)) {
         return Writer.create(asString, [])
@@ -227,6 +235,12 @@ function serializeToString(value: any, type: ODataTypeRef | null | undefined, se
     if (Array.isArray(value)) {
         type = type?.isCollection ? type.collectionType : type
         return `[${value.map(x => serializeToString(x, type, settings))}]`
+    }
+
+    // it is possible that an entity property makes it
+    // in here if it is wrapped in an array
+    if (hasODataQueryMetadata(value)) {
+        return value.$$oDataQueryMetadata.path.map(x => x.path).join("/")
     }
 
     if (type?.isCollection) {

@@ -6,16 +6,17 @@ export class UnboundFunctionSet<TRoot, TSubPath, TFetchResult> {
 
     constructor(
         private readonly tools: UnboundFunctionSetTools<TFetchResult, any>,
-        private disableHttp = false) {
+        private readonly disableHttp = false,
+        private readonly encodeUri = true) {
     }
 
     subPath<TNewEntityQuery>(
         selector: (entity: TSubPath, params: Params<TRoot>) => SubPathSelection<TNewEntityQuery>): TNewEntityQuery {
-        const state = recontextDataForUnboundFunctions(this.tools, selector)
+        const state = recontextDataForUnboundFunctions(this.tools, selector, this.encodeUri)
         const tools = {
             requestTools: this.tools.requestTools,
             defaultResponseInterceptor: this.tools.defaultResponseInterceptor,
-            schema: this.tools.root.schemaNamespaces[this.tools.schemaName],
+            schema: this.tools.schema,
             root: this.tools.root,
             serializerSettings: this.tools.serializerSettings
         }

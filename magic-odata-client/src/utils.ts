@@ -206,3 +206,8 @@ export function dir<T>(x: T, ...messages: any[]) {
     console.dir(messages.length ? [x, ...messages] : x, { depth: 100 })
     return x
 }
+
+export function log<T>(x: T, ...messages: any[]) {
+    console.log(messages.length ? [x, ...messages] : x)
+    return x
+}

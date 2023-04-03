@@ -205,7 +205,7 @@ ${tab(selectorParams)}) => ${keywords.SubPathSelection}<TNewEntityQuery>): TNewE
 
         const args = {
             root: "rootConfig",
-            schemaName: `"${schemaName}"`,
+            schema: `${keywords.toODataSchema}("${schemaName || ""}")`,
             containerName: `"${containerName}"`,
             requestTools: `${(first && "this.") || ""}_httpClientArgs`,
             defaultResponseInterceptor: "responseParser",

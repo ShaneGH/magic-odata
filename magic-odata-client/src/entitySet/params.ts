@@ -2,7 +2,7 @@ import { ODataSchema, ODataServiceConfig } from "magic-odata-shared";
 import { IEntitySet, Params } from "../entitySetInterfaces.js";
 import { OutputTypes, resolveOutputType } from "../query/filtering/queryPrimitiveTypes0.js";
 import { buildUriBuilderRoot } from "../query/root.js";
-import { AtParam, SerializerSettings, rawType } from "../valueSerializer.js";
+import { AtParam, ParameterDefinition, SerializerSettings, rawType } from "../valueSerializer.js";
 
 function ensureAt(param: string) {
     return param[0] === "@" ? param : `@${param}`
