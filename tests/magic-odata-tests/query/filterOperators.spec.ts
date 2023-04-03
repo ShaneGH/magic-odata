@@ -61,6 +61,10 @@ describe("Query.Filter Operators", function () {
         return describe(name, test)
     }
 
+    testCase("concat", function () {
+        // concat is just a flag to point to concatString or concatCollection
+    })
+
     testCase("null", function () {
 
         it("Should work correctly", async () => {

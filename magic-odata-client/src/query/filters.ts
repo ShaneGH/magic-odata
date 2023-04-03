@@ -372,6 +372,11 @@ export type FilterUtils<TRoot> = {
     negate(op: Operable<number | EdmDuration>, group?: boolean): Filter;
 
     /**
+     * @deprecated Use concatString or concatCollection
+    */
+    concat(): void;
+
+    /**
      * An OData "concat" operation
      * @example concatString(x.bandMember, " Starr")
      */
@@ -681,6 +686,7 @@ export function newUtils<TRoot>(): FilterUtils<TRoot> {
         div,
         divby,
         mod,
+        concat: () => { },
         concatString,
         containsString,
         matchesPattern,
