@@ -3,19 +3,10 @@ import { Filter, FilterEnv, FilterResult, QbEmit } from "../../queryBuilder.js";
 import { QueryCollection, QueryEnum, QueryObject, QueryPrimitive } from "../queryComplexObjectBuilder.js";
 import { rawType, serialize } from "../../valueSerializer.js";
 import { ReaderWriter, Writer } from "../../utils.js";
-import { SubPathSelection } from "../../entitySet/subPath.js";
+import { SubPathSelection, isSubPathSelection } from "../../entitySet/subPath.js";
 import { IEntitySet } from "../../entitySetInterfaces.js";
 
 export type Operable<T> = QueryPrimitive<T> | QueryEnum<T> | Filter | SubPathSelection<IEntitySet<any, T, any, any, any, any, any, any>>
-
-function isSubPathSelection<T>(x: any): x is SubPathSelection<IEntitySet<any, T, any, any, any, any, any, any>> {
-    const keys = Object.keys(x)
-    return !!keys.length
-        && keys.indexOf("propertyName") !== -1
-        && keys.indexOf("outputType") !== -1
-        && typeof x["propertyName"] === "string"
-        && typeof x["outputType"] === "object"
-}
 
 function processSubPath(subPath: SubPathSelection<any>): Filter {
     return ReaderWriter.retn<FilterEnv, FilterResult, QbEmit>({

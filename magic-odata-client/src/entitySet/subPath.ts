@@ -1,5 +1,5 @@
 import { ODataComplexType, ODataTypeRef, Function as ODataFunction, ODataEntitySet, Dict, ODataSchema, ODataServiceConfig, Function } from "magic-odata-shared";
-import { Params } from "../entitySetInterfaces.js";
+import { IEntitySet, Params } from "../entitySetInterfaces.js";
 import { QbEmit } from "../queryBuilder.js";
 import { Writer } from "../utils.js";
 import { SerializerSettings, serialize } from "../valueSerializer.js";
@@ -191,6 +191,15 @@ export type SubPathSelection<TNewEntityQuery> = {
     propertyName: string,
     outputType?: ODataTypeRef,
     qbEmit: QbEmit
+}
+
+export function isSubPathSelection<T>(x: any): x is SubPathSelection<IEntitySet<any, T, any, any, any, any, any, any>> {
+    const keys = Object.keys(x)
+    return !!keys.length
+        && keys.indexOf("propertyName") !== -1
+        && keys.indexOf("outputType") !== -1
+        && typeof x["propertyName"] === "string"
+        && typeof x["outputType"] === "object"
 }
 
 export function recontextDataForSubPath<TRoot, TFetchResult, TResult, TSubPath, TNewEntityQuery>(
