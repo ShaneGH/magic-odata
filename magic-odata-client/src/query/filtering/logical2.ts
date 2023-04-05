@@ -102,8 +102,13 @@ export function isIn<T>(lhs: Operable<T>, rhs: T[] | OperableCollection<T>, mapp
         rhs = lhs.bind(({ $$output }) => valueToFilter(rhsA, { isCollection: true, collectionType: $$output }, mapperA))
     }
 
-    lhs = operableToFilter(lhs)
-    rhs = operableToFilter(rhs)
+    const rhsOperable = asOperable(rhs)
+    if (rhsOperable) {
+        return combineFilterStrings(" in ", bool, lhs, rhsOperable)
+    }
 
-    return combineFilterStrings(" in ", bool, lhs, rhs)
+    const mapperA = mapper && ((xs: T[]) => `[${xs.map(mapper)}]`)
+    const rhsF = lhs.bind(({ $$output }) => valueToFilter(rhs as T[], { isCollection: true, collectionType: $$output }, mapperA))
+
+    return combineFilterStrings(" in ", bool, lhs, rhsF)
 }

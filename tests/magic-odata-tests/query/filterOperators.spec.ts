@@ -287,6 +287,28 @@ describe("Query.Filter Operators", function () {
                 expect(result.value.length).toBe(0);
             }
         }
+
+        it("Should work with @params", () => {
+
+            const result = client.Users
+                .withQuery((u, { $filter: { eq, and, isIn } }, params) =>
+                    and(eq(u.Id, "123"), isIn(u.Name, params.createConst("x", ["abc"]))))
+                .uri(false);
+
+            expect(result.query.$filter).toBe("Id eq '123' and Name in @x");
+            expect(result.query["@x"]).toBe("['abc']");
+        });
+
+        it("Should work with @params (2)", () => {
+
+            const result = client.Users
+                .withQuery((u, { $filter: { eq, and, isIn } }, params) =>
+                    and(eq(u.Id, "123"), isIn(u.Name, [params.createConst("x", "abc")])))
+                .uri(false);
+
+            expect(result.query.$filter).toBe("Id eq '123' and Name in [@x]");
+            expect(result.query["@x"]).toBe("'abc'");
+        });
     });
 
     testCase("ne", function () {
