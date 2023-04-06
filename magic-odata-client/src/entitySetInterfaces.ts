@@ -42,6 +42,14 @@ export interface IUriBuilder {
 
 export type Param<T> = { param: ParameterDefinition } & T
 
+export enum RefType {
+    /** Serialize refs as follows: {"@odata.id":"https://my.odata.server/Users('123')"} */
+    RefObject = "RefObject",
+
+    /** Serialize refs as follows: $root/Users('123') */
+    $root = "$root"
+}
+
 /**
  * Object to help with generating @ params in an OData Uri
  * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_ParameterAliases
@@ -50,6 +58,7 @@ export type Params<TRoot> = {
     /**
      * Create a new URI param
      * @param paramName The name of the param in the uri. If the param is not prefixed with `@`, it will be added automatically
+     * @param refType Detarmines how the ref type should be serialized. @default `RefType.RefObject`
      * @returns A reference to the param that can be used in the query
      * @example
      * // buildUri: https://localhost/bandMembers/findMembersByBandName(bandName=@x)?@x={"@odata.id":"https://localhost/bands(123)/name"}
@@ -59,7 +68,30 @@ export type Params<TRoot> = {
      *         return m.findMembersByBandName({ bandName })
      *     })
      */
-    createRef<T>(paramName: string, ref: (root: TRoot) => IEntitySet<any, T, any, any, any, any, any, any>): Param<T>
+    createRef<T>(paramName: string, ref: (root: TRoot) => IEntitySet<any, T, any, any, any, any, any, any>, refType?: RefType): Param<T>
+
+    // TS bug on IEntitySet<any, T, any, any, any, any, any, any> ^^. 
+    // Compiler is unable to resolve type T if a parent (or smaller) interface is used
+
+    /**
+     * Create a new collection URI param
+     * @param paramName The name of the param in the uri. If the param is not prefixed with `@`, it will be added automatically
+     * @param values The `paramName` of each individual value is ignored
+     * @returns A reference to the param that can be used in the query
+     * @example
+     * // buildUri: https://localhost/bandMembers/findMembersByBandNames(bandNames=@x)?@x=[{"@odata.id":"https://localhost/bands(123)/name", 'The Beatles'}]
+     * oDataClient.bandMembers
+     *     .subPath((m, params) => {
+     *         const bandNames = params.createRefCollection("x", [
+     *             params.createRef("_", root => root.bands.withKey(k => k.key(123)).subPath(b => b.name)),
+     *             params.createConst("_", "The Beatles")
+     *         ])
+     * 
+     *         return m.findMembersByBandNames({ bandNames })
+     *     })
+     */
+    createRefCollection<T>(paramName: string, values: Param<T>[]): Param<T[]>
+
     // TS bug on IEntitySet<any, T, any, any, any, any, any, any> ^^. 
     // Compiler is unable to resolve type T if a parent (or smaller) interface is used
 
@@ -130,10 +162,17 @@ export interface IEntitySet<TRoot, TEntity, TResult, TKeyBuilder, TQueryable, TC
 
     /**
      * Create a new EntitySet with the defined query attached
-     * 
-     * @param urlEncode Default true
      */
-    withQuery(queryBuilder: (entity: TQueryable, utils: Utils<TRoot>, params: Params<TRoot>) => Query | Query[], urlEncode?: boolean)
+    withQuery(queryBuilder: (entity: TQueryable, utils: Utils<TRoot>, params: Params<TRoot>) => Query | Query[])
+        : IEntitySet<TRoot, TEntity, TResult, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, TFetchResult>;
+
+
+    /**
+     * @deprecated Use withQuery method without urlEncode parameter. 
+     * If the query is used in a URL that is executed as an http request, the uri will always be encoded
+     * If the query is used to build a URL without executing, the encoding can be specified in the `.uri(...)` method
+     */
+    withQuery(queryBuilder: (entity: TQueryable, utils: Utils<TRoot>, params: Params<TRoot>) => Query | Query[], urlEncode: boolean)
         : IEntitySet<TRoot, TEntity, TResult, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, TFetchResult>;
 
     /**

@@ -5,9 +5,10 @@ import { typeNameString, typeRefString, Writer } from "./utils.js";
 import { hasODataQueryMetadata } from "./query/queryComplexObjectBuilder.js";
 
 export type ParameterDefinition =
-    | { type: "Ref", data: { name: string, uri: IUriBuilder } }
+    | { type: "Ref", data: { name: string, uri: IUriBuilder, serializeAsObject: boolean } }
     | { type: "Const", data: { name: string, value: any, paramType: ODataTypeRef | undefined } }
     | { type: "Param", data: { name: string } }
+    | { type: "Collection", data: { name: string, values: AtParam[] } }
 
 export class AtParam {
     public readonly name: string

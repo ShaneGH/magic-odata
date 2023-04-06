@@ -80,11 +80,7 @@ function keyExpr(keyTypes: KeyType[], key: any, keyEmbedType: WithKeyType, seria
             throw new Error(`Invalid WithKeyType: ${keyEmbedType}`);
         }
 
-        return result.map(x => ({
-            ...x,
-            // TODO: should not be always encoded???  
-            value: encodeURIComponent(x.value)
-        }))
+        return result
     }
 
     const kvp = keyTypes
@@ -110,8 +106,7 @@ function keyExpr(keyTypes: KeyType[], key: any, keyEmbedType: WithKeyType, seria
 
     return value.map(value => ({
         appendToLatest: true,
-        // TODO: should not be always encoded???
-        value: `(${encodeURIComponent(value)})`
+        value: `(${value})`
     }))
 }
 

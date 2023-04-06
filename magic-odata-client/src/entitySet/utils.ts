@@ -33,7 +33,6 @@ export type EntityQueryState = {
     type: ODataTypeRef,
     query: {
         query: Query[]
-        urlEncode: boolean
     }
 }
 

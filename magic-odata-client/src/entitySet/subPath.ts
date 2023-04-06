@@ -12,13 +12,12 @@ const $value = {};
 
 function buildSubPathProperties<TFetchResult, TResult, TSubPath>(
     data: RequestBuilderData<TFetchResult, TResult>,
-    type: ODataTypeRef,
-    encodeUri: boolean): TSubPath {
+    type: ODataTypeRef): TSubPath {
 
     if (type.isCollection) {
 
         const functions = data.entitySet
-            ? listAllEntitySetFunctionsGrouped(data.entitySet, data.tools.serializerSettings, encodeUri)
+            ? listAllEntitySetFunctionsGrouped(data.entitySet, data.tools.serializerSettings)
                 .reduce((s, x) => ({ ...s, [x[0]]: x[1] }), {} as any)
             : {};
 
@@ -36,7 +35,7 @@ function buildSubPathProperties<TFetchResult, TResult, TSubPath>(
     const props = listAllProperties(t.type, data.tools.root.schemaNamespaces, true)
         .reduce((s, x) => ({ ...s, [x]: { propertyName: x } }), {} as any);
 
-    const functions = listAllEntityFunctionsGrouped(t.type, data.tools.serializerSettings, encodeUri)
+    const functions = listAllEntityFunctionsGrouped(t.type, data.tools.serializerSettings)
         .reduce((s, x) => ({ ...s, [x[0]]: x[1] }), {} as any);
 
     return {
@@ -45,7 +44,7 @@ function buildSubPathProperties<TFetchResult, TResult, TSubPath>(
     }
 }
 
-export function functionUriBuilder(functionName: string, serializerSettings: SerializerSettings, functions: Function[], encodeUri: boolean): (x: any) => SubPathSelection<any> {
+export function functionUriBuilder(functionName: string, serializerSettings: SerializerSettings, functions: Function[]): (x: any) => SubPathSelection<any> {
 
     const _serialize: typeof serialize = (x, y, z) => {
 
@@ -61,9 +60,7 @@ export function functionUriBuilder(functionName: string, serializerSettings: Ser
                 .join("/"), [])
         }
 
-        return encodeUri
-            ? serialize(x, y, { ...z, allowJsonForComplexTypes: true }).map(encodeURIComponent)
-            : serialize(x, y, { ...z, allowJsonForComplexTypes: true })
+        return serialize(x, y, { ...z, allowJsonForComplexTypes: true })
     }
 
     return (x: any) => {
@@ -103,24 +100,23 @@ export function functionUriBuilder(functionName: string, serializerSettings: Ser
     }
 }
 
-function buildFunctions(groupedFunctions: { [k: string]: ODataFunction[] }, serializerSettings: SerializerSettings, encodeUri: boolean): [string, (x: any) => SubPathSelection<any>][] {
+function buildFunctions(groupedFunctions: { [k: string]: ODataFunction[] }, serializerSettings: SerializerSettings): [string, (x: any) => SubPathSelection<any>][] {
 
     return Object
         .keys(groupedFunctions)
         .map(key => [
             key,
-            functionUriBuilder(key, serializerSettings, groupedFunctions[key], encodeUri)
+            functionUriBuilder(key, serializerSettings, groupedFunctions[key])
         ])
 }
 
 function listAllEntityFunctionsGrouped(
     type: ODataComplexType,
     serializerSettings: SerializerSettings,
-    encodeUri: boolean,
     includeParent = true) {
 
     const groupedFunctions = groupFunctions(listAllEntityFunctionsUngrouped(type, serializerSettings.serviceConfig, includeParent))
-    return buildFunctions(groupedFunctions, serializerSettings, encodeUri)
+    return buildFunctions(groupedFunctions, serializerSettings)
 }
 
 function listUnboundFunctionsGrouped(
@@ -130,7 +126,7 @@ function listUnboundFunctionsGrouped(
     encodeUri: boolean) {
 
     const groupedFunctions = groupFunctions(schema.entityContainers[containerName].unboundFunctions)
-    return buildFunctions(groupedFunctions, serializerSettings, encodeUri)
+    return buildFunctions(groupedFunctions, serializerSettings)
 }
 
 function groupFunctions(functions: ODataFunction[]) {
@@ -148,11 +144,10 @@ function groupFunctions(functions: ODataFunction[]) {
 
 function listAllEntitySetFunctionsGrouped(
     entitySet: ODataEntitySet,
-    serializerSettings: SerializerSettings,
-    encodeUri: boolean) {
+    serializerSettings: SerializerSettings) {
 
     const groupedFunctions = groupFunctions(entitySet.collectionFunctions)
-    return buildFunctions(groupedFunctions, serializerSettings, encodeUri)
+    return buildFunctions(groupedFunctions, serializerSettings)
 }
 
 function listAllEntityFunctionsUngrouped(
@@ -215,7 +210,7 @@ export function recontextDataForSubPath<TRoot, TFetchResult, TResult, TSubPath, 
             const paramsBuilder = params<TRoot>(data.tools.requestTools.uriRoot,
                 data.tools.root, data.tools.serializerSettings, data.tools.schema);
 
-            const newT = subPath(buildSubPathProperties(data, state.type, true), paramsBuilder)
+            const newT = subPath(buildSubPathProperties(data, state.type), paramsBuilder)
             if (newT === $value) {
                 propType = state.type
             } else if (newT === $count && state.type.isCollection) {
@@ -291,8 +286,7 @@ export function recontextDataForUnboundFunctions<TRoot, TFetchResult, TResult, T
         accept: defaultAccept,
         type: newT.outputType,
         query: {
-            query: [],
-            urlEncode: true
+            query: []
         }
     }, newT.qbEmit)
 }

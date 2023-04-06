@@ -74,7 +74,8 @@ function combineTools<TFetchResult, TResult>(
 
 function _buildUri<TFetchResult, TResult>(
     data: RequestBuilderData<TFetchResult, TResult>,
-    tools: RequestTools<TFetchResult, TResult>): UriWithMetadata {
+    tools: RequestTools<TFetchResult, TResult>,
+    encodeUri: boolean): UriWithMetadata {
 
     const buildUri = tools.uriInterceptor || defaultUriInterceptor
     const filterEnv = {
@@ -88,6 +89,10 @@ function _buildUri<TFetchResult, TResult>(
 
     const [state, qbEmit] = data.state.execute()
 
+    const relativePath = encodeUri
+        ? state.path.map(encodeURIComponent).join("/")
+        : state.path.join("/")
+
     return {
         qbEmit,
         outputType: state.type,
@@ -97,17 +102,18 @@ function _buildUri<TFetchResult, TResult>(
             // if namespace === "", give null instead
             entitySetContainerName: data.entitySet?.containerName || null,
             entitySetName: data.entitySet?.name || null,
-            relativePath: state.path.join("/"),
-            query: buildQuery(data.tools.serializerSettings, buildUri, qbEmit, state.query.query, filterEnv, state.query.urlEncode)
+            relativePath,
+            query: buildQuery(data.tools.serializerSettings, buildUri, qbEmit, state.query.query, filterEnv, encodeUri)
         }
     }
 }
 
 export function buildUri<TFetchResult, TResult>(
-    data: RequestBuilderData<TFetchResult, TResult>): UriWithMetadata {
+    data: RequestBuilderData<TFetchResult, TResult>,
+    encodeUri: boolean): UriWithMetadata {
 
     const tools = combineTools(data, undefined)
-    return _buildUri(data, tools);
+    return _buildUri(data, tools, encodeUri);
 }
 
 export function executeRequest<TFetchResult, TResult>(
@@ -116,7 +122,7 @@ export function executeRequest<TFetchResult, TResult>(
 
     const requestTools = combineTools(data, overrideRequestTools)
 
-    const { uriParts, accept } = _buildUri({ ...data, tools: { ...data.tools, requestTools } }, requestTools)
+    const { uriParts, accept } = _buildUri({ ...data, tools: { ...data.tools, requestTools } }, requestTools, true)
     const uri = requestTools.uriInterceptor!(uriParts);
 
     const acceptHeader = !accept || accept === Accept.Json

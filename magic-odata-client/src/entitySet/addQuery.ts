@@ -90,8 +90,7 @@ export function executeQueryBuilder<TRoot, TQueryable, TQuery>(
 
 export function recontextDataForRootQuery<TRoot, TFetchResult, TResult, TQueryable>(
     data: RequestBuilderData<TFetchResult, TResult>,
-    queryBuilder: (entity: TQueryable, utils: Utils<TRoot>, params: Params<TRoot>) => Query | Query[],
-    urlEncode?: boolean): Writer<EntityQueryState, QbEmit> {
+    queryBuilder: (entity: TQueryable, utils: Utils<TRoot>, params: Params<TRoot>) => Query | Query[]): Writer<EntityQueryState, QbEmit> {
 
     return data.state.bind(state => {
 
@@ -112,8 +111,7 @@ export function recontextDataForRootQuery<TRoot, TFetchResult, TResult, TQueryab
         return [{
             ...state,
             query: {
-                query: Array.isArray(query) ? query : [query],
-                urlEncode: urlEncode == undefined ? true : urlEncode
+                query: Array.isArray(query) ? query : [query]
             }
         }, QbEmit.zero];
     })

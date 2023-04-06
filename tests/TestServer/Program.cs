@@ -175,6 +175,11 @@ public class Program
 
         builder.Function("MyBlogs").ReturnsCollection<Blog>().ReturnNullable = false;
 
+        var myBlogs2 = builder.Function("MyBlogs2");
+        myBlogs2.Parameter<int>("take");
+        myBlogs2
+            .ReturnsCollection<Blog>().ReturnNullable = false;
+
         builder
             .EntityType<HasId>()
             .Function("JustReturn6")
@@ -265,6 +270,20 @@ public class Program
             .Function("AcceptsGuid");
         acceptsGuid.Parameter<Guid>("theGuid");
         acceptsGuid.Returns<Guid>();
+
+        // NOTE: not implemented in controller layer
+        var acceptsGuids = builder
+            .EntityType<Blog>()
+            .Function("AcceptsGuids");
+        acceptsGuids.CollectionParameter<Guid>("theGuids");
+        acceptsGuids.Returns<Guid>();
+
+        // NOTE: not implemented in controller layer
+        var acceptsEntityCollection = builder
+            .EntityType<Blog>()
+            .Function("IsFromUser");
+        acceptsEntityCollection.CollectionParameter<User>("users");
+        acceptsEntityCollection.Returns<bool>();
 
         builder
             .EntityType<Blog>()

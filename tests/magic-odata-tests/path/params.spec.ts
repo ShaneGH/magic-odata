@@ -2,7 +2,7 @@
 import { My, ODataClient } from "../generatedCode.js";
 import { addBlog, addBlogPost, addComment, addFullUserChain, addUser } from "../utils/client.js";
 import { uniqueString } from "../utils/utils.js";
-import { NonNumericTypes, ODataCollectionResult, WithKeyType } from "magic-odata-client";
+import { NonNumericTypes, ODataCollectionResult, RefType, WithKeyType } from "magic-odata-client";
 import { RequestOptions, ResponseInterceptor } from "magic-odata-client";
 import { defaultUriInterceptor, oDataClient, uriClient } from "../utils/odataClient.js";
 import { RootResponseInterceptor } from "magic-odata-client";
@@ -242,10 +242,47 @@ describe("@Params", () => {
                     }))
                     .uri(true);
 
-                expect(uri.relativePath).toBe("Users('123')/IsType(userType=%40x)");
-                expect(uri.query["@x"]).toBe("'some%25thing'");
+                expect(uri.relativePath).toBe("Users('123')/IsType(userType%3D%40x)");
+                expect(uri.query[encodeURIComponent("@x")]).toBe("'some%25thing'");
             })
         })
+    })
+
+    describe("collection", () => {
+
+        it("Should process collection param (encode)", execute.bind(null, true));
+        it("Should process collection param", execute.bind(null, false));
+
+        function execute(encode: boolean) {
+            const result = oDataClient.Blogs
+                .withKey(k => k.key("1"))
+                .subPath((b, params) => b.AcceptsGuids({
+                    theGuids: params.createRefCollection("x", [
+                        params.createRef("x", x =>
+                            x.My.Odata.Container.Users.withKey(k => k.key("777")).subPath(x => x.Id), RefType.RefObject),
+                        params.createRef("l", x =>
+                            x.My.Odata.Container.Users.withKey(k => k.key("888")).subPath(x => x.Id), RefType.$root),
+                        params.createConst("x", "xxx"),
+                        params.createConst("x", "yyy", NonNumericTypes.String)
+                    ])
+                }))
+                .uri(encode)
+
+            const results = [
+                '{"@odata.id":"http://localhost:5432/odata/test-entities/Users(\'777\')/Id"}',
+                "$root/Users('888')/Id",
+                'xxx',
+                "'yyy'"
+            ]
+
+            if (encode) {
+                expect(result.relativePath).toBe("Blogs('1')/AcceptsGuids(theGuids%3D%40x)")
+                expect(result.query["%40x"]).toBe(encodeURIComponent(`[${results}]`))
+            } else {
+                expect(result.relativePath).toBe("Blogs('1')/AcceptsGuids(theGuids=@x)")
+                expect(result.query["@x"]).toBe(`[${results}]`)
+            }
+        }
     })
 
     describe("complex const", () => {
@@ -295,6 +332,30 @@ describe("@Params", () => {
     });
 
     describe("Reference", () => {
+        describe("Serialize as $root/", () => {
+
+            it("should work (1)", execute.bind(null, RefType.$root))
+            it("should work (1)", execute.bind(null, RefType.RefObject))
+
+            function execute(refType: RefType) {
+                const uriBuilder = oDataClient.Blogs
+                    .withKey((k, params) => k
+                        .key(params.createRef("x", root => root.My.Odata.Container.BlogPosts
+                            .withKey(x => x.key("213"))
+                            .subPath(x => x.Blog)
+                            .subPath(x => x.Id), refType)))
+
+                const uri1 = defaultUriInterceptor(uriBuilder.uri(false));
+                const uri2 = defaultUriInterceptor(uriBuilder.uri(true));
+
+                const ref = refType === RefType.RefObject
+                    ? JSON.stringify({ "@odata.id": "http://localhost:5432/odata/test-entities/BlogPosts('213')/Blog/Id" })
+                    : "$root/BlogPosts('213')/Blog/Id"
+                expect(uri1).toBe(`http://localhost:5432/odata/test-entities/Blogs(@x)?@x=${ref}`)
+                expect(uri2).toBe(`http://localhost:5432/odata/test-entities/Blogs(%40x)?%40x=${encodeURIComponent(ref)}`)
+            }
+        })
+
         it("Should reference another entity id", function () {
             const uriBuilder = oDataClient.Blogs
                 .withKey((k, params) => k
@@ -307,8 +368,8 @@ describe("@Params", () => {
             const uri2 = defaultUriInterceptor(uriBuilder.uri(true));
 
             const ref = JSON.stringify({ "@odata.id": "http://localhost:5432/odata/test-entities/BlogPosts('213')/Blog/Id" })
-            expect(uri1).toBe(`http://localhost:5432/odata/test-entities/Blogs(%40x)?@x=${ref}`)
-            expect(uri2).toBe(`http://localhost:5432/odata/test-entities/Blogs(%40x)?@x=${encodeURIComponent(ref)}`)
+            expect(uri1).toBe(`http://localhost:5432/odata/test-entities/Blogs(@x)?@x=${ref}`)
+            expect(uri2).toBe(`http://localhost:5432/odata/test-entities/Blogs(%40x)?%40x=${encodeURIComponent(ref)}`)
         });
 
         describe("Entity ref", () => {
@@ -369,6 +430,90 @@ describe("@Params", () => {
 
             expect(result.query.$orderBy).toBe("HasBlog(blog=@x)")
             expect(result.query["@x"]).toBe('{"@odata.id":"http://localhost:5432/odata/test-entities/Blogs(\'123132\')"}')
+        });
+    });
+
+    describe("$root", () => {
+        const builder = oDataClient.Users
+            .withKey(k => k.key("1"))
+            .subPath((u, parms) => u.HasBlog({
+                blog: parms.createRef("@x", root => root.My.Odata.Container.Blogs
+                    .withKey(k => k.key(parms.createConst("y", "123"))))
+            }))
+
+        it("Should work correctly without encoding", function () {
+            const result = builder.uri(false)
+
+            expect(result.relativePath).toBe("Users('1')/HasBlog(blog=@x)")
+            expect(result.query["@x"]).toBe('{"@odata.id":"http://localhost:5432/odata/test-entities/Blogs(@y)"}')
+            expect(result.query["@y"]).toBe("'123'")
+        });
+
+        it("Should work correctly with encoding", function () {
+            const result = builder.uri(true)
+
+            expect(result.relativePath).toBe("Users('1')/HasBlog(blog%3D%40x)")
+            expect(result.query[encodeURIComponent("@x")]).toBe(encodeURIComponent('{"@odata.id":"http://localhost:5432/odata/test-entities/Blogs(@y)"}'))
+            expect(result.query[encodeURIComponent("@y")]).toBe("'123'")
+        });
+
+        it("Should throw on duplicate param", function () {
+            try {
+                const result = oDataClient.Users
+                    .withKey(k => k.key("1"))
+                    .subPath((u, parms) => u.HasBlog({
+                        blog: parms.createRef("x", root => root.My.Odata.Container.Blogs
+                            .withKey(k => k.key(parms.createConst("x", "123"))))
+                    }))
+                    .uri(false)
+
+                // expect that this case is never reached
+                expect(true).toBe(false)
+            } catch (e: any) {
+                expect(e.toString()).toContain("@x")
+            }
+        });
+
+        it("Call function from $root (1)", function () {
+            const result = oDataClient.Users
+                .withKey(k => k.key("1"))
+                .subPath((u, parms) => u.HasBlog({
+                    blog: parms.createRef("x", root => root.My.Odata.Container
+                        .unboundFunctions(f => f.MyBlogs2({ take: parms.createConst("y", 444) })))
+                }))
+                .uri(false)
+
+            expect(result.relativePath).toBe("Users('1')/HasBlog(blog=@x)")
+            expect(result.query["@x"]).toBe("{\"@odata.id\":\"http://localhost:5432/odata/test-entities/MyBlogs2(take=@y)\"}")
+            expect(result.query["@y"]).toBe("444")
+        });
+
+        it("Call function from $root (2)", function () {
+            const result = oDataClient.Users
+                .withKey(k => k.key("1"))
+                .withQuery((u, { $filter: { eq, $root } }, params) => [
+                    eq(u.Blogs as any, $root(root => root.My.Odata.Container.unboundFunctions(f => f
+                        .MyBlogs2({ take: params.createConst("y", 444) }))))
+                ])
+                .uri(false)
+
+            expect(result.relativePath).toBe("Users('1')")
+            expect(result.query["$filter"]).toBe("Blogs eq $root/MyBlogs2(take=@y)")
+            expect(result.query["@y"]).toBe("444")
+        });
+
+        it("Call function from $root (3)", function () {
+            const result = oDataClient.Blogs
+                .withKey(k => k.key("1"))
+                .subPath((b, params) => b.IsFromUser({
+                    users: [params.createRef("x",
+                        x => x.My.Odata.Container.Users.withKey(k => k.key("777"))
+                    )]
+                }))
+                .uri(false)
+
+            expect(result.relativePath).toBe("Blogs('1')/IsFromUser(users=[@x])")
+            expect(result.query["@x"]).toBe("{\"@odata.id\":\"http://localhost:5432/odata/test-entities/Users('777')\"}")
         });
     });
 });

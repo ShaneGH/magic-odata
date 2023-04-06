@@ -3,10 +3,11 @@ import { RequestBuilder } from "../requestBuilder.js";
 import { SchemaTools } from "../entitySet/utils.js";
 import { IUriBuilder, Params } from "../entitySetInterfaces.js";
 import { FilterEnv, FilterResult, QbEmit } from "../queryBuilder.js";
-import { ReaderWriter } from "../utils.js";
-import { SerializerSettings } from "../valueSerializer.js";
+import { ReaderWriter, Writer, dir } from "../utils.js";
+import { AtParam, ParameterDefinition, SerializerSettings, rawType } from "../valueSerializer.js";
 import { UnboundFunctionSet } from "../unboundFunctionSet.js";
 import { SubPathSelection } from "../entitySet/subPath.js";
+import { ODataUriParts } from "../entitySet/requestTools.js";
 
 type RBuilder = RequestBuilder<any, any, any, any, any, any, any, any>
 
@@ -33,6 +34,29 @@ export function buildUriBuilderRoot(uriRoot: string, serializerSettings: Seriali
     return (entitySetTree && stripSumType(entitySetTree)) || {} as any
 }
 
+export function extractAtParams(uriParts: ODataUriParts) {
+
+    const { query, at } = Object
+        .keys(uriParts.query)
+        .reduce(
+            (s, x) => x.length > 0 && x[0] === "@"
+                ? {
+                    ...s,
+                    at: [
+                        ...s.at,
+                        new AtParam({
+                            type: "Const",
+                            data: { name: x, value: uriParts.query[x], paramType: rawType }
+                        })]
+                }
+                : { ...s, query: { ...s.query, [x]: uriParts.query[x] } },
+            { query: {} as Dict<string>, at: [] as AtParam[] })
+
+    return Writer.create<ODataUriParts, QbEmit>(
+        { ...uriParts, query },
+        QbEmit.maybeZero(undefined, at))
+}
+
 export function $root(filter: (root: any) => IUriBuilder) {
 
     return ReaderWriter.create<FilterEnv, FilterResult, QbEmit>(env => {
@@ -40,20 +64,11 @@ export function $root(filter: (root: any) => IUriBuilder) {
         const entitySets = buildUriBuilderRoot("$root/", env.serializerSettings, env.serviceConfig, env.schema)
         let { uriParts, qbEmit, outputType } = filter(entitySets).uriWithMetadata(false)
 
-        // remove any @ params. These will be added to the overall query
-        uriParts = {
-            ...uriParts,
-            query: Object
-                .keys(uriParts.query)
-                .reduce((s, x) => x.length > 0 && x[0] === "@"
-                    ? s
-                    : { ...s, [x]: uriParts.query[x] }, {} as Dict<string>)
-        }
-
         return [
             {
                 $$output: outputType,
-                $$filter: env.buildUri(uriParts)
+                $$filter: env.buildUri(
+                    extractAtParams(uriParts).execute()[0])
             },
             qbEmit]
     });

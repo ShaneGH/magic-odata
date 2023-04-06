@@ -44,7 +44,6 @@ export class RequestBuilder<TRoot, TEntity, TResult, TKeyBuilder, TQueryable, TC
                 path: entitySet ? [entitySet.name] : [],
                 type: queryType!,
                 query: {
-                    urlEncode: true,
                     query: []
                 }
             }, QbEmit.zero)
@@ -74,7 +73,11 @@ export class RequestBuilder<TRoot, TEntity, TResult, TKeyBuilder, TQueryable, TC
     // https://github.com/ShaneGH/magic-odata/issues/2
     withQuery(queryBuilder: (entity: TQueryable, utils: Utils<TRoot>, params: Params<TRoot>) => Query | Query[], urlEncode?: boolean) {
 
-        const state = recontextDataForRootQuery(this.state, queryBuilder, urlEncode)
+        if (urlEncode != undefined) {
+            throw new Error("Deprecated. See method jsdoc for details");
+        }
+
+        const state = recontextDataForRootQuery(this.state, queryBuilder)
         return new RequestBuilder<TRoot, TEntity, TResult, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, OperationIsNotPossibleAfterQuery, TFetchResult>(
             this.state.tools, this.state.entitySet, null, state, this.disableHttp);
     }
@@ -96,19 +99,7 @@ export class RequestBuilder<TRoot, TEntity, TResult, TKeyBuilder, TQueryable, TC
     }
 
     uriWithMetadata(encodeQueryParts?: boolean): UriWithMetadata {
-        const state = typeof encodeQueryParts !== "boolean"
-            ? this.state
-            : {
-                ...this.state,
-                state: this.state.state.map(state => ({
-                    ...state,
-                    query: {
-                        ...state.query,
-                        urlEncode: encodeQueryParts
-                    }
-                }))
-            }
 
-        return buildUri(state)
+        return buildUri(this.state, encodeQueryParts == undefined ? true : encodeQueryParts)
     }
 }

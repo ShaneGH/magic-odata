@@ -52,9 +52,9 @@ describe('Fetch client', () => {
         .withQuery((_, { $filter: { filterRaw } }) => filterRaw("sadkas"))
         .get();
 
-      expect(true).toBe(false)
-    } catch {
-      // GREATE SUCCESS
+      expect("INVALID").toBe("NOT INVALID")
+    } catch (e: any) {
+      expect(e.toString().indexOf("INVALID")).toBe(-1);
     }
   });
 

@@ -81,11 +81,11 @@ describe("Composite Keys", function () {
 
         try {
             client.CompositeKeyItems
-                .withKey({ Id1: item.Id1! } as any);
+                .withKey(k => k.key({ Id1: item.Id1! } as any));
 
             expect(true).toBe(false);
-        } catch {
-            // GREAT SUCCESS!
+        } catch (e: any) {
+            expect(e.toString()).toContain("Id2");
         }
     });
 });

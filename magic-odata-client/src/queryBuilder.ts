@@ -1,8 +1,9 @@
 import { ODataSchema, ODataServiceConfig, ODataTypeRef } from "magic-odata-shared";
 import { ODataUriParts } from "./entitySet/requestTools.js";
 import { NonNumericTypes, resolveOutputType } from "./query/filtering/queryPrimitiveTypes0.js";
-import { groupBy, ReaderWriter, removeNulls, Writer } from "./utils.js";
-import { AtParam, SerializerSettings, serialize } from "./valueSerializer.js";
+import { dir, groupBy, ReaderWriter, removeNulls, Writer } from "./utils.js";
+import { AtParam, SerializerSettings, rawType, serialize } from "./valueSerializer.js";
+import { extractAtParams } from "./query/root.js";
 
 type Dict<T> = { [key: string]: T }
 
@@ -179,7 +180,7 @@ export function buildPartialQuery(q: Query | Query[], filterEnv: FilterEnv, enco
 }
 
 export function buildQuery(serializerSettings: SerializerSettings, buildUri: BuildUri,
-    qbEmit: QbEmit, q: Query | Query[], filterEnv: FilterEnv, encode = true): Dict<string> {
+    qbEmit: QbEmit, q: Query | Query[], filterEnv: FilterEnv, encode: boolean): Dict<string> {
 
     const pq = buildPartialQuery(q, filterEnv, encode)
         .bind(x => Writer.create(x, qbEmit))
@@ -191,6 +192,24 @@ const stringT = resolveOutputType(NonNumericTypes.String)
 
 function processAtParams(qbEmit: QbEmit, encode: boolean, buildUri: BuildUri, serializerSettings: SerializerSettings) {
 
+    const params = qbEmit.untypedparamTypes
+        .map(x => [x, null] as [AtParam, ODataTypeRef | null])
+        .concat(qbEmit.paramTypes)
+
+    return _processAtParams(params, encode, buildUri, serializerSettings)
+}
+
+function constParamType(param: AtParam) {
+    return (param.param.type === "Const"
+        && param.param.data.paramType) || null
+}
+
+function _processAtParams(
+    atParams: [AtParam, ODataTypeRef | null][],
+    encode: boolean,
+    buildUri: BuildUri,
+    serializerSettings: SerializerSettings) {
+
     const stringify = encode
         ? (x: any) => encodeURIComponent(JSON.stringify(x))
         : (x: any) => JSON.stringify(x)
@@ -199,13 +218,10 @@ function processAtParams(qbEmit: QbEmit, encode: boolean, buildUri: BuildUri, se
         ? (x, y, z) => serialize(x, y, { ...z, allowJsonForComplexTypes: true }).map(encodeURIComponent)
         : (x, y, z) => serialize(x, y, { ...z, allowJsonForComplexTypes: true })
 
-    const params = qbEmit.untypedparamTypes
-        .map(x => [x, null] as [AtParam, ODataTypeRef | null])
-        .concat(qbEmit.paramTypes)
-    const grouped = groupBy(params, x => x[0].name)
+    const grouped = groupBy(atParams, x => x[0].name)
     return Object
         .keys(grouped)
-        .map(name => {
+        .flatMap((name): { k: string, v: string }[] => {
             const defs = removeNulls(grouped[name]
                 .map(([param, t]) => param.param.type !== "Param"
                     ? { name: param.name, param: param.param, type: t }
@@ -222,19 +238,47 @@ function processAtParams(qbEmit: QbEmit, encode: boolean, buildUri: BuildUri, se
 
             const def = defs[0]
             const t = defs.map(x => x.type)[0]
-            return def.param.type === "Const"
-                ? {
+
+            if (def.param.type === "Const") {
+                return [{
                     k: def.name,
-                    v: def.param.data.paramType || t
-                        ? _serialize(def.param.data.value, def.param.data.paramType || t, serializerSettings).execute()[0]
+                    v: constParamType(def) || t
+                        ? _serialize(def.param.data.value, constParamType(def) || t, serializerSettings).execute()[0]
                         : typeof def.param.data.value === "string"
                             ? _serialize(def.param.data.value, stringT, serializerSettings).execute()[0]
                             : stringify(def.param.data.value)
-                }
-                : {
+                }]
+            }
+
+            if (def.param.type === "Ref") {
+
+                const [uriParts, emit] = extractAtParams(
+                    def.param.data.uri.uri(false)).execute()
+
+                return [{
                     k: def.param.data.name,
-                    v: stringify({ "@odata.id": buildUri(def.param.data.uri.uri(false)) })
-                }
+                    v: def.param.data.serializeAsObject
+                        ? stringify({ "@odata.id": buildUri(uriParts) })
+                        : _serialize(buildUri(uriParts), rawType, serializerSettings).execute()[0]
+                }].concat(processAtParams(emit, encode, buildUri, serializerSettings))
+            }
+
+            const collectionType = (t && t.isCollection && t.collectionType) || null
+            const innerParams = def.param.data.values
+                // process each param separately so as to ignore duplicate names
+                .flatMap(x => _processAtParams(
+                    [[x, constParamType(x) || collectionType]],
+                    false,
+                    buildUri,
+                    serializerSettings))
+                .map(x => x.v)
+
+            const ps = `[${innerParams.join(",")}]`
+
+            return [{
+                k: def.name,
+                v: encode ? encodeURIComponent(ps) : ps
+            }]
         })
 
 }
@@ -244,8 +288,15 @@ function merge(serializerSettings: SerializerSettings, buildUri: BuildUri,
     const [params, _dataParams] = acc.execute()
 
     return processAtParams(_dataParams, encode, buildUri, serializerSettings)
-        .reduce((s, x) => ({
-            ...s,
-            [x.k]: x.v
-        }), params)
+        .reduce((s, x) => {
+            const k = encode ? encodeURIComponent(x.k) : x.k
+            if (s[k]) {
+                throw new Error(`Param ${x.k} is defined more than once`)
+            }
+
+            return {
+                ...s,
+                [k]: x.v
+            };
+        }, params)
 }

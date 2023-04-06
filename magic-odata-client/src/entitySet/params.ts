@@ -1,8 +1,8 @@
 import { ODataSchema, ODataServiceConfig } from "magic-odata-shared";
-import { IEntitySet, Params } from "../entitySetInterfaces.js";
+import { IEntitySet, Param, Params, RefType } from "../entitySetInterfaces.js";
 import { OutputTypes, resolveOutputType } from "../query/filtering/queryPrimitiveTypes0.js";
 import { buildUriBuilderRoot } from "../query/root.js";
-import { AtParam, ParameterDefinition, SerializerSettings, rawType } from "../valueSerializer.js";
+import { AtParam, SerializerSettings, rawType } from "../valueSerializer.js";
 
 function ensureAt(param: string) {
     return param[0] === "@" ? param : `@${param}`
@@ -14,14 +14,39 @@ function ensureAt(param: string) {
  * The alternative is to use a Writer monad and expose this to the client, which is not ideal
  */
 export function params<TRoot>(uriRoot: string, serviceConfig: ODataServiceConfig, serializerSettings: SerializerSettings, schema: ODataSchema): Params<TRoot> {
-    let root: TRoot | null = null
+    let $root: TRoot | null = null
+    let refObject: TRoot | null = null
 
     return {
-        createRef<T>(paramName: string, ref: (root: TRoot) => IEntitySet<any, T, any, any, any, any, any, any>) {
-            root ??= (buildUriBuilderRoot(uriRoot, serializerSettings, serviceConfig, schema) as TRoot)
+        createRef<T>(paramName: string, ref: (root: TRoot) => IEntitySet<any, T, any, any, any, any, any, any>, refType?: RefType) {
+            const serializeAsObject = refType !== RefType.$root
+
+            let root: TRoot;
+            if (serializeAsObject) {
+                root = (refObject ??= buildUriBuilderRoot(
+                    uriRoot, serializerSettings, serviceConfig, schema) as TRoot)
+            } else {
+                root = ($root ??= buildUriBuilderRoot(
+                    "$root/", serializerSettings, serviceConfig, schema) as TRoot)
+            }
 
             paramName = ensureAt(paramName)
-            return new AtParam({ type: "Ref", data: { name: paramName, uri: ref(root) } }) as any
+            return new AtParam({ type: "Ref", data: { name: paramName, uri: ref(root), serializeAsObject } }) as any
+        },
+
+        createRefCollection<T>(paramName: string, values: Param<T>[]) {
+
+            const vs = values.map(x => {
+                if (x instanceof AtParam) return x
+                throw new Error(`Parameter "${x.param.data.name}" from ` +
+                    `collection "${paramName}" was generated incorrectly`)
+            });
+
+            paramName = ensureAt(paramName)
+            return new AtParam({
+                type: "Collection",
+                data: { name: paramName, values: vs }
+            }) as any
         },
 
         createConst<T>(paramName: string, value: T, paramType?: OutputTypes | undefined) {

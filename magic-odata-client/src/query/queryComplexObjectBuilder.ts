@@ -228,7 +228,7 @@ function buildPropertyTypeRef<T>(type: ODataTypeRef, serializerSettings: Seriali
                         }
 
                         if (x.type === "Function") {
-                            const fs = functionUriBuilder(x.key, serializerSettings, x.functionGroup, false)
+                            const fs = functionUriBuilder(x.key, serializerSettings, x.functionGroup)
                             return propertyCache = function (args: any) {
                                 const { propertyName, outputType, qbEmit } = fs(args)
                                 const propPath = [

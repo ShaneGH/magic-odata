@@ -22,7 +22,7 @@ describe("Query", function () {
                 .withQuery((p: QueryEnum<My.Odata.Entities.UserProfileType>, { $filter: { eq } }) => eq(p, My.Odata.Entities.UserProfileType.Advanced))
                 .get();
 
-            expect(userProfileType).toBe("xxx/Users('123')/UserProfileType/$value?$filter=%24it%20eq%20My.Odata.Entities.UserProfileType'Advanced'");
+            expect(userProfileType).toBe("xxx/Users('123')/UserProfileType/%24value?$filter=%24it%20eq%20My.Odata.Entities.UserProfileType'Advanced'");
         });
     });
 
@@ -48,7 +48,7 @@ describe("Query", function () {
                 .withQuery((u: My.Odata.Entities.QueryableUser, { $filter: { eq } }) => eq(u.Id, "1234"))
                 .get<Promise<string>>();
 
-            expect(result).toBe(`xxx/HasIds/My.Odata.Entities.User/$count?$filter=Id%20eq%20'1234'`);
+            expect(result).toBe(`xxx/HasIds/My.Odata.Entities.User/%24count?$filter=Id%20eq%20'1234'`);
         });
 
     });

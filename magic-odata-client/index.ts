@@ -46,6 +46,7 @@ export {
     ODataCollectionResult,
     ODataResult,
     Params,
+    RefType,
     IEntitySet
 } from "./src/entitySetInterfaces.js"
 

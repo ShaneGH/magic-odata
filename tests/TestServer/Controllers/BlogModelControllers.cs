@@ -573,6 +573,17 @@ public class BlogsController : ODataControllerBase<Blog>
             .SelectMany(u => u.Blogs);
     }
 
+    // not actually tested
+    [HttpGet("MyBlogs2(take={take})")]
+    [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
+    public IQueryable<Blog> GetMyBlogs2(int take)
+    {
+        return _inMemoryDb.Users
+            .Where(x => x.Id == "Me")
+            .SelectMany(u => u.Blogs)
+            .Take(take);
+    }
+
     [HttpGet("Blogs({key})/WordCount(filterCommentsOnly={filterCommentsOnly})")]
     [EnableQuery(MaxAnyAllExpressionDepth = 100, MaxExpansionDepth = 100)]
     public SingleResult<int> GetWordCount(string key, bool filterCommentsOnly)

@@ -388,7 +388,7 @@ describe("SubPath", function () {
                 .subPath(x => x.$count)
                 .get();
 
-            expect(uri).toBe(`xxx/Users('${user.blogUser.Id}')/Blogs/$count`);
+            expect(uri).toBe(`xxx/Users('${user.blogUser.Id}')/Blogs/%24count`);
         });
 
         it("Should retrieve complex type set $count", async () => {
@@ -399,7 +399,7 @@ describe("SubPath", function () {
                 .subPath(x => x.$count)
                 .get();
 
-            expect(uri).toBe(`xxx/Comments('${user.comment.Id}')/Tags/$count`);
+            expect(uri).toBe(`xxx/Comments('${user.comment.Id}')/Tags/%24count`);
         });
 
         it("Should retrieve complex type set $count", async () => {
@@ -421,7 +421,7 @@ describe("SubPath", function () {
                 .subPath(x => x.$count)
                 .get();
 
-            expect(uri).toBe(`xxx/Users/My.Odata.Entities.User/$count`);
+            expect(uri).toBe(`xxx/Users/My.Odata.Entities.User/%24count`);
         });
     })
 });
