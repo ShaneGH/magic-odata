@@ -1,3 +1,5 @@
+[![Node.js CI](https://github.com/ShaneGH/magic-odata/actions/workflows/node.js.yml/badge.svg)](https://github.com/ShaneGH/magic-odata/actions/workflows/node.js.yml)
+
 # magic-odata
 Magical OData client generation for typescript. No more `string`. No more `any`!
 
