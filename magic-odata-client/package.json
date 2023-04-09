@@ -1,6 +1,6 @@
 {
   "name": "magic-odata-client",
-  "version": "x.x.x",
+  "version": "1.0.0",
   "description": "Code generation tools to build OData clients",
   "main": "dist/index.js",
   "types": "dist/index.d.js",
@@ -32,5 +32,8 @@
   "devDependencies": {
     "@types/node": "^18.11.18",
     "typescript": "^4.9.4"
+  },
+  "dependencies": {
+    "magic-odata-shared": "1.0.0"
   }
 }
