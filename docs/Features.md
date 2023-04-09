@@ -9,6 +9,7 @@
  * [Key lookup](#key-lookup)
  * [Sub path lookup](#sub-path-lookup)
     * [$value and $count](#value-and-count)
+    * [Indexed items](#indexed-items)
     * [Functions](#function-calls)
  * [@Parameter Aliases](#parameter-aliases)
  * [Enums](#enums)
@@ -234,6 +235,25 @@ const userName = new MyOdataClient({...})
     .withKey(k => k.key(user.Id))
     .subPath(user => user.Name)
     .get()
+```
+
+## Indexed items
+
+You can retrieve [indexed items](http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part2-url-conventions.html#sec_AddressingaMemberofanOrderedCollecti) from an ordered collection
+
+```typescript
+
+// get the 10th user in the collection
+const userName = new MyOdataClient({...})
+    .User
+    .subPath(users => users[9])
+    .get();
+    
+// get the last user in the collection
+const userName = new MyOdataClient({...})
+    .User
+    .subPath(users => users[-1])
+    .get();
 ```
 
 ## $value and $count

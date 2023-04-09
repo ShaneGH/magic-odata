@@ -10,6 +10,10 @@ import { Accept, RequestBuilderData, lookup, tryFindBaseType, tryFindPropertyTyp
 const $count = {};
 const $value = {};
 
+class Indexed {
+    constructor(public readonly index: number) { }
+}
+
 function buildSubPathProperties<TFetchResult, TResult, TSubPath>(
     data: RequestBuilderData<TFetchResult, TResult>,
     type: ODataTypeRef): TSubPath {
@@ -21,10 +25,19 @@ function buildSubPathProperties<TFetchResult, TResult, TSubPath>(
                 .reduce((s, x) => ({ ...s, [x[0]]: x[1] }), {} as any)
             : {};
 
-        return {
+        return new Proxy<any>({
             ...functions,
             $count
-        } as any
+        }, {
+            get: (target: any, p: string | symbol, receiver: any) => {
+                if (typeof p === "symbol") return target[p]
+
+                const asInt = parseInt(p)
+                if (isNaN(asInt)) return target[p]
+
+                return new Indexed(asInt)
+            }
+        })
     }
 
     const t = lookup(type, data.tools.root.schemaNamespaces);
@@ -215,6 +228,8 @@ export function recontextDataForSubPath<TRoot, TFetchResult, TResult, TSubPath, 
                 propType = state.type
             } else if (newT === $count && state.type.isCollection) {
                 propType = state.type.collectionType
+            } else if (newT instanceof Indexed && state.type.isCollection) {
+                propType = state.type.collectionType
             } else if (newT.outputType) {
                 propType = newT.outputType
             } else if (!state.type.isCollection) {
@@ -229,7 +244,9 @@ export function recontextDataForSubPath<TRoot, TFetchResult, TResult, TSubPath, 
                 ? "$value"
                 : newT === $count
                     ? "$count"
-                    : newT.propertyName
+                    : newT instanceof Indexed
+                        ? newT.index.toString()
+                        : newT.propertyName
 
             const path = state.path?.length
                 ? [...state.path, propName]

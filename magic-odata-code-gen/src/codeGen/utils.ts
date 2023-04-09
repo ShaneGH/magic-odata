@@ -222,7 +222,6 @@ export function angularResultType(settings: CodeGenConfig | null): string | null
 }
 
 const httpClientGenericNames = ["TRoot", "TEntity", "TResult", "TKeyBuilder", "TQueryable", "TCaster", "TSubPath", "TFetchResult"]
-const longest = httpClientGenericNames.map(x => x.length).reduce((s, x) => s > x ? s : x, -1);
 
 export function getFetchResult(keywords: Keywords, settings: CodeGenConfig | null) {
     const angularResult = angularResultType(settings);
@@ -231,20 +230,21 @@ export function getFetchResult(keywords: Keywords, settings: CodeGenConfig | nul
         : { async: "Promise", fetchResponse: "Response" };
 }
 
-export type HttpClientType = (generics: HttpClientGenerics, asInterface: boolean) => string
+export type HttpClientType = (generics: HttpClientGenerics, asInterface: boolean, genericDescription?: string) => string
 export function buildHttpClientType(types: Dict<ODataSchema>, keywords: Keywords, tab: Tab, settings: CodeGenConfig | null): HttpClientType {
 
     const fullyQualifiedTsType = buildFullyQualifiedTsType(settings);
     const { async, fetchResponse } = getFetchResult(keywords, settings)
 
-    function addType(name: string, i: number) {
-        const gType = httpClientGenericNames[i] || ""
+    function addType(generics: string[], name: string, i: number) {
+        const longest = generics.map(x => x.length).reduce((s, x) => s > x ? s : x, -1);
+        const gType = generics[i] || ""
         const padded = `/* ${gType} */ ` + [...Array(Math.max(0, longest - gType.length)).keys()].map(_ => " ").join("")
 
         return `${padded}${name}`
     }
 
-    return (generics: HttpClientGenerics, asInterface: boolean) => {
+    return (generics: HttpClientGenerics, asInterface: boolean, genericDescription?: string) => {
 
         const isEnum = !generics.tResult.isCollection
             && types[generics.tResult.namespace]
@@ -258,6 +258,10 @@ export function buildHttpClientType(types: Dict<ODataSchema>, keywords: Keywords
         if (generics.tResultNullable) {
             tResult += " | null"
         }
+
+        const genericNames = genericDescription
+            ? httpClientGenericNames.map(x => `${x}${genericDescription}`)
+            : httpClientGenericNames
 
         const gs = [
             entitySetsName(settings),
@@ -273,7 +277,7 @@ export function buildHttpClientType(types: Dict<ODataSchema>, keywords: Keywords
             generics.tSubPath,
             `${async}<${fetchResponse}>`
         ]
-            .map(addType)
+            .map(addType.bind(null, genericNames))
             .map(tab)
             .join(",\n");
 

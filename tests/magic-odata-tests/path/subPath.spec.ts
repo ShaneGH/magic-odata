@@ -194,16 +194,6 @@ describe("SubPath", function () {
                 expect(cache).toBe("http://localhost:5432/odata/test-entities/UserProfiles(My.Odata.Entities.UserProfileType'Advanced')");
             });
         });
-
-        // it("Should retrieve subpath of item with enum as key", async () => {
-        //     const user = await addFullUserChain();
-        //     const role = await client.UserRoles
-        //         .withKey(x => x.key(My.Odata.Entities.UserType.User))
-        //         .subPath(x => x.Description)
-        //         .get();
-
-        //     expect(role.value).toBe("User");
-        // });
     });
 
     describe("Collection", () => {
@@ -415,13 +405,58 @@ describe("SubPath", function () {
 
         it("Should retrieve casted entity set $count", async () => {
 
-            const user = await addFullUserChain();
             const uri: any = await uriClient.Users
                 .cast(x => x.User())
                 .subPath(x => x.$count)
                 .get();
 
             expect(uri).toBe(`xxx/Users/My.Odata.Entities.User/%24count`);
+        });
+    })
+
+    describe("CollectionIndexes", () => {
+
+        it("Should retrieve indexed item from entity set", () => {
+
+            const uri = uriClient.Users
+                .subPath(x => x[0])
+                .subPath(x => x.Blogs)
+                .uri(false)
+
+            expect(uri.relativePath).toBe(`Users/0/Blogs`);
+        });
+
+        it("Should retrieve indexed item after casting", () => {
+
+            const uri = uriClient.HasIds
+                .cast(x => x.User())
+                .subPath(x => x[-99])
+                .subPath(x => x.Blogs)
+                .uri(false)
+
+            expect(uri.relativePath).toBe(`HasIds/My.Odata.Entities.User/-99/Blogs`);
+        });
+
+        it("Should retrieve indexed item after sub path", () => {
+
+            const uri = uriClient.Users
+                .subPath(x => x[0])
+                .subPath(x => x.Blogs)
+                .subPath(x => x[99])
+                .uri(false)
+
+            expect(uri.relativePath).toBe(`Users/0/Blogs/99`);
+        });
+
+        it("Should retrieve indexed item after function call", () => {
+
+            const uri = uriClient
+                .unboundFunctions(fs => fs.MyBlogs())
+                .subPath(x => x[-85])
+                .subPath(x => x.Name)
+                .uri(false)
+
+            expect(uri.relativePath).toBe(`MyBlogs()/-85/Name`);
         });
     })
 });

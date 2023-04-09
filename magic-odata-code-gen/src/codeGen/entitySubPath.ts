@@ -50,7 +50,9 @@ export function buildGetTypeForSubPath(
     httpClientType: HttpClientType,
     settings: CodeGenConfig | null): GetTypeForSubPath {
 
-    return (t, isNullable) => {
+    return (t, isNullable) => builder(t, isNullable, undefined, true)
+
+    function builder(t: ODataTypeRef, isNullable: boolean | undefined, genericDescription: string | undefined, subPathSelection: boolean) {
         // TODO: test with arrays of arrays?
 
         const entityInfo = getEntityTypeInfo(t)
@@ -65,15 +67,19 @@ export function buildGetTypeForSubPath(
             tResultNullable: isNullable
         }
 
-        const entityQueryType = httpClientType(generics, true);
-        return `${keywords.SubPathSelection}<${entityQueryType}>`
+        const entityQueryType = httpClientType(generics, true, genericDescription);
+        return subPathSelection
+            ? `${keywords.SubPathSelection}<${entityQueryType}>`
+            : entityQueryType
     }
 
     function getTSubPath(typeRef: ODataTypeRef, tQueryable: string) {
 
         if (typeRef.isCollection) {
             const { async, fetchResponse } = getFetchResult(keywords, settings || null)
-            return `${keywords.CollectionSubPath}<${entitySetsName(settings)}, ${async}<number>, ${tQueryable}, ${async}<${fetchResponse}>>`;
+            const element = builder(typeRef.collectionType, false, " (element)", false)
+
+            return `${keywords.CollectionSubPath}<${entitySetsName(settings)}, ${async}<number>, ${tQueryable}, ${async}<${fetchResponse}>, ${element}>`;
         }
 
         // https://github.com/ShaneGH/magic-odata/issues/12

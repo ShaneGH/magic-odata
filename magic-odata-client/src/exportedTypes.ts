@@ -87,7 +87,7 @@ export type PrimitiveSubPath<TRoot, TValueResult, TQueryable, TFetchResult> = {
       /* TFetchResult */ TFetchResult>>
 }
 
-export type CollectionSubPath<TRoot, TCountResult, TQueryable, TFetchResult> = {
+export type CollectionSubPath<TRoot, TCountResult, TQueryable, TFetchResult, TElementSubPath> = {
   $count: SubPathSelection<IEntitySet<
       /* TRoot */        TRoot,
       /* TEntity */      number,
@@ -97,6 +97,11 @@ export type CollectionSubPath<TRoot, TCountResult, TQueryable, TFetchResult> = {
       /* TCaster */      $ValueAnd$CountTypesCanNotBeOperatedOn,
       /* TSubPath */     $ValueAnd$CountTypesCanNotBeOperatedOn,
       /* TFetchResult */ TFetchResult>>
+
+  /**
+   * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part2-url-conventions.html#sec_AddressingaMemberofanOrderedCollecti
+   */
+  [index: number]: SubPathSelection<TElementSubPath>
 }
 
-export type EntitySetSubPath<TRoot, TCountResult, TFunctions, TQueryable, TFetchResult> = TFunctions & CollectionSubPath<TRoot, TCountResult, TQueryable, TFetchResult>
+export type EntitySetSubPath<TRoot, TCountResult, TFunctions, TQueryable, TFetchResult, TElementSubPath> = TFunctions & CollectionSubPath<TRoot, TCountResult, TQueryable, TFetchResult, TElementSubPath>

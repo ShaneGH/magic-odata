@@ -283,12 +283,14 @@ ${tab(`return new ${instanceType}(args, ${entitySetArg}, ${entitySetType});`)}
         }
         const functionsName = `${fullyQualifiedTsType(mockedType)}["${entitySet.containerName || ""}"]["${entitySet.name}"]`
         const { async, fetchResponse } = getFetchResult(keywords, settings || null)
+        const asSingleResult = httpClientType(singletonGenerics(entitySet), true, " (element)")
+
 
         return {
             tKeyBuilder,
             tQueryable,
             tCaster: `${casterType}.Collection`,
-            tSubPath: `${keywords.EntitySetSubPath}<${entitySetsName(settings)}, ${async}<number>, ${functionsName}, ${tQueryable}, ${async}<${fetchResponse}>>`,
+            tSubPath: `${keywords.EntitySetSubPath}<${entitySetsName(settings)}, ${async}<number>, ${functionsName}, ${tQueryable}, ${async}<${fetchResponse}>, ${asSingleResult}>`,
             tResult: {
                 isCollection: true as true,
                 collectionType: entitySet.forType

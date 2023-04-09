@@ -29,9 +29,9 @@ function buildGetComplexCasterProps(
             .map(x => x!))
         .reduce((s, x) => [...s, ...x], [])
 
-    return (type: ODataComplexType, collectionResult: boolean, singleCasterType: boolean) => {
+    return (type: ODataComplexType, isCollection: boolean) => {
 
-        const casterType = singleCasterType ? "Single" : "Collection"
+        const casterType = isCollection ? "Collection" : "Single"
         const complexInherits = allComplexTypeFlatList
             .filter(x => (x.baseType
                 && x.baseType.namespace === type.namespace
@@ -55,17 +55,31 @@ function buildGetComplexCasterProps(
                 const tQueryable = fullyQualifiedTsType(typeRef, getQueryableName)
                 const { async, fetchResponse } = getFetchResult(keywords, settings || null)
 
-                const generics = {
+                const singleGenerics = {
                     tKeyBuilder: keyProp,
                     tQueryable,
                     tCaster: `${caster}.${casterType}`,
-                    tSubPath: singleCasterType ? subProps : `${keywords.CollectionSubPath}<${entitySetsName(settings)}, ${async}<number>, ${tQueryable}, ${async}<${fetchResponse}>>`,
-                    tResult: collectionResult
-                        ? { isCollection: true as true, collectionType: typeRef }
-                        : typeRef
+                    tSubPath: subProps,
+                    tResult: typeRef
                 }
 
-                const entityQueryType = httpClientType(generics, true);
+                let entityQueryType = httpClientType(singleGenerics, true, isCollection ? " (element)" : undefined);
+                if (isCollection) {
+                    const generics = {
+                        tKeyBuilder: keyProp,
+                        tQueryable,
+                        tCaster: `${caster}.${casterType}`,
+                        tSubPath: isCollection
+                            ? `${keywords.CollectionSubPath}<${entitySetsName(settings)}, ${async}<number>, ${tQueryable}, ${async}<${fetchResponse}>, ${entityQueryType}>`
+                            : subProps,
+                        tResult: isCollection
+                            ? { isCollection: true as true, collectionType: typeRef }
+                            : typeRef
+                    }
+
+                    entityQueryType = httpClientType(generics, true);
+                }
+
                 return `${name(t)}(): ${keywords.CastSelection}<${entityQueryType}>`
             })
     }
@@ -100,7 +114,7 @@ ${tab(collection(type))}
     }
 
     function single(type: ODataComplexType) {
-        const props = getComplexCasterProps(type, false, true)
+        const props = getComplexCasterProps(type, false)
         return !props.length
             ? "export type Single = { }"
             : `export type Single = {
@@ -109,7 +123,7 @@ ${tab(props.join("\n\n"))}
     }
 
     function collection(type: ODataComplexType) {
-        const props = getComplexCasterProps(type, true, false)
+        const props = getComplexCasterProps(type, true)
         return !props.length
             ? "export type Collection = { }"
             : `export type Collection = {

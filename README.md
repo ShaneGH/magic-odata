@@ -73,6 +73,7 @@ Write safe, statically typed odata queries in typescript. No more `string`. No m
  * @Parameter aliases
  * Enums
  * Functions
+ * Indexed ordered collections
  * Query options
     * $filter
     * $select
