@@ -27,6 +27,7 @@ jobs:
         cache: 'npm'
         cache-dependency-path: tests/magic-odata-tests
     - run: cd ./tests/magic-odata-tests
+    - run: ls
     - run: npm ci
     - run: npm run fix-links
     - run: npm run build-and-test-unix
