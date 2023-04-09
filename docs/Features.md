@@ -243,14 +243,12 @@ You can retrieve [indexed items](http://docs.oasis-open.org/odata/odata/v4.01/od
 
 ```typescript
 
-// get the 10th user in the collection
-const userName = new MyOdataClient({...})
+const tenthUser = new MyOdataClient({...})
     .User
     .subPath(users => users[9])
     .get();
     
-// get the last user in the collection
-const userName = new MyOdataClient({...})
+const lastUser = new MyOdataClient({...})
     .User
     .subPath(users => users[-1])
     .get();
