@@ -5,6 +5,7 @@ import { OrderingUtils, newUtils as orderBy } from "./orderBy.js";
 import { SearchUtils, newUtils as search } from "./search.js";
 import { count, top, skip } from "./paging.js";
 import { Custom } from "../queryBuilder.js";
+import { levels } from "./levels.js";
 
 /**
  * Utils for building queries
@@ -58,6 +59,11 @@ export type Utils<TRoot> = {
      * @example custom("$filter", "name eq 'John'")
      */
     custom: typeof custom
+
+    /**
+     * http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_ExpandOptionlevels
+     */
+    $levels: typeof levels
 }
 
 export function utils<TRoot>(): Utils<TRoot> {
@@ -70,7 +76,8 @@ export function utils<TRoot>(): Utils<TRoot> {
         $top: top,
         $skip: skip,
         $count: count,
-        custom
+        custom,
+        $levels: levels
     }
 }
 

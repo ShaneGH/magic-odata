@@ -406,4 +406,17 @@ describe("Query.Expand", function () {
             expect(result.Comments![0].Title).toBe(ctxt.comment.Title);
         });
     });
+
+    testCase("$levels", function () {
+        it("Should work correctly", async () => {
+
+            const result = client.BlogPosts
+                .withKey(x => x.key("123"))
+                .withQuery((p, { $expand: { expand }, $levels }) =>
+                    expand(p.Blog, _ => $levels(20)))
+                .uri(false);
+
+            expect(result.query.$expand).toBe("Blog($levels=20)");
+        });
+    });
 });

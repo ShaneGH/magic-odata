@@ -17,6 +17,7 @@
     * [$filter](#filter)
     * [$select](#select)
     * [$expand](#expand)
+        * [$levels](#levels)
     * [$orderBy](#orderby)
     * [$search](#search)
     * [$skip, $top and $count](#paging)
@@ -476,6 +477,19 @@ const myUser = new MyOdataClient({...})
 const myUser = new MyOdataClient({...})
     .Users
     .withQuery((user, { $expand: { expandRaw } }) => expandRaw("Friends"))
+    .get()
+```
+
+### $levels
+
+[$expand $levels](http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_ExpandOptionlevels) allow you to expand recursively
+    
+```typescript
+// expand friends to 3 levels
+const myUser = new MyOdataClient({...})
+    .Users
+    .withQuery((user, { $expand: { expand }, $levels }) => 
+        expand(user.Friends, () => $levels(3)))
     .get()
 ```
 

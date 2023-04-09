@@ -38,6 +38,11 @@ export type Expand = {
     $$expand: (env: FilterEnv) => ExpandResult
 }
 
+export type Levels = {
+    $$oDataQueryObjectType: "Levels"
+    $$levels: number
+}
+
 export type OrderBy = {
     $$oDataQueryObjectType: "OrderBy"
     $$orderBy: Writer<string, QbEmit>
@@ -107,7 +112,7 @@ export class QbEmit {
 
 export type Filter = ReaderWriter<FilterEnv, FilterResult, QbEmit>
 
-export type Query = Top | Skip | Count | Expand | OrderBy | Select | Filter | Custom | Search
+export type Query = Top | Skip | Count | Expand | OrderBy | Select | Filter | Custom | Search | Levels
 
 type QueryAccumulator = Writer<Dict<string>, QbEmit>
 
@@ -173,6 +178,10 @@ export function buildPartialQuery(q: Query | Query[], filterEnv: FilterEnv, enco
 
             if (x.$$oDataQueryObjectType === "Count") {
                 return maybeAdd(encode, s, "$count", "true");
+            }
+
+            if (x.$$oDataQueryObjectType === "Levels") {
+                return maybeAdd(encode, s, "$levels", x.$$levels.toString());
             }
 
             return maybeAdd(encode, s, "$skip", x.$$skip.toString());

@@ -78,6 +78,7 @@ Write safe, statically typed odata queries in typescript. No more `string`. No m
     * $filter
     * $select
     * $expand
+        * $levels
     * $orderBy
     * $search
     * $skip, $top and $count
