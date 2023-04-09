@@ -46,6 +46,7 @@ export type ODataComplexTypeProperty = {
 export type ODataComplexType = ODataTypeName & {
     keyProps?: string[] | undefined
     baseType?: ODataTypeName
+    // eslint-disable-next-line @typescript-eslint/ban-types
     functions: Function[]
     properties: {
         [key: string]: ODataComplexTypeProperty
@@ -71,11 +72,13 @@ export type ODataEntitySet = {
     /** The entity set namespace */
     containerName: string,
     forType: ODataSingleTypeRef
+    // eslint-disable-next-line @typescript-eslint/ban-types
     collectionFunctions: Function[]
 }
 
 export type EntityContainer = {
     entitySets: Dict<ODataEntitySet>
+    // eslint-disable-next-line @typescript-eslint/ban-types
     unboundFunctions: Function[]
 }
 
