@@ -7,7 +7,7 @@ This project is open to any contributions
 
 Create [github issues](https://github.com/ShaneGH/magic-odata/issues) for bugs or feature requests
 
-Use labels [bug](https://github.com/ShaneGH/magic-odata/labels/bug) or [feature](https://github.com/ShaneGH/magic-odata/labels/feature)
+Use labels [bug](https://github.com/ShaneGH/magic-odata/labels/bug) or [feature-request](https://github.com/ShaneGH/magic-odata/labels/feature-request)
 
 ## Create a pull request
 
