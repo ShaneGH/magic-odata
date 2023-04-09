@@ -26,8 +26,5 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
         cache-dependency-path: tests/magic-odata-tests
-    - run: cd ./tests/magic-odata-tests
-    - run: ls
-    - run: npm ci
-    - run: npm run fix-links
-    - run: npm run build-and-test-unix
+    - run: cd ./tests/magic-odata-tests; npm ci
+    - run: cd ./tests/magic-odata-tests; npm run fix-links; npm run build-and-test-unix
