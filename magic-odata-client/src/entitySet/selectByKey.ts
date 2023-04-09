@@ -25,6 +25,7 @@ export enum WithKeyType {
     PathSegment = "PathSegment"
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export type KeySelection<TNewEntityQuery> = {
     raw: boolean
     keyEmbedType: WithKeyType,

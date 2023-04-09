@@ -129,7 +129,7 @@ export function executeRequest<TFetchResult, TResult>(
         ? "application/json"
         : "text/plain"
 
-    let init: RequestOptions = requestTools.requestInterceptor!(uri, {
+    const init: RequestOptions = requestTools.requestInterceptor!(uri, {
         method: "GET",
         headers: [
             ["OData-Version", "4"],

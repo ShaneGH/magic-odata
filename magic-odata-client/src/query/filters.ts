@@ -686,6 +686,7 @@ export function newUtils<TRoot>(): FilterUtils<TRoot> {
         div,
         divby,
         mod,
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
         concat: () => { },
         concatString,
         containsString,

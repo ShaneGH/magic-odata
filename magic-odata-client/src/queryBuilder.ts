@@ -1,7 +1,7 @@
 import { ODataSchema, ODataServiceConfig, ODataTypeRef } from "magic-odata-shared";
 import { ODataUriParts } from "./entitySet/requestTools.js";
 import { NonNumericTypes, resolveOutputType } from "./query/filtering/queryPrimitiveTypes0.js";
-import { dir, groupBy, ReaderWriter, removeNulls, Writer } from "./utils.js";
+import { groupBy, ReaderWriter, removeNulls, Writer } from "./utils.js";
 import { AtParam, SerializerSettings, rawType, serialize } from "./valueSerializer.js";
 import { extractAtParams } from "./query/root.js";
 

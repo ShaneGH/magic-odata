@@ -29,7 +29,7 @@ function buildSubPathProperties<TFetchResult, TResult, TSubPath>(
             ...functions,
             $count
         }, {
-            get: (target: any, p: string | symbol, receiver: any) => {
+            get: (target: any, p: string | symbol) => {
                 if (typeof p === "symbol") return target[p]
 
                 const asInt = parseInt(p)
@@ -57,6 +57,7 @@ function buildSubPathProperties<TFetchResult, TResult, TSubPath>(
     }
 }
 
+// eslint-disable-next-line @typescript-eslint/ban-types
 export function functionUriBuilder(functionName: string, serializerSettings: SerializerSettings, functions: Function[]): (x: any) => SubPathSelection<any> {
 
     const _serialize: typeof serialize = (x, y, z) => {
@@ -135,8 +136,7 @@ function listAllEntityFunctionsGrouped(
 function listUnboundFunctionsGrouped(
     serializerSettings: SerializerSettings,
     schema: ODataSchema,
-    containerName: string,
-    encodeUri: boolean) {
+    containerName: string) {
 
     const groupedFunctions = groupFunctions(schema.entityContainers[containerName].unboundFunctions)
     return buildFunctions(groupedFunctions, serializerSettings)
@@ -194,6 +194,7 @@ function listAllProperties(
             : []);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export type SubPathSelection<TNewEntityQuery> = {
     propertyName: string,
     outputType?: ODataTypeRef,
@@ -277,22 +278,21 @@ export type UnboundFunctionSetTools<TFetchResult, TResult> = {
     defaultResponseInterceptor: DefaultResponseInterceptor<TFetchResult, TResult>
 }
 
-function getUnboundFunctions(containerName: string, schema: ODataSchema, serializerSettings: SerializerSettings, encodeUri: boolean) {
+function getUnboundFunctions(containerName: string, schema: ODataSchema, serializerSettings: SerializerSettings) {
 
-    return listUnboundFunctionsGrouped(serializerSettings, schema, containerName, encodeUri)
+    return listUnboundFunctionsGrouped(serializerSettings, schema, containerName)
         .reduce((s, x) => ({ ...s, [x[0]]: x[1] }), {} as Dict<(x: any) => SubPathSelection<any>>)
 
 }
 
 export function recontextDataForUnboundFunctions<TRoot, TFetchResult, TResult, TSubPath, TNewEntityQuery>(
     data: UnboundFunctionSetTools<TFetchResult, TResult>,
-    subPath: (pathSelector: TSubPath, params: Params<TRoot>) => SubPathSelection<TNewEntityQuery>,
-    encodeUri: boolean): Writer<EntityQueryState, QbEmit> {
+    subPath: (pathSelector: TSubPath, params: Params<TRoot>) => SubPathSelection<TNewEntityQuery>): Writer<EntityQueryState, QbEmit> {
 
     const paramsBuilder = params<TRoot>(data.requestTools.uriRoot,
         data.root, data.serializerSettings, data.schema);
 
-    const functions = getUnboundFunctions(data.containerName, data.schema, data.serializerSettings, encodeUri)
+    const functions = getUnboundFunctions(data.containerName, data.schema, data.serializerSettings)
     const newT = subPath(functions as any, paramsBuilder)
     if (!newT.outputType) {
         throw new Error(`Invalid property ${newT.propertyName}`);

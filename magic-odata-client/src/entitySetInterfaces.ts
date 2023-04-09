@@ -4,7 +4,6 @@ import { ODataUriParts, RequestTools, UriWithMetadata } from "./entitySet/reques
 import { KeySelection } from "./entitySet/selectByKey.js";
 import { CastSelection } from "./entitySet/cast.js";
 import { SubPathSelection } from "./entitySet/subPath.js";
-import { ODataTypeRef } from "magic-odata-shared";
 import { OutputTypes } from "./query/filtering/queryPrimitiveTypes0.js";
 import { ParameterDefinition } from "./valueSerializer.js";
 

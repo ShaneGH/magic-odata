@@ -1,10 +1,10 @@
-import { Dict, ODataEntitySet, ODataSchema, ODataServiceConfig, ODataTypeRef, Function, EntityContainer } from "magic-odata-shared";
+import { Dict, ODataEntitySet, ODataSchema, ODataServiceConfig, ODataTypeRef, Function as ODataFunction, EntityContainer } from "magic-odata-shared";
 import { RequestBuilder } from "../requestBuilder.js";
 import { SchemaTools } from "../entitySet/utils.js";
 import { IUriBuilder, Params } from "../entitySetInterfaces.js";
 import { FilterEnv, FilterResult, QbEmit } from "../queryBuilder.js";
-import { ReaderWriter, Writer, dir } from "../utils.js";
-import { AtParam, ParameterDefinition, SerializerSettings, rawType } from "../valueSerializer.js";
+import { ReaderWriter, Writer } from "../utils.js";
+import { AtParam, SerializerSettings, rawType } from "../valueSerializer.js";
 import { UnboundFunctionSet } from "../unboundFunctionSet.js";
 import { SubPathSelection } from "../entitySet/subPath.js";
 import { ODataUriParts } from "../entitySet/requestTools.js";
@@ -62,7 +62,7 @@ export function $root(filter: (root: any) => IUriBuilder) {
     return ReaderWriter.create<FilterEnv, FilterResult, QbEmit>(env => {
 
         const entitySets = buildUriBuilderRoot("$root/", env.serializerSettings, env.serviceConfig, env.schema)
-        let { uriParts, qbEmit, outputType } = filter(entitySets).uriWithMetadata(false)
+        const { uriParts, qbEmit, outputType } = filter(entitySets).uriWithMetadata(false)
 
         return [
             {
@@ -74,7 +74,8 @@ export function $root(filter: (root: any) => IUriBuilder) {
     });
 }
 
-function stripSumType(leaf: Node): FinalNamespace<RBuilder | globalThis.Function> | RBuilder | globalThis.Function {
+// eslint-disable-next-line @typescript-eslint/ban-types
+function stripSumType(leaf: Node): FinalNamespace<RBuilder | Function> | RBuilder | Function {
     if (leaf.t === "EntitySet") {
         return leaf.data
     }
@@ -84,7 +85,8 @@ function stripSumType(leaf: Node): FinalNamespace<RBuilder | globalThis.Function
         .reduce((s, x) => ({
             ...s,
             [x]: stripSumType(leaf.data[x])
-        }), {} as FinalNamespace<RBuilder | globalThis.Function>)
+            // eslint-disable-next-line @typescript-eslint/ban-types
+        }), {} as FinalNamespace<RBuilder | Function>)
 }
 
 function merge(part1: Node, part2: Node, name: string): Node {
@@ -152,7 +154,8 @@ type Namespace = { [k: string]: Node }
 type NsNode = { t: "Namespace", data: Namespace }
 
 type Node =
-    | { t: "EntitySet", data: RBuilder | globalThis.Function } // Function is for unboundFunctions
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    | { t: "EntitySet", data: RBuilder | Function } // Function is for unboundFunctions
     | NsNode
 
 function methodsForEntitySetNamespace(
@@ -233,7 +236,7 @@ function functionsForEntitySetNamespace(
     serializerSettings: SerializerSettings,
     containerName: string,
     schema: ODataSchema,
-    functions: Function[]): Node {
+    functions: ODataFunction[]): Node {
 
     if (!functions.length) {
         return {
@@ -257,7 +260,7 @@ function functionsForEntitySetNamespace(
                         containerName,
                         requestTools: requestTools(uriRoot),
                         defaultResponseInterceptor: () => { throw new Error("This entity set has http requests disabled") },
-                    }, true, false)
+                    }, true)
 
                     return fns.subPath(f)
                 }

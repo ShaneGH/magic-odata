@@ -56,21 +56,21 @@ function expandRaw(expand: string): Expand {
 
     return {
         $$oDataQueryObjectType: "Expand",
-        $$expand: _ => Writer.create(expand, QbEmit.zero)
+        $$expand: () => Writer.create(expand, QbEmit.zero)
     }
 }
 
 function expandAll(): Expand {
     return {
         $$oDataQueryObjectType: "Expand",
-        $$expand: _ => Writer.create("*", QbEmit.zero)
+        $$expand: () => Writer.create("*", QbEmit.zero)
     }
 }
 
 function expandRef(): Expand {
     return {
         $$oDataQueryObjectType: "Expand",
-        $$expand: _ => Writer.create("*/$ref", QbEmit.zero)
+        $$expand: () => Writer.create("*/$ref", QbEmit.zero)
     }
 }
 

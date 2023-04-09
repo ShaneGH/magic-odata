@@ -1,8 +1,8 @@
-import { ODataComplexType, ODataTypeRef, ODataEnum, ODataSchema, ODataComplexTypeProperty, Function } from "magic-odata-shared";
+import { ODataComplexType, ODataTypeRef, ODataEnum, ODataComplexTypeProperty, Function as ODataFunction } from "magic-odata-shared";
 import { functionUriBuilder } from "../entitySet/subPath.js";
 import { QbEmit } from "../queryBuilder.js";
 import { groupBy, typeNameString, typeRefString } from "../utils.js";
-import { AtParam, SerializerSettings, rawType } from "../valueSerializer.js";
+import { SerializerSettings, rawType } from "../valueSerializer.js";
 
 type Dict<T> = { [key: string]: T }
 
@@ -31,12 +31,14 @@ export type QueryObjectMetadata = {
 }
 
 // T is not used, but adds strong typing to FilterUtils
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export type QueryPrimitive<T> = {
     $$oDataQueryObjectType: QueryObjectType.QueryPrimitive
     $$oDataQueryMetadata: QueryObjectMetadata
 }
 
 // T is not used, but adds strong typing to FilterUtils
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export type QueryEnum<T> = {
     $$oDataQueryObjectType: QueryObjectType.QueryEnum
     $$oDataQueryMetadata: QueryObjectMetadata
@@ -292,7 +294,7 @@ function buildPropertyTypeRef<T>(type: ODataTypeRef, serializerSettings: Seriali
 
 type PropertyOrMethod =
     | { type: "Property", key: string, value: ODataComplexTypeProperty }
-    | { type: "Function", key: string, functionGroup: Function[] }
+    | { type: "Function", key: string, functionGroup: ODataFunction[] }
 
 export function buildComplexTypeRef<T>(type: ODataComplexType, serializerSettings: SerializerSettings,
     rootContext: string): QueryComplexObject<T> {

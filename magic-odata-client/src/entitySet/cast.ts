@@ -67,6 +67,7 @@ function getCastingTypeRef(type: ODataTypeRef) {
     }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export type CastSelection<TNewEntityQuery> = {
     type: ODataTypeRef
 }

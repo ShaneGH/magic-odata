@@ -185,7 +185,7 @@ function serializeDateTimeOffset(value: any): string {
 
     const date = serializeDate(value)
     const time = serializeTime(value)
-    let offset = value
+    const offset = value
 
     if (!(value instanceof ODataDateTimeOffset)) {
         console.warn("Unknown Edm.DateTimeOffset type in serialization");

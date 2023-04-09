@@ -12,12 +12,13 @@ export function typeRefString(type: ODataTypeRef, delimiter = "/"): string {
 }
 
 const nonMemoized = {}
+// eslint-disable-next-line @typescript-eslint/ban-types
 function memoize<F extends Function>(f: F): F {
 
     let result = nonMemoized
-    return function () {
+    return function (...args: any[]) {
         if (result === nonMemoized) {
-            result = f.apply(null, arguments)
+            result = f(...args)
         }
 
         return result
@@ -50,7 +51,7 @@ export class Reader<TEnv, T> {
     static retn<T>(x: T): Reader<any, T>;
     static retn<TEnv, T>(x: T): Reader<TEnv, T>;
     static retn<T>(x: T): Reader<any, T> {
-        return new Reader<any, T>(_ => x)
+        return new Reader<any, T>(() => x)
     }
 
     static traverse<TEnv, T>(...readers: Reader<TEnv, T>[]) {
@@ -121,7 +122,7 @@ export class ReaderWriter<TEnv, T, TSemigroup extends { concat: (x: TSemigroup) 
     public static retn<TEnv, T, TSemigroup extends { concat: (x: TSemigroup) => TSemigroup }>(data: T, zero: TSemigroup): ReaderWriter<TEnv, T, TSemigroup>;
     public static retn<T, TSemigroup extends { concat: (x: TSemigroup) => TSemigroup }>(data: T, zero: TSemigroup): ReaderWriter<any, T, TSemigroup>;
     public static retn<T, TSemigroup extends { concat: (x: TSemigroup) => TSemigroup }>(data: T, zero: TSemigroup): ReaderWriter<any, T, TSemigroup> {
-        return new ReaderWriter<any, T, TSemigroup>(Reader.create(_ => Writer.create(data, zero)))
+        return new ReaderWriter<any, T, TSemigroup>(Reader.create(() => Writer.create(data, zero)))
     }
 
     execute(env: TEnv) {
@@ -163,7 +164,7 @@ export class ReaderWriter<TEnv, T, TSemigroup extends { concat: (x: TSemigroup) 
     static traverse<TEnv, T, TSemigroup extends { concat: (x: TSemigroup) => TSemigroup }>(items: ReaderWriter<TEnv, T, TSemigroup>[], zero: TSemigroup) {
         return items.reduce(
             (s, x) => s.bind(xs => x.map(x => [...xs, x])),
-            ReaderWriter.create<TEnv, T[], TSemigroup>(_ => [[], zero]))
+            ReaderWriter.create<TEnv, T[], TSemigroup>(() => [[], zero]))
     }
 }
 

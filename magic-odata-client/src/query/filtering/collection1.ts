@@ -33,7 +33,7 @@ export function collectionFunction<TArrayType>(
     collection: OperableCollection<TArrayType>,
     values: OperableCollection<TArrayType> | TArrayType[],
     mapper?: (x: TArrayType) => string): Filter {
-    return _collectionFunction(functionName, collection, values, mapper, _ => bool)
+    return _collectionFunction(functionName, collection, values, mapper, () => bool)
 }
 
 function filterize<TArrayType>(
@@ -156,7 +156,7 @@ export function hasSubset<TArrayType>(
     values: TArrayType[],
     mapper?: (x: TArrayType) => string): Filter {
 
-    return _collectionFunction("hassubset", collection, values, mapper, _ => bool);
+    return _collectionFunction("hassubset", collection, values, mapper, () => bool);
 }
 
 export function hasSubSequence<TArrayType>(
@@ -164,7 +164,7 @@ export function hasSubSequence<TArrayType>(
     values: TArrayType[],
     mapper?: (x: TArrayType) => string): Filter {
 
-    return _collectionFunction("hassubsequence", collection, values, mapper, _ => bool);
+    return _collectionFunction("hassubsequence", collection, values, mapper, () => bool);
 }
 
 export function concat<T>(lhs: OperableCollection<T>, rhs: OperableCollection<T> | T[], mapper?: (x: T) => string): Filter;
@@ -190,7 +190,7 @@ export function endsWith<T>(lhs: OperableCollection<T> | T[], rhs: OperableColle
         }
     }
 
-    return _collectionFunction("endswith", lhs, rhs, mapper, _ => bool);
+    return _collectionFunction("endswith", lhs, rhs, mapper, () => bool);
 }
 
 export function startsWith<T>(lhs: OperableCollection<T>, rhs: OperableCollection<T> | T[], mapper?: (x: T) => string): Filter;
@@ -203,7 +203,7 @@ export function startsWith<T>(lhs: OperableCollection<T> | T[], rhs: OperableCol
         }
     }
 
-    return _collectionFunction("startswith", lhs, rhs, mapper, _ => bool);
+    return _collectionFunction("startswith", lhs, rhs, mapper, () => bool);
 }
 
 function singleValuedFunction<T>(
