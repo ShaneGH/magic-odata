@@ -43,8 +43,8 @@ public class Program
         var i = 0;
         App.Use((ctxt, req) =>
         {
-            if (ctxt.Request.Method == "GET")
-                Console.WriteLine($"GET Req: {Interlocked.Increment(ref i)}");
+            // if (ctxt.Request.Method == "GET")
+            //     Console.WriteLine($"GET Req: {Interlocked.Increment(ref i)}");
 
             return req(ctxt);
         });

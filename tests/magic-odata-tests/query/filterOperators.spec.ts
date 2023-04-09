@@ -1688,11 +1688,15 @@ describe("Query.Filter Operators", function () {
         })
 
         it("Should build filter Val (date) -> Op -> Filter", () => {
+            const expected = new Date(2023, 2, 23, 14, 33, 19, 13)
             const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
-                // TODO: assumes specific timezone
-                addDateTimeOffset(new Date(2023, 2, 23, 14, 33, 19, 13), e.Duration));
+                addDateTimeOffset(expected, e.Duration));
 
-            expect(q["$filter"]).toBe("2023-03-23T14:33:19.013+00:00 add Duration");
+            const addDuration = " add Duration"
+            expect(q["$filter"].endsWith(addDuration)).toBe(true);
+
+            const actual = new Date(q["$filter"].substring(0, q["$filter"].indexOf(addDuration)))
+            expect(actual.toISOString()).toBe(expected.toISOString());
         })
 
         it("Should build filter Val (class) -> Op -> Filter", () => {
@@ -1742,11 +1746,15 @@ describe("Query.Filter Operators", function () {
         })
 
         it("Should build filter Val (date) -> Op -> Filter", () => {
+            const expected = new Date(1999, 2, 4)
             const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
-                // TODO: assumes specific timezone
-                subDateTimeOffset(new Date(1999, 9, 4), e.Duration));
+                subDateTimeOffset(expected, e.Duration));
 
-            expect(q["$filter"]).toBe("1999-10-04T00:00:00.000-01:00 sub Duration");
+            const subDuration = " sub Duration"
+            expect(q["$filter"].endsWith(subDuration)).toBe(true);
+
+            const actual = new Date(q["$filter"].substring(0, q["$filter"].indexOf(subDuration)))
+            expect(actual.toISOString()).toBe(expected.toISOString());
         })
 
         it("Should build filter Val (class) -> Op -> Filter", () => {
