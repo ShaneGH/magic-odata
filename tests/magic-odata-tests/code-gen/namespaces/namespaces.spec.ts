@@ -1,7 +1,7 @@
 
 // test failures will be compile errors
 
-import { NS1, NS4, NS5, NamespaceClient, Entity1 } from "./generatedCode.js";
+import { NS1, NS4, NS5, NamespaceClient, Entity1, CastingTests1 } from "./generatedCode.js";
 
 describe("Namespace code gen cases ()", () => {
     const client: NamespaceClient = new NamespaceClient({} as any)
@@ -208,5 +208,24 @@ describe("Namespace code gen cases (NS5)", () => {
     const client: NS5.NamespaceClient = new NS5.NamespaceClient({} as any)
 
     it("Is fine :)", () => {
+    });
+});
+
+describe("Casting namespace clashes", () => {
+    const client = new CastingTests1.Namespace.NamespaceClient({} as any)
+
+    it.only("Should cast correctly (1)", () => {
+        const result1 = client.Parents
+            .cast(x => x.CastingTests1_Namespace_Child())
+            .subPath(x => x.$count)
+            .uri(false)
+
+        const result2 = client.Parents
+            .cast(x => x.CastingTests2_Namespace_Child())
+            .subPath(x => x.$count)
+            .uri(false)
+
+        expect(result1.relativePath).toBe("Parents/CastingTests1.Namespace.Child/$count")
+        expect(result2.relativePath).toBe("Parents/CastingTests2.Namespace.Child/$count")
     });
 });

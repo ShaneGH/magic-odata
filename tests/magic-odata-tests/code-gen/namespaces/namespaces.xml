@@ -1,6 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
     <edmx:DataServices>
+        <Schema Namespace="CastingTests1.Namespace" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+            <EntityType Name="Parent">
+                <Key>
+                    <PropertyRef Name="Id" />
+                </Key>
+                <Property Name="Id" Type="Edm.Int32" Nullable="false" />
+            </EntityType>
+            <EntityType Name="Child" BaseType="CastingTests1.Namespace.Parent">
+            </EntityType>
+            <EntityContainer Name="">
+                <EntitySet Name="Parents" EntityType="CastingTests1.Namespace.Parent" />
+                <EntitySet Name="Children" EntityType="CastingTests1.Namespace.Child" />
+            </EntityContainer>
+        </Schema>
+        <Schema Namespace="CastingTests2.Namespace" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+            <EntityType Name="Child" BaseType="CastingTests1.Namespace.Parent">
+            </EntityType>
+            <EntityContainer Name="">
+                <EntitySet Name="Children" EntityType="CastingTests2.Namespace.Child" />
+            </EntityContainer>
+        </Schema>
         <Schema Namespace="" xmlns="http://docs.oasis-open.org/odata/ns/edm">
             <EntityType Name="Entity1">
                 <Key>
