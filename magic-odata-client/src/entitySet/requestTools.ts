@@ -4,6 +4,9 @@ import { Accept } from "./utils.js";
 
 /**
  * Input args to components which build uris
+ * See https://github.com/ShaneGH/magic-odata/blob/main/docs/Features.md#client-configuration for examples
+ * 
+ * If using an angular client, see https://github.com/ShaneGH/magic-odata/blob/main/docs/Features.md#2---wire-up-an-angular-client-in-a-di-factory
  */
 export type ODataUriParts = {
     /**
