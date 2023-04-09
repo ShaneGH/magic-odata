@@ -1,4 +1,4 @@
-import { ODataServiceConfig, Function, ODataComplexType, ODataEntitySet, ODataSchema, EntityContainer, FunctionParam, ODataTypeRef } from "magic-odata-shared";
+import { ODataServiceConfig, Function, ODataComplexType, ODataEntitySet, EntityContainer, ODataTypeRef } from "magic-odata-shared";
 import { CodeGenConfig } from "../config.js";
 import { getQueryableTypeString } from "./entityQuery.js";
 import { buildGetTypeForSubPath, GetTypeForSubPath } from "./entitySubPath.js";
@@ -92,6 +92,7 @@ ${tab(functions.join("\n\n"))}
     }
 }
 
+// eslint-disable-next-line @typescript-eslint/ban-types
 type MapFunction = (f: Function) => string
 function buildMapFunction(getTypeForSubPath: GetTypeForSubPath, keywords: Keywords, serviceConfig: ODataServiceConfig,
     settings: CodeGenConfig | null | undefined, fullyQualifiedTsType: FullyQualifiedTsType, getQueryableName: GetQueryableName, tab: Tab): MapFunction {

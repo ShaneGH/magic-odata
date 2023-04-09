@@ -1,6 +1,6 @@
-import { ODataEntitySet, ODataSchema, ODataServiceConfig, Function, Dict } from "magic-odata-shared";
+import { ODataEntitySet, ODataServiceConfig, Function, Dict } from "magic-odata-shared";
 import { CodeGenConfig } from "../config.js";
-import { treeify, Node, flatten, toList, mapDict, groupBy, removeNulls, removeNullNulls } from "../utils.js";
+import { treeify, Node, flatten, toList, mapDict, groupBy, removeNullNulls } from "../utils.js";
 import { Keywords } from "./keywords.js";
 import {
     buildFullyQualifiedTsType, buildGetCasterName, buildGetKeyBuilderName, buildGetQueryableName, getEntitySetFunctionsName,
@@ -60,7 +60,10 @@ ${tab(parseResponseFunctionBody)}
     }
 }
 
-type CollectionItem = { type: "EntitySet", value: ODataEntitySet } | { type: "Function", schemaName: string, containerName: string, value: Function }
+type CollectionItem =
+    | { type: "EntitySet", value: ODataEntitySet }
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    | { type: "Function", schemaName: string, containerName: string, value: Function }
 
 function containerName(x: CollectionItem) {
     return x.type === "EntitySet" ? x.value.containerName : x.containerName
@@ -118,8 +121,8 @@ export module ${ns} {\n${tab(module)}\n}`
 
         const entitySets = flatten(
             toList(serviceConfig.schemaNamespaces[schemaName].entityContainers)
-                .map(([_, ctr]) => toList(ctr.entitySets)
-                    .map(([_, x]) => ({ type: "EntitySet", value: x } as CollectionItem))))
+                .map(([, ctr]) => toList(ctr.entitySets)
+                    .map(([, x]) => ({ type: "EntitySet", value: x } as CollectionItem))))
 
         const functions = flatten(
             toList(serviceConfig.schemaNamespaces[schemaName].entityContainers)
@@ -147,7 +150,7 @@ export module ${ns} {\n${tab(module)}\n}`
             ?.map(x => methodForEntitySet(isForInterface, x, first))
             .filter(x => !!x) || []
 
-        var containerName = (entitySets.value || []).map(x => x.type === "Function" ? x.containerName : null).filter(x => x != null)[0]
+        const containerName = (entitySets.value || []).map(x => x.type === "Function" ? x.containerName : null).filter(x => x != null)[0]
         const functions = (containerName != null && getFunctions(isForInterface, first, schemaName, containerName)) || ""
 
         const cacheArgs = !isForInterface && first
@@ -277,7 +280,7 @@ ${tab(`return new ${instanceType}(args, ${entitySetArg}, ${entitySetType});`)}
         const casterType = fullyQualifiedTsType(entitySet.forType, getCasterName)
         const tKeyBuilder = fullyQualifiedTsType(entitySet.forType, getKeyBuilderName)
         const mockedType = {
-            isCollection: false as false,
+            isCollection: false as const,
             namespace: entitySet.namespace,
             name: getEntitySetFunctionsName(settings)
         }
@@ -292,7 +295,7 @@ ${tab(`return new ${instanceType}(args, ${entitySetArg}, ${entitySetType});`)}
             tCaster: `${casterType}.Collection`,
             tSubPath: `${keywords.EntitySetSubPath}<${entitySetsName(settings)}, ${async}<number>, ${functionsName}, ${tQueryable}, ${async}<${fetchResponse}>, ${asSingleResult}>`,
             tResult: {
-                isCollection: true as true,
+                isCollection: true as const,
                 collectionType: entitySet.forType
             }
         }

@@ -81,7 +81,7 @@ function validateArgs(args: ParseArgState) {
 
 export function parseArgs(args: string[]): CommandLineArgs | 0 | 1 {
 
-    var parsed = args.reduce(parseArg, { flags: [], keyValues: {} })
+    let parsed = args.reduce(parseArg, { flags: [], keyValues: {} })
     if (parsed?.currentFlag) {
         parsed = {
             ...parsed,

@@ -73,7 +73,7 @@ function buildGetComplexCasterProps(
                             ? `${keywords.CollectionSubPath}<${entitySetsName(settings)}, ${async}<number>, ${tQueryable}, ${async}<${fetchResponse}>, ${entityQueryType}>`
                             : subProps,
                         tResult: isCollection
-                            ? { isCollection: true as true, collectionType: typeRef }
+                            ? { isCollection: true as const, collectionType: typeRef }
                             : typeRef
                     }
 

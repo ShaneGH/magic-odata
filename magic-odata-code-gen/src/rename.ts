@@ -3,7 +3,7 @@ import { Config } from "./config.js";
 import { Writer } from "./utils.js";
 import { visit } from "./visitor.js";
 
-function hasOwnProperty(x: any, prop: string) {
+function hasOwnProperty(x: unknown, prop: string) {
     return Object.prototype.hasOwnProperty.call(x, prop)
 }
 

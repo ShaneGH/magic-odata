@@ -1,7 +1,7 @@
 import { existsSync, readFile, unlink, writeFile } from "fs";
 import * as path from "path";
 import { codeGen } from "./codeGen/codeGen.js";
-import { CodeGenConfig, Config } from "./config.js";
+import { Config } from "./config.js";
 import { applyWhitelist } from "./whitelist.js";
 import { loadConfig, LocationType, XmlLocation } from "./odataConfigLoader.js";
 import { processConfig } from "./odataConfigProcessor.js";

@@ -1,4 +1,4 @@
-import { ODataComplexType, ODataTypeRef, ODataServiceConfig, ODataEnum, ComplexTypeOrEnum } from "magic-odata-shared";
+import { ODataComplexType, ODataTypeRef, ODataServiceConfig, ComplexTypeOrEnum } from "magic-odata-shared";
 import { CodeGenConfig } from "../config.js";
 import { typeNameString } from "../utils.js";
 import { Keywords } from "./keywords.js";

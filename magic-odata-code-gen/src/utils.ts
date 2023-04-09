@@ -100,12 +100,12 @@ export function removeDictNulls<T>(items: Dict<T | null | undefined>) {
 }
 
 export function removeNulls<T>(items: (T | null | undefined)[]): T[] {
-    return items.filter(x => x != null) as any
+    return items.filter(x => x != null) as T[]
 }
 
 export function removeNullNulls<T>(items: (T | null | undefined)[] | undefined): T[] | undefined {
     if (!items) return undefined
-    return items.filter(x => x != null) as any
+    return items.filter(x => x != null) as T[]
 }
 
 export function flatten<T>(xs: T[][]) {
@@ -113,7 +113,7 @@ export function flatten<T>(xs: T[][]) {
 }
 
 export function hasNoNulls<T>(dict: Dict<T | undefined | null>): Dict<T> {
-    return dict as any
+    return dict as Dict<T>
 }
 
 export function zip<T, U>(xs: T[], ys: U[]): [T | undefined, U | undefined][] {
@@ -131,7 +131,7 @@ export function distinct(xs: string[]) {
 }
 
 export function keyDictionary(xs: string[]) {
-    return xs.reduce((s, x) => s[x] ? s : { ...s, [x]: true as true }, {} as Dict<true>)
+    return xs.reduce((s, x) => s[x] ? s : { ...s, [x]: true as const }, {} as Dict<true>)
 }
 
 export class Writer<T, TSemigroup extends { concat: (x: TSemigroup) => TSemigroup }> {

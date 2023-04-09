@@ -14,7 +14,7 @@ export type Tab = {
 
 export function buildTab(settings: CodeGenConfig | null | undefined): Tab {
     const tabValue = [...Array(settings?.tabSize == null ? defaultTabs : settings.tabSize).keys()]
-        .map(_ => " ")
+        .map(() => " ")
         .join("");
 
     function f(input: string) {
@@ -49,7 +49,7 @@ export function linting() {
 }
 
 export function configObj(serviceConfig: ODataServiceConfig, keywords: Keywords, settings: CodeGenConfig | null | undefined, tab: Tab) {
-    const oDataServiceConfig = !!settings?.prettyPrintJsonConfig
+    const oDataServiceConfig = settings?.prettyPrintJsonConfig
         ? JSON.stringify(serviceConfig, null, tab.spaces)
         : JSON.stringify(serviceConfig);
 
@@ -239,7 +239,7 @@ export function buildHttpClientType(types: Dict<ODataSchema>, keywords: Keywords
     function addType(generics: string[], name: string, i: number) {
         const longest = generics.map(x => x.length).reduce((s, x) => s > x ? s : x, -1);
         const gType = generics[i] || ""
-        const padded = `/* ${gType} */ ` + [...Array(Math.max(0, longest - gType.length)).keys()].map(_ => " ").join("")
+        const padded = `/* ${gType} */ ` + [...Array(Math.max(0, longest - gType.length)).keys()].map(() => " ").join("")
 
         return `${padded}${name}`
     }

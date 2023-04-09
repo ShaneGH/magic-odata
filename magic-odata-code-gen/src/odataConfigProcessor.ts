@@ -53,9 +53,10 @@ function getSchemaNamespace(n: Element | null): string {
     return getSchemaNamespace(n.parentNode as Element)
 }
 
+// eslint-disable-next-line @typescript-eslint/ban-types
 function processFunction(warningConfig: SupressWarnings, f: Element): Function | null {
 
-    var name = nsLookup<Attr>(f, "@Name")
+    const name = nsLookup<Attr>(f, "@Name")
     if (name.length !== 1) {
         let names = name.map(x => x.value).join(", ")
         names = names && ` (${names})`
@@ -64,7 +65,7 @@ function processFunction(warningConfig: SupressWarnings, f: Element): Function |
         return null
     }
 
-    var returnType = nsLookup<Attr>(f, "edm:ReturnType/@Type")
+    const returnType = nsLookup<Attr>(f, "edm:ReturnType/@Type")
     if (returnType.length !== 1) {
         warn(warningConfig, "suppressInvalidFunctionConfiguration", `Function ${name[0].value} has ${returnType.length} return types. Ignoring.`);
         return null
@@ -96,7 +97,7 @@ function processFunctionParam(fName: string, param: Node, warningConfig: Supress
         return null
     }
 
-    var paramType = nsLookup<Attr>(param, "@Type")
+    const paramType = nsLookup<Attr>(param, "@Type")
     if (paramType.length !== 1) {
         warn(warningConfig, "suppressInvalidFunctionConfiguration", `Function ${fName} has a parameter ${name[0].value} with ${paramType.length} types. Ignoring.`);
         return null
@@ -184,6 +185,7 @@ function mapEntityContainer(warningConfig: SupressWarnings, entityContainer: Ele
     return [containerName, { entitySets, unboundFunctions }]
 }
 
+// eslint-disable-next-line @typescript-eslint/ban-types
 function getUnboundFunctions(entityContainer: Element, warningConfig: SupressWarnings): Function[] {
     const functionImports = nsLookup<Element>(entityContainer, "edm:FunctionImport")
     if (!functionImports.length) return []
@@ -208,6 +210,7 @@ function getUnboundFunctions(entityContainer: Element, warningConfig: SupressWar
         })
         .filter(x => !!x)
 
+    // eslint-disable-next-line @typescript-eslint/ban-types
     return output as Function[]
 }
 

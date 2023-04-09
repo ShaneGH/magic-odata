@@ -108,6 +108,7 @@ export function visit<TWriter extends { concat: (x: TWriter) => TWriter }>(confi
                         .apply(Writer.create(mapOutput, zero)))))
             .map(f => f())
 
+        // eslint-disable-next-line @typescript-eslint/ban-types
         function mapOutput(typeName: ODataTypeName, baseType: ODataTypeName | undefined, functions: Function[], properties: Dict<ODataComplexTypeProperty>): ODataComplexType {
             return {
                 name: typeName.name,
@@ -159,6 +160,7 @@ export function visit<TWriter extends { concat: (x: TWriter) => TWriter }>(confi
                 })
     }
 
+    // eslint-disable-next-line @typescript-eslint/ban-types
     function visitFunction(f: Function): Writer<Function, TWriter> | undefined {
 
         const namespace = (visitors.visitSchemaNamespace || id)(f.namespace)
@@ -177,6 +179,7 @@ export function visit<TWriter extends { concat: (x: TWriter) => TWriter }>(confi
             .map(f => f())
 
 
+        // eslint-disable-next-line @typescript-eslint/ban-types
         function mapOutput(namespace: string, returnType: ODataTypeRef, params: FunctionParam[]): Function {
             if (namespace === f.namespace
                 && returnType === f.returnType
@@ -219,6 +222,7 @@ export function visit<TWriter extends { concat: (x: TWriter) => TWriter }>(confi
                         .apply(Writer.create(mapOutuput, zero)))))
             .map(f => f())
 
+        // eslint-disable-next-line @typescript-eslint/ban-types
         function mapOutuput(containerName: string, namespace: string, forType: ODataTypeName, collectionFunctions: Function[]): ODataEntitySet {
 
             if (containerName === entitySet.containerName
@@ -260,6 +264,7 @@ export function visit<TWriter extends { concat: (x: TWriter) => TWriter }>(confi
                 .apply(Writer.create(mapOutput, zero)))
             .map(f => f());
 
+        // eslint-disable-next-line @typescript-eslint/ban-types
         function mapOutput(entitySets: Dict<ODataEntitySet>, unboundFunctions: Function[]): EntityContainer {
 
             return {

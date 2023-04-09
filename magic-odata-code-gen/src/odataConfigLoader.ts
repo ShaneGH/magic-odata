@@ -78,6 +78,7 @@ function getHeader(index: number): Promise<[string, string]> {
 async function getHeaders(): Promise<[string, string][]> {
 
     const headers: [string, string][] = []
+    // eslint-disable-next-line no-constant-condition
     for (let i = 1; true; i++) {
         const header = await getHeader(i);
         if (!header[0]) { break }

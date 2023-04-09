@@ -126,6 +126,7 @@ export function generateKeywords(allNamespaces: string[], rootLevelTypes: string
     function getKeyword(defaultVal: string) {
         if (!lookup[defaultVal]) return defaultVal;
 
+        // eslint-disable-next-line no-constant-condition
         for (let i = 1; true; i++) {
             const val = `${defaultVal}${i}`;
             if (!lookup[val]) return val;
