@@ -214,7 +214,7 @@ describe("Namespace code gen cases (NS5)", () => {
 describe("Casting namespace clashes", () => {
     const client = new CastingTests1.Namespace.NamespaceClient({} as any)
 
-    it.only("Should cast correctly (1)", () => {
+    it("Should cast correctly (1)", () => {
         const result1 = client.Parents
             .cast(x => x.CastingTests1_Namespace_Child())
             .subPath(x => x.$count)
