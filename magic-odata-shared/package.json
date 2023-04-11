@@ -1,6 +1,6 @@
 {
   "name": "magic-odata-shared",
-  "version": "x.x.x",
+  "version": "1.0.2",
   "scripts": {},
   "files": [
     "dist/**/*"
