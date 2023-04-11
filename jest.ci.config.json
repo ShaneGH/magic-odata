@@ -1,0 +1,15 @@
+{
+    "setupFilesAfterEnv": [
+        "./tests/magic-odata-tests/dist/tests/magic-odata-tests/setup-jest.js"
+    ],
+    "roots": [
+        "./"
+    ],
+    "testMatch": [
+        "**/tests/magic-odata-tests/**/*.spec.js"
+    ],
+    "collectCoverageFrom": [
+        "**/magic-odata-client/dist/**/*.js",
+        "**/magic-odata-code-gen/dist/**/*.js"
+    ]
+}

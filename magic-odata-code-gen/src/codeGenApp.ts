@@ -43,7 +43,6 @@ function loadConfigFile(location: string) {
 
 export function generateCode(odataConfig: XmlLocation, settings: Config, configFileLocation: string | null): Promise<string> {
 
-    console.log("Generating code file");
     return loadConfig(settings, odataConfig, configFileLocation)
         .then(x => processConfig(settings.warningSettings || {}, x))
         .then(x => applyWhitelist(x, settings))
@@ -51,7 +50,7 @@ export function generateCode(odataConfig: XmlLocation, settings: Config, configF
         .then(x => codeGen(x, settings.codeGenSettings, settings.warningSettings));
 }
 
-export function generateTypescriptFile(args: CommandLineArgs): Promise<void> {
+export function generateTypescriptFile(args: CommandLineArgs, persistResult: boolean): Promise<string> {
 
     let configFile = args.type === "ConfigFile"
         ? loadConfigFile(args.configFile)
@@ -66,7 +65,9 @@ export function generateTypescriptFile(args: CommandLineArgs): Promise<void> {
 
     return configFile
         .then(config => generateCode(getXmlLocation(config), config, args.type === "ConfigFile" ? args.configFile : null)
-            .then(code => persist(code, outputFile(config))));
+            .then(code => persistResult
+                ? persist(code, outputFile(config)).then(() => code)
+                : code));
 
     function outputFile(config: Config) {
         if (!config.outputFileLocation) {
@@ -80,16 +81,17 @@ export function generateTypescriptFile(args: CommandLineArgs): Promise<void> {
 
     function getXmlLocation(config: Config): XmlLocation {
         const validation = [
-            !!config.inputFileLocation?.fromFile,
-            !!config.inputFileLocation?.fromString,
-            !!config.inputFileLocation?.fromUri
+            config.inputFileLocation?.fromFile,
+            config.inputFileLocation?.fromString,
+            config.inputFileLocation?.fromUri
         ]
-            .filter(x => x)
-            .length;
+            .filter(x => !!x);
 
-        if (validation !== 1) {
+        if (validation.length !== 1) {
 
-            throw new Error("You must specify exactly one of [inputFileLocation.fromFile, inputFileLocation.fromString, inputFileLocation.fromUri] in your config.");
+            throw new Error(`You must specify exactly one of ` +
+                `[inputFileLocation.fromFile, inputFileLocation.fromString, inputFileLocation.fromUri] ` +
+                `in your config. [${validation}]`);
         }
 
         if (config.inputFileLocation?.fromFile) {

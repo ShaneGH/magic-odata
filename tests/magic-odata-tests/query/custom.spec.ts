@@ -1,7 +1,6 @@
 
 import { addFullUserChain } from "../utils/client.js";
 import { My, ODataClient, rootConfigExporter } from "../generatedCode.js";
-import { queryUtils } from "magic-odata-client";
 
 const rootConfig = rootConfigExporter();
 

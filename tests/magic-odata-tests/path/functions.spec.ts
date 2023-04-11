@@ -1,10 +1,8 @@
 
-import { My, ODataClient } from "../generatedCode.js";
-import { addBlog, addBlogPost, addComment, addFullUserChain, addUser } from "../utils/client.js";
-import { uniqueString } from "../utils/utils.js";
-import { ODataCollectionResult, WithKeyType } from "magic-odata-client";
-import { RequestOptions, ResponseInterceptor } from "magic-odata-client";
-import { oDataClient, uriClient } from "../utils/odataClient.js";
+import { addBlog, addBlogPost, addFullUserChain, addUser } from "../utils/client.js";
+import { ODataCollectionResult } from "magic-odata-client";
+import { RequestOptions } from "magic-odata-client";
+import { oDataClient } from "../utils/odataClient.js";
 import { RootResponseInterceptor } from "magic-odata-client";
 
 function toListRequestInterceptor(_: any, r: RequestInit): RequestInit {

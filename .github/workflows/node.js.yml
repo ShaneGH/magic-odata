@@ -26,4 +26,8 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
         cache-dependency-path: tests/magic-odata-tests
+
     - run: ./ci.sh
+    
+    - name: Coveralls
+      uses: coverallsapp/github-action@v1
