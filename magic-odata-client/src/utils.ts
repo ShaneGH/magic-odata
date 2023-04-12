@@ -36,27 +36,21 @@ export class Reader<TEnv, T> {
         return new Reader<TEnv, T1>(env => f(this.execute(env)))
     }
 
-    mapEnv<TEnv1>(f: (env: TEnv1) => TEnv) {
-        return new Reader<TEnv1, T>(env => this.execute(f(env)))
-    }
-
-    bind<T1>(f: (env: T) => Reader<TEnv, T1>) {
-        return new Reader<TEnv, T1>(env => f(this.execute(env)).execute(env))
-    }
+    // not actually used!!!
+    // bind<T1>(f: (env: T) => Reader<TEnv, T1>) {
+    //     return new Reader<TEnv, T1>(env => f(this.execute(env)).execute(env))
+    // }
 
     static create<TEnv, T>(f: (env: TEnv) => T) {
         return new Reader<TEnv, T>(f);
     }
 
-    static retn<T>(x: T): Reader<any, T>;
-    static retn<TEnv, T>(x: T): Reader<TEnv, T>;
-    static retn<T>(x: T): Reader<any, T> {
-        return new Reader<any, T>(() => x)
-    }
-
-    static traverse<TEnv, T>(...readers: Reader<TEnv, T>[]) {
-        return new Reader<TEnv, T[]>(env => readers.map(r => r.execute(env)))
-    }
+    // not actually used!!!
+    // static retn<T>(x: T): Reader<any, T>;
+    // static retn<TEnv, T>(x: T): Reader<TEnv, T>;
+    // static retn<T>(x: T): Reader<any, T> {
+    //     return new Reader<any, T>(() => x)
+    // }
 }
 
 export class Writer<T, TSemigroup extends { concat: (x: TSemigroup) => TSemigroup }> {
@@ -73,11 +67,6 @@ export class Writer<T, TSemigroup extends { concat: (x: TSemigroup) => TSemigrou
         return Writer.create<T, TSemigroup1>(x, f(acc))
     }
 
-    tap(f: (result: T, writer: TSemigroup) => void) {
-        f(this._result, this._writer)
-        return this
-    }
-
     bind<T1>(f: (x: T) => [T1, TSemigroup] | Writer<T1, TSemigroup>) {
 
         const result = f(this._result)
@@ -90,15 +79,16 @@ export class Writer<T, TSemigroup extends { concat: (x: TSemigroup) => TSemigrou
         return [this._result, this._writer]
     }
 
-    apply<T1>(w: Writer<(x: T) => T1, TSemigroup>): Writer<() => T1, TSemigroup>;
-    apply<T1, U>(w: Writer<(x0: T, x1: T1) => U, TSemigroup>): Writer<(x1: T1) => U, TSemigroup>;
-    apply<T1, T2, U>(w: Writer<(x0: T, x1: T1, x2: T2) => U, TSemigroup>): Writer<(x1: T1, x2: T2) => U, TSemigroup>;
-    apply<T1, T2, T3, U>(w: Writer<(x0: T, x1: T1, x2: T2, x3: T3) => U, TSemigroup>): Writer<(x1: T1, x2: T2, x3: T3) => U, TSemigroup>;
-    apply(w: Writer<any, TSemigroup>): Writer<any, TSemigroup> {
+    // not actually used!!!
+    // apply<T1>(w: Writer<(x: T) => T1, TSemigroup>): Writer<() => T1, TSemigroup>;
+    // apply<T1, U>(w: Writer<(x0: T, x1: T1) => U, TSemigroup>): Writer<(x1: T1) => U, TSemigroup>;
+    // apply<T1, T2, U>(w: Writer<(x0: T, x1: T1, x2: T2) => U, TSemigroup>): Writer<(x1: T1, x2: T2) => U, TSemigroup>;
+    // apply<T1, T2, T3, U>(w: Writer<(x0: T, x1: T1, x2: T2, x3: T3) => U, TSemigroup>): Writer<(x1: T1, x2: T2, x3: T3) => U, TSemigroup>;
+    // apply(w: Writer<any, TSemigroup>): Writer<any, TSemigroup> {
 
-        const mappedF = w.execute()[0].bind(null, this._result)
-        return Writer.create(mappedF, this._writer.concat(w.execute()[1]))
-    }
+    //     const mappedF = w.execute()[0].bind(null, this._result)
+    //     return Writer.create(mappedF, this._writer.concat(w.execute()[1]))
+    // }
 
     static create<T, TSemigroup extends { concat: (x: TSemigroup) => TSemigroup }>(result: T, writer: TSemigroup) {
         return new Writer(result, writer)
@@ -153,14 +143,6 @@ export class ReaderWriter<TEnv, T, TSemigroup extends { concat: (x: TSemigroup) 
         return Writer.create(wr, result)
     }
 
-    observe(message?: any) {
-        return ReaderWriter.create<TEnv, T, TSemigroup>(env => {
-            const result = this.execute(env)
-            console.log(result, message)
-            return result
-        })
-    }
-
     static traverse<TEnv, T, TSemigroup extends { concat: (x: TSemigroup) => TSemigroup }>(items: ReaderWriter<TEnv, T, TSemigroup>[], zero: TSemigroup) {
         return items.reduce(
             (s, x) => s.bind(xs => x.map(x => [...xs, x])),
@@ -189,26 +171,13 @@ export function groupBy<T>(x: T[], grouping: (x: T) => string): Dict<T[]> {
         }, {} as Dict<T[]>)
 }
 
-export function mapDict<T, T1>(items: Dict<T>, mapper: (x: T) => T1, keyMapper?: (x: string) => string) {
-    return Object
-        .keys(items)
-        .reduce((s, x) => {
-            const newK = keyMapper ? keyMapper(x) : x
-            if (s[newK]) throw new Error(`Duplicate key: ${newK}`);
+// debug methods
+// export function dir<T>(x: T, ...messages: any[]) {
+//     console.dir(messages.length ? [x, ...messages] : x, { depth: 100 })
+//     return x
+// }
 
-            return {
-                ...s,
-                [newK]: mapper(items[x])
-            }
-        }, {} as Dict<T1>)
-}
-
-export function dir<T>(x: T, ...messages: any[]) {
-    console.dir(messages.length ? [x, ...messages] : x, { depth: 100 })
-    return x
-}
-
-export function log<T>(x: T, ...messages: any[]) {
-    console.log(messages.length ? [x, ...messages] : x)
-    return x
-}
+// export function log<T>(x: T, ...messages: any[]) {
+//     console.log(messages.length ? [x, ...messages] : x)
+//     return x
+// }

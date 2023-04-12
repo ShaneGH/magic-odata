@@ -61,29 +61,14 @@ export function processServiceConfig(settings: CodeGenConfig | null | undefined,
     return Object
         .keys(serviceConfig.schemaNamespaces)
         .reduce((s, x) => {
-            let namespaceData = namespaceBuilder(serviceConfig.schemaNamespaces[x].types);
             const namespaceName = sanitizeNamespace(x);
             if (s[namespaceName]) {
-                const overlap = Object
-                    .keys(namespaceData)
-                    .filter(x => s[namespaceName][x]);
-
-                if (overlap.length && !warnings?.suppressAll && !warnings?.suppressTypeNameOverlap) {
-                    const ns = namespaceName && `${namespaceName}/`
-                    const msg = overlap.map(x => `${ns}${x}`).join(", ")
-
-                    warn(warnings, "suppressTypeNameOverlap", `Found multiple typescript types with the same name: ${msg}. Some overlapped types will be missing from the generated client. `);
-                }
-
-                namespaceData = {
-                    ...namespaceData,
-                    ...s[namespaceName]
-                };
+                warn(warnings, "suppressTypeNameOverlap", `Found multiple typescript schema definitions with the same name: ${namespaceName}. Some overlapped types will be missing from the generated client. `);
             }
 
             return {
                 ...s,
-                [x]: namespaceData
+                [x]: namespaceBuilder(serviceConfig.schemaNamespaces[x].types)
             }
         }, {} as ProcessedServiceConfig)
 }

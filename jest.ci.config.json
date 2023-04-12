@@ -8,6 +8,12 @@
     "testMatch": [
         "**/tests/magic-odata-tests/**/*.spec.js"
     ],
+    "coveragePathIgnorePatterns": [
+        "argParser\\.js$",
+        "codeGenApp\\.js$",
+        "codeGenCmd\\.js$",
+        "odataConfigLoader\\.js$"
+    ],
     "collectCoverageFrom": [
         "**/magic-odata-client/dist/**/*.js",
         "**/magic-odata-code-gen/dist/**/*.js"
