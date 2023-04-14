@@ -1,4 +1,10 @@
 
+# v1.0.3
+
+ * Added serialize -INF
+ * Fixed issues with readme in npm
+ * increased code coverage
+ 
 # v1.0.2
 
  * Added Linting
