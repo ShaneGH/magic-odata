@@ -49,6 +49,9 @@ export function basicSerialize(value: any): string {
     if (value === Infinity)
         return "INF"
 
+    if (value === -Infinity)
+        return "-INF"
+
     return value.toString();
 }
 
