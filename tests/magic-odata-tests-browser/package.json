@@ -1,6 +1,6 @@
 {
   "name": "magic-odata-tests-browser",
-  "version": "x.x.x",
+  "version": "1.1.0",
   "scripts": {
     "fix-links: COMMENT": "Used to link the test project to the modules that it is testing. This command needs to be run after each 'npm install'",
     "fix-links": "npm link ../../magic-odata-client ../../magic-odata-code-gen ../magic-odata-tests",
@@ -32,7 +32,9 @@
     "@angular/router": "^15.1.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
-    "zone.js": "~0.12.0"
+    "zone.js": "~0.12.0",
+    "magic-odata-client": "1.1.0",
+    "magic-odata-code-gen": "1.1.0"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "^15.1.4",
