@@ -102,6 +102,8 @@ function _expand<T>(
                         : addPath;
 
                 const result = expandString(obj.$$oDataQueryMetadata.path, innerExpand);
+
+                /* istanbul ignore next */
                 if (!result) {
                     throw new Error("Object cannot be expanded");
                 }

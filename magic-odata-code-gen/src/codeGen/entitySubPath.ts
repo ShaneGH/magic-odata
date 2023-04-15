@@ -89,6 +89,8 @@ export function buildGetTypeForSubPath(
         }
 
         const type = allTypes[typeRef.namespace] && allTypes[typeRef.namespace].types[typeRef.name]
+
+        /* istanbul ignore next */
         if (!type) {
             throw new Error(`Could not find key for type ${typeNameString(typeRef, settings)}`);
         }
@@ -186,6 +188,8 @@ export function buildGetTypeForSubPath(
         }
 
         const type = allTypes[propertyType.namespace] && allTypes[propertyType.namespace].types[propertyType.name]
+
+        /* istanbul ignore next */
         if (!type) {
             throw new Error(`Could not find key for type ${typeNameString(propertyType, settings)}`);
         }

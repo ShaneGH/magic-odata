@@ -77,6 +77,7 @@ export function group(condition: Filter): Filter {
 }
 
 export function and(...conditions: Filter[]): Filter {
+    /* istanbul ignore next */
     if (conditions.length === 0) {
         throw new Error("You must include at least 1 condition");
     }
@@ -85,6 +86,7 @@ export function and(...conditions: Filter[]): Filter {
 }
 
 export function or(...conditions: Filter[]): Filter {
+    /* istanbul ignore next */
     if (conditions.length === 0) {
         throw new Error("You must include at least 1 condition");
     }

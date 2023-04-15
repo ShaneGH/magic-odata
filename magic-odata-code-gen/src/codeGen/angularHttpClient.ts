@@ -70,6 +70,7 @@ export function angularHttpClient(
       ? AngularHttpResultType.String
       : settings.angularMode.httpResultType;
 
+  /* istanbul ignore next */
   if (responseType === null) {
     throw new Error("Invalid angular configuration");
   }

@@ -34,6 +34,7 @@ function getQueryableType(type: ODataTypeRef, keywords: Keywords, settings: Code
         };
     }
 
+    /* istanbul ignore next */
     if (!serviceConfig.schemaNamespaces[type.namespace] || !serviceConfig.schemaNamespaces[type.namespace].types[type.name]) {
         throw new Error(`Unknown type: ${typeNameString(type, settings)}`);
     }

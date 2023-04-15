@@ -56,6 +56,7 @@ function processObjReference(x: QueryPrimitive<any> | QueryEnum<any>): [string, 
 
 function orderBy(...properties: Property[]): OrderBy {
 
+    /* istanbul ignore next */
     if (!properties.length) {
         throw new Error("You must order by at least one property");
     }

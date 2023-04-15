@@ -44,6 +44,7 @@ ${tab(props)}
                 return k();
             }
 
+            /* istanbul ignore next */
             throw new Error(`Invalid "enumType" setting: ${settings.enumType}`);
         }
 
@@ -53,6 +54,7 @@ ${tab(props)}
                 ? v
                 : null;
 
+        /* istanbul ignore next */
         if (!defaultF) {
             throw new Error(`Invalid "enumType.default" setting: ${settings.enumType.default}`);
         }

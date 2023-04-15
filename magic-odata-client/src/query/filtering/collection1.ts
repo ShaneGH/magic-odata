@@ -77,6 +77,7 @@ function _collectionFunction<TArrayType>(
     output: (ts: [FilterResult, FilterResult]) => ODataTypeRef): Filter {
 
     if (Array.isArray(collection)) {
+        /* istanbul ignore next */
         if (Array.isArray(values)) {
             throw new Error("Invalid method overload")
         }
@@ -85,6 +86,7 @@ function _collectionFunction<TArrayType>(
     }
 
     if (Array.isArray(values)) {
+        /* istanbul ignore next */
         if (Array.isArray(collection)) {
             throw new Error("Invalid method overload")
         }
@@ -130,11 +132,13 @@ export function $filter<TRoot, T, TQuery extends QueryObject<T>>(collection: Que
                 .create<FilterEnv, ReaderWriter<FilterEnv, FilterResult, QbEmit>, QbEmit>(env => {
 
                     if (!x.$$output.isCollection) {
+                        /* istanbul ignore next */
                         throw new Error(`$filter can only be done on collections. `
                             + `Attempting to execute on ${x.$$output.namespace && `${x.$$output.namespace}/`}${x.$$output.name}`);
                     }
 
                     // https://github.com/ShaneGH/magic-odata/issues/60
+                    /* istanbul ignore next */
                     if (x.$$output.collectionType.isCollection) {
                         throw new Error("Collections of collections are not supported");
                     }
@@ -175,6 +179,7 @@ export function concat<T>(lhs: OperableCollection<T> | T[], rhs: OperableCollect
 export function concat<T>(lhs: OperableCollection<T> | T[], rhs: OperableCollection<T> | T[], mapper?: (x: T) => string): Filter {
 
     if (Array.isArray(lhs)) {
+        /* istanbul ignore next */
         if (Array.isArray(rhs)) {
             throw new Error("Invalid method overload");
         }
@@ -188,6 +193,7 @@ export function endsWith<T>(lhs: OperableCollection<T> | T[], rhs: OperableColle
 export function endsWith<T>(lhs: OperableCollection<T> | T[], rhs: OperableCollection<T> | T[], mapper?: (x: T) => string): Filter {
 
     if (Array.isArray(lhs)) {
+        /* istanbul ignore next */
         if (Array.isArray(rhs)) {
             throw new Error("Invalid method overload");
         }
@@ -201,6 +207,7 @@ export function startsWith<T>(lhs: OperableCollection<T> | T[], rhs: OperableCol
 export function startsWith<T>(lhs: OperableCollection<T> | T[], rhs: OperableCollection<T> | T[], mapper?: (x: T) => string): Filter {
 
     if (Array.isArray(lhs)) {
+        /* istanbul ignore next */
         if (Array.isArray(rhs)) {
             throw new Error("Invalid method overload");
         }
@@ -218,6 +225,7 @@ function singleValuedFunction<T>(
 
     let rhsO = asOperable(rhs);
     if (Array.isArray(lhs)) {
+        /* istanbul ignore next */
         if (!rhsO) {
             throw new Error("Invalid method overload")
         }

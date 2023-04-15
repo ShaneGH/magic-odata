@@ -70,6 +70,7 @@ export function generateTypescriptFile(args: CommandLineArgs, persistResult: boo
                 : code));
 
     function outputFile(config: Config) {
+        /* istanbul ignore next */
         if (!config.outputFileLocation) {
             throw new Error("outputFileLocation is not defined in config");
         }
@@ -87,6 +88,7 @@ export function generateTypescriptFile(args: CommandLineArgs, persistResult: boo
         ]
             .filter(x => !!x);
 
+        /* istanbul ignore next */
         if (validation.length !== 1) {
 
             throw new Error(`You must specify exactly one of ` +

@@ -95,6 +95,7 @@ export const buildLookupComplexType = (serviceConfig: ODataServiceConfig, settin
         const result = lt(t);
         if (!result || result.containerType === "ComplexType") return result?.type;
 
+        /* istanbul ignore next */
         throw new Error(`${typeNameString(t, settings)} is not a complex type`);
     }
 }
@@ -156,6 +157,8 @@ export const buildGetKeyType = (settings: CodeGenConfig | null | undefined, serv
         if (!t.keyProps) {
             if (t.baseType && lookupParent) {
                 const baseType = lookupComplexType({ isCollection: false, namespace: t.baseType.namespace, name: t.baseType.name })
+
+                /* istanbul ignore next */
                 if (!baseType) {
                     throw new Error(`Could not find base type: ${typeNameString(t.baseType, settings)}`);
                 }
@@ -168,6 +171,8 @@ export const buildGetKeyType = (settings: CodeGenConfig | null | undefined, serv
 
         const propTypes = t.keyProps.map(name => {
             const type = t.properties[name]?.type;
+
+            /* istanbul ignore next */
             if (!type) {
                 throw new Error(`Could not find key property: ${name} of type ${typeNameString(t, settings)}`)
             }

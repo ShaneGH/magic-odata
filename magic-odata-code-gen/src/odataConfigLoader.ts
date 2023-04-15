@@ -124,11 +124,13 @@ function loadFromUri(odataConfig: UriLocation, headers: [string, string][] = [],
             if (response.status < 200 || response.status >= 300) {
                 console.error(response);
 
+                /* istanbul ignore next */
                 if (!tryHandleError) {
                     throw new Error(response.statusText);
                 }
 
                 const authResult = await promptForAuthHeaders(response)
+                /* istanbul ignore next */
                 if (!authResult.length) {
                     throw new Error(response.statusText);
                 }

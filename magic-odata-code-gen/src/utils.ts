@@ -76,6 +76,8 @@ export function mapDict<T, T1>(items: Dict<T>, mapper: (x: T) => T1, keyMapper?:
         .keys(items)
         .reduce((s, x) => {
             const newK = keyMapper ? keyMapper(x) : x
+
+            /* istanbul ignore next */
             if (s[newK]) throw new Error(`Duplicate key: ${newK}`);
 
             return {

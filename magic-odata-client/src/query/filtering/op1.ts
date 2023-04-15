@@ -17,6 +17,7 @@ export function filterRaw(filter: string, outputType?: OutputTypes | undefined):
 export function filterRaw(obj: FilterableProps, filter: (path: FilterablePaths) => string, outputType?: OutputTypes | undefined): Filter;
 export function filterRaw(arg1: string | FilterableProps, arg2?: ((path: FilterablePaths) => string) | OutputTypes, arg3?: OutputTypes | undefined): Filter {
     if (typeof arg1 === "string") {
+        /* istanbul ignore next */
         if (typeof arg2 === "function") {
             throw new Error("Invalid method overload");
         }
@@ -27,6 +28,7 @@ export function filterRaw(arg1: string | FilterableProps, arg2?: ((path: Filtera
         }, QbEmit.zero)
     }
 
+    /* istanbul ignore next */
     if (typeof arg2 !== "function") {
         throw new Error("Invalid method overload");
     }

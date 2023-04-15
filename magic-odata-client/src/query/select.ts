@@ -25,6 +25,7 @@ function getPath<T>(x: QueryObject<T>) {
 }
 
 function select(...props: QueryObject<any>[]): Select {
+    /* istanbul ignore next */
     if (!props?.length) {
         throw new Error("You must specify at least one property to select");
     }

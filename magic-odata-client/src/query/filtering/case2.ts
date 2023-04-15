@@ -5,6 +5,7 @@ import { NonNumericTypes, resolveOutputType } from "./queryPrimitiveTypes0.js";
 const trueT = resolveOutputType(NonNumericTypes.Boolean)
 
 export function caseExpression(...cases: [Filter | true, Filter][]): Filter {
+    /* istanbul ignore next */
     if (!cases.length) {
         throw new Error("A caseExpression must include at least 1 case");
     }

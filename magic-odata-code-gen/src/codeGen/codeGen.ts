@@ -12,6 +12,7 @@ import { unboundFunctions } from "./unboundFunctions.js"
 
 export function codeGen(serviceConfig: ODataServiceConfig, settings: CodeGenConfig | null | undefined, warnings: SupressWarnings | null | undefined) {
 
+    /* istanbul ignore next */
     if (settings != null && settings.angularMode && settings.asyncType && settings.asyncType !== AsyncType.RxJs) {
         throw new Error('If angularMode is configured, asyncType must be either null or "Rxjs"');
     }

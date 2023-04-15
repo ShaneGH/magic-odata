@@ -187,6 +187,7 @@ function buildPropertyTypeRef<T>(type: ODataTypeRef, serializerSettings: Seriali
     rootContext: string, path: PathSegment[], queryAliases: Dict<boolean>, qbEmit: QbEmit): QueryObject<T> {
 
     if (type.isCollection) {
+        /* istanbul ignore next */
         if (!path.length) {
             throw new Error("The top level object cannot be a collection");
         }
@@ -224,6 +225,8 @@ function buildPropertyTypeRef<T>(type: ODataTypeRef, serializerSettings: Seriali
 
     const root = serializerSettings.serviceConfig
     const tLookup = root[type.namespace || ""] && root[type.namespace || ""].types[type.name];
+
+    /* istanbul ignore next */
     if (!tLookup) {
         throw new Error(`Could not find type ${typeNameString(type)}`);
     }
@@ -258,10 +261,12 @@ function buildPropertyTypeRef<T>(type: ODataTypeRef, serializerSettings: Seriali
         && root[complexType.baseType.namespace]
         && root[complexType.baseType.namespace].types[complexType.baseType.name];
 
+    /* istanbul ignore next */
     if (complexType.baseType && !bLookup) {
         throw new Error(`Could not find base type ${typeNameString(complexType.baseType)}`);
     }
 
+    /* istanbul ignore next */
     if (bLookup && bLookup.containerType !== "ComplexType") {
         throw new Error(`Base type ${typeNameString(bLookup.type)} is an enum. Expecting a complex type`);
     }
@@ -277,6 +282,7 @@ function buildPropertyTypeRef<T>(type: ODataTypeRef, serializerSettings: Seriali
         .concat(baseTypeProperties())
         .concat(baseTypeFunctions())
         .reduce((s, x) => {
+            /* istanbul ignore next */
             if (x.key === "$$oDataQueryObjectType" || x.key === "$$oDataQueryMetadata") {
                 throw new Error(`Property ${x.key} is reserved`);
             }
@@ -370,6 +376,7 @@ export function buildComplexTypeRef<T>(type: ODataComplexType, serializerSetting
         isCollection: false
     }, serializerSettings, rootContext, [], {}, QbEmit.zero);
 
+    /* istanbul ignore next */
     if (typeRef.$$oDataQueryObjectType !== QueryObjectType.QueryObject) {
         throw new Error(`Type ref is not a complex object: ${typeRef.$$oDataQueryObjectType}, ${typeRefString(typeRef.$$oDataQueryMetadata.typeRef)}`);
     }
@@ -379,6 +386,7 @@ export function buildComplexTypeRef<T>(type: ODataComplexType, serializerSetting
 
 export function reContext<T>(obj: QueryComplexObject<T>, serializerSettings: SerializerSettings): QueryComplexObject<T> {
 
+    /* istanbul ignore next */
     if (obj.$$oDataQueryMetadata.typeRef.isCollection) {
         throw new Error("Complex object has collection type ref");
     }
@@ -391,6 +399,7 @@ export function reContext<T>(obj: QueryComplexObject<T>, serializerSettings: Ser
         isCollection: false
     }, serializerSettings, "$this", [], obj.$$oDataQueryMetadata.queryAliases, obj.$$oDataQueryMetadata.qbEmit);
 
+    /* istanbul ignore next */
     if (typeRef.$$oDataQueryObjectType !== QueryObjectType.QueryObject) {
         throw new Error(`Type ref is not a complex object: ${typeRef.$$oDataQueryObjectType}, ${typeRefString(typeRef.$$oDataQueryMetadata.typeRef)}`);
     }
