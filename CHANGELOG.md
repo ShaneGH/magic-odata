@@ -1,4 +1,8 @@
 
+# v1.1.0
+
+ * Added fluent operators
+
 # v1.0.3
 
  * Added serialize -INF
