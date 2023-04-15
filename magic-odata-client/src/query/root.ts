@@ -2,8 +2,8 @@ import { Dict, ODataEntitySet, ODataSchema, ODataServiceConfig, ODataTypeRef, Fu
 import { RequestBuilder } from "../requestBuilder.js";
 import { SchemaTools } from "../entitySet/utils.js";
 import { IUriBuilder, Params } from "../entitySetInterfaces.js";
-import { FilterEnv, FilterResult, QbEmit } from "../queryBuilder.js";
-import { ReaderWriter, Writer } from "../utils.js";
+import { Filter, QbEmit } from "../queryBuilder.js";
+import { Writer } from "../utils.js";
 import { AtParam, SerializerSettings, rawType } from "../valueSerializer.js";
 import { UnboundFunctionSet } from "../unboundFunctionSet.js";
 import { SubPathSelection } from "../entitySet/subPath.js";
@@ -59,7 +59,7 @@ export function extractAtParams(uriParts: ODataUriParts) {
 
 export function $root(filter: (root: any) => IUriBuilder) {
 
-    return ReaderWriter.create<FilterEnv, FilterResult, QbEmit>(env => {
+    return Filter.create(env => {
 
         const entitySets = buildUriBuilderRoot("$root/", env.serializerSettings, env.serviceConfig, env.schema)
         const { uriParts, qbEmit, outputType } = filter(entitySets).uriWithMetadata(false)

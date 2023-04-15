@@ -16,7 +16,7 @@ function isInteger(item: Operable<number> | number) {
         return ReaderWriter.retn(Number.isInteger(item), QbEmit.zero);
     }
 
-    return operableToFilter(item)
+    return operableToFilter(item).wrapped
         .map(f => f?.$$output
             && !f.$$output.isCollection
             && f.$$output.namespace === "Edm"
@@ -63,8 +63,8 @@ function arithmeticInfixOp(
 
     const r = (result && ReaderWriter.retn(result, QbEmit.zero)) || guessAritmeticOutputType(lhs, operator, rhs)
 
-    return r
-        .bind(r => infixOp(toFilter(lhs), ` ${operator} `, toFilter(rhs), r))
+    return new Filter(r
+        .bind(r => infixOp(toFilter(lhs), ` ${operator} `, toFilter(rhs), r).wrapped))
 }
 
 export function add(lhs: Operable<number>, rhs: Operable<number> | number, result: RealNumberTypes | undefined): Filter {

@@ -1,7 +1,7 @@
 import { ODataComplexType, ODataEnum, ODataTypeName } from "magic-odata-shared";
 import { Utils, utils as queryUtils } from "../query/queryUtils.js";
 import { QbEmit, Query } from "../queryBuilder.js";
-import { buildComplexTypeRef, QueryComplexObject, QueryEnum, QueryObjectType, QueryPrimitive } from "../query/queryComplexObjectBuilder.js";
+import { addEquality, buildComplexTypeRef, QueryComplexObject, QueryEnum, QueryObjectType, QueryPrimitive } from "../query/queryComplexObjectBuilder.js";
 import { RequestBuilderData, getDeepTypeRef, lookup, EntityQueryState } from "./utils.js";
 import { Params } from "../entitySetInterfaces.js";
 import { params } from "./params.js";
@@ -18,7 +18,7 @@ function executePrimitiveQueryBuilder<TRoot, TEntity, TQuery>(
     rootContext: string,
     params: Params<TRoot>): TQuery {
 
-    const typeRef: QueryPrimitive<TEntity> = {
+    const typeRef: QueryPrimitive<TEntity> = addEquality({
         $$oDataQueryObjectType: QueryObjectType.QueryPrimitive,
         $$oDataQueryMetadata: {
             typeRef: {
@@ -30,7 +30,7 @@ function executePrimitiveQueryBuilder<TRoot, TEntity, TQuery>(
             path: [],
             qbEmit: QbEmit.zero
         }
-    };
+    });
 
     return queryBuilder(typeRef, queryUtils(), params);
 }
@@ -52,7 +52,7 @@ function executeEnumQueryBuilder<TRoot, TEntity, TQuery>(
     rootContext: string,
     params: Params<TRoot>): TQuery {
 
-    const typeRef: QueryEnum<TEntity> = {
+    const typeRef: QueryEnum<TEntity> = addEquality({
         $$oDataEnumType: type,
         $$oDataQueryObjectType: QueryObjectType.QueryEnum,
         $$oDataQueryMetadata: {
@@ -66,7 +66,7 @@ function executeEnumQueryBuilder<TRoot, TEntity, TQuery>(
             path: [],
             qbEmit: QbEmit.zero
         }
-    };
+    });
 
     return queryBuilder(typeRef, queryUtils(), params);
 }

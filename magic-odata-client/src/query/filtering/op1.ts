@@ -21,7 +21,7 @@ export function filterRaw(arg1: string | FilterableProps, arg2?: ((path: Filtera
             throw new Error("Invalid method overload");
         }
 
-        return ReaderWriter.retn({
+        return Filter.retn({
             $$filter: arg1,
             $$output: (arg2 && resolveOutputType(arg2)) || rawType
         }, QbEmit.zero)
@@ -31,16 +31,16 @@ export function filterRaw(arg1: string | FilterableProps, arg2?: ((path: Filtera
         throw new Error("Invalid method overload");
     }
 
-    return ReaderWriter.traverse(Object
+    return new Filter(ReaderWriter.traverse(Object
         .keys(arg1)
-        .map(name => operableToFilter(arg1[name])
+        .map(name => operableToFilter(arg1[name]).wrapped
             .map(filterResult => ({ name, filterResult }))), QbEmit.zero)
         .map(results => results.reduce((s, x) => ({ ...s, [x.name]: x.filterResult.$$filter }), {} as FilterablePaths))
         .map(arg2)
         .map(paths => ({
             $$filter: paths,
             $$output: (arg3 && resolveOutputType(arg3)) || rawType
-        }))
+        })))
 }
 
 function toTypeRef(outputType: ODataTypeRef | OutputTypes): ODataTypeRef {
@@ -60,9 +60,8 @@ export function infixOp(lhs: Filter, op: string, rhs: Filter, outputType: ODataT
 }
 
 export function functionCall(functionName: string, args: Filter[], outputType: ODataTypeRef | OutputTypes): Filter {
-    return ReaderWriter
-        .traverse(args, QbEmit.zero)
-        .map(r => ({
+    return Filter
+        .traverse(args, r => ({
             $$output: toTypeRef(outputType),
             $$filter: `${functionName}(${r.map(x => x.$$filter).join(",")})`
         }))
