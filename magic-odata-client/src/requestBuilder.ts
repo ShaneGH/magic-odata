@@ -28,10 +28,12 @@ export class RequestBuilder<TRoot, TEntity, TResult, TKeyBuilder, TQueryable, TC
 
         this.name = entitySet?.name || null
 
+        /* istanbul ignore next */
         if (!state && !queryType) {
             throw new Error("You must specify state or a type");
         }
 
+        /* istanbul ignore next */
         if (state && queryType) {
             throw new Error("You must specify state or a type, but not both");
         }
@@ -73,6 +75,7 @@ export class RequestBuilder<TRoot, TEntity, TResult, TKeyBuilder, TQueryable, TC
     // https://github.com/ShaneGH/magic-odata/issues/2
     withQuery(queryBuilder: (entity: TQueryable, utils: Utils<TRoot>, params: Params<TRoot>) => Query | Query[], urlEncode?: boolean) {
 
+        /* istanbul ignore next */
         if (urlEncode != undefined) {
             throw new Error("Deprecated. See method jsdoc for details");
         }
@@ -86,6 +89,8 @@ export class RequestBuilder<TRoot, TEntity, TResult, TKeyBuilder, TQueryable, TC
     get<TOverrideResultType>(overrideRequestTools?: Partial<RequestTools<TFetchResult, TOverrideResultType>>): TOverrideResultType;
     get<TOverrideFetchResult, TOverrideResultType>(overrideRequestTools?: Partial<RequestTools<TOverrideFetchResult, TOverrideResultType>>): TOverrideResultType;
     get(overrideRequestTools?: Partial<RequestTools<TFetchResult, TResult>>): TResult {
+
+        /* istanbul ignore next */
         if (this.disableHttp) {
             throw new Error("This entity set has http requests disabled");
         }

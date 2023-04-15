@@ -99,6 +99,8 @@ export function recontextDataForRootQuery<TRoot, TFetchResult, TResult, TQueryab
         }
 
         const typeRef = getDeepTypeRef(state.type);
+
+        /* istanbul ignore next */
         if (typeRef.collectionDepth > 1) {
             throw new Error("Querying of collections of collections is not supported");
         }

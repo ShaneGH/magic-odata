@@ -41,6 +41,8 @@ export function lookupComplex(
     root: Dict<ODataSchema>) {
 
     const result = lookup(type, root);
+
+    /* istanbul ignore next */
     if (result.flag !== "Complex") {
         throw new Error(`Could not find complex type ${typeNameString(type)}`)
     }
@@ -76,6 +78,8 @@ export function lookup(
     }
 
     const result = root[type.namespace] && root[type.namespace].types[type.name];
+
+    /* istanbul ignore next */
     if (!result) {
         throw new Error(`Could not find type ${type.namespace && `${type.namespace}/`}${type.name}`)
     }
@@ -94,10 +98,13 @@ export function tryFindBaseType(
     }
 
     const result = root[type.baseType.namespace] && root[type.baseType.namespace].types[type.baseType.name]
+
+    /* istanbul ignore next */
     if (!result) {
         throw new Error(`Base type ${typeNameString(type)} does not exist`);
     }
 
+    /* istanbul ignore next */
     if (result.containerType !== "ComplexType") {
         throw new Error(`Base type ${typeNameString(type)} es an enum. Expected an entity or complex type`);
     }

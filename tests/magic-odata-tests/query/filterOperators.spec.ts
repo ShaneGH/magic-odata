@@ -2272,6 +2272,13 @@ describe("Query.Filter Operators", function () {
 
             expect(q["$filter"]).toBe("Int16 add INF");
         })
+
+        it("Should work", () => {
+            const q = queryBuilder<My.Odata.Entities.QueryableOneOfEverything>("My.Odata.Entities.OneOfEverything", e =>
+                add(e.Int16, -Infinity));
+
+            expect(q["$filter"]).toBe("Int16 add -INF");
+        })
     })
 });
 

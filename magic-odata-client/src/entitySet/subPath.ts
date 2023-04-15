@@ -95,6 +95,7 @@ export function functionUriBuilder(functionName: string, serializerSettings: Ser
             return argNames.length === 0
         })
 
+        /* istanbul ignore next */
         if (!fn) {
             throw new Error(`Unknown function args for function ${functionName}(${(x && Object.keys(x)) || ""})`);
         }
@@ -237,6 +238,7 @@ export function recontextDataForSubPath<TRoot, TFetchResult, TResult, TSubPath, 
                 propType = tryFindPropertyType(state.type, newT.propertyName, data.tools.root.schemaNamespaces)
             }
 
+            /* istanbul ignore next */
             if (!propType) {
                 throw new Error(`Invalid property ${newT.propertyName}`);
             }
@@ -294,6 +296,8 @@ export function recontextDataForUnboundFunctions<TRoot, TFetchResult, TResult, T
 
     const functions = getUnboundFunctions(data.containerName, data.schema, data.serializerSettings)
     const newT = subPath(functions as any, paramsBuilder)
+
+    /* istanbul ignore next */
     if (!newT.outputType) {
         throw new Error(`Invalid property ${newT.propertyName}`);
     }

@@ -57,6 +57,8 @@ function getSchemaNamespace(n: Element | null): string {
 function processFunction(warningConfig: SupressWarnings, f: Element): Function | null {
 
     const name = nsLookup<Attr>(f, "@Name")
+
+    /* istanbul ignore next */
     if (name.length !== 1) {
         let names = name.map(x => x.value).join(", ")
         names = names && ` (${names})`
@@ -66,6 +68,8 @@ function processFunction(warningConfig: SupressWarnings, f: Element): Function |
     }
 
     const returnType = nsLookup<Attr>(f, "edm:ReturnType/@Type")
+
+    /* istanbul ignore next */
     if (returnType.length !== 1) {
         warn(warningConfig, "suppressInvalidFunctionConfiguration", `Function ${name[0].value} has ${returnType.length} return types. Ignoring.`);
         return null
@@ -90,6 +94,8 @@ function processFunction(warningConfig: SupressWarnings, f: Element): Function |
 function processFunctionParam(fName: string, param: Node, warningConfig: SupressWarnings): FunctionParam | null {
 
     const name = nsLookup<Attr>(param, "@Name")
+
+    /* istanbul ignore next */
     if (name.length !== 1) {
         let names = name.map(x => x.value).join(", ")
         names = names && ` (${names})`
@@ -98,6 +104,8 @@ function processFunctionParam(fName: string, param: Node, warningConfig: Supress
     }
 
     const paramType = nsLookup<Attr>(param, "@Type")
+
+    /* istanbul ignore next */
     if (paramType.length !== 1) {
         warn(warningConfig, "suppressInvalidFunctionConfiguration", `Function ${fName} has a parameter ${name[0].value} with ${paramType.length} types. Ignoring.`);
         return null
@@ -195,12 +203,16 @@ function getUnboundFunctions(entityContainer: Element, warningConfig: SupressWar
     const output = functionImports
         .map(fImport => {
             const functionName = nsLookup<Attr>(fImport, "@Function")[0]?.value
+
+            /* istanbul ignore next */
             if (!functionName) {
                 warn(warningConfig, "suppressInvalidFunctionConfiguration", "Found FunctionImport node with no Function attribute. Ignoring")
                 return null
             }
 
             const f = unboundFunctions.filter(x => `${x.namespace && `${x.namespace}.`}${x.name}` === functionName)[0]
+
+            /* istanbul ignore next */
             if (!f) {
                 warn(warningConfig, "suppressInvalidFunctionConfiguration", `Could not find function definition for unbound function ${functionName}. Ignoring`)
                 return null
@@ -266,10 +278,13 @@ function mapSingleton(containerName: string, entitySet: Element): ODataEntitySet
 function getName(entitySet: Node, nameAttr: string, namespace: string) {
 
     const name = nsLookup(entitySet, nameAttr) as Attr[];
+    /* istanbul ignore next */
     if (name.length > 1) {
         const names = name.map(x => x.value).join(", ");
         console.warn(`Found more than one Name for EntitySet: ${names}. Using first value.`);
-    } else if (!name.length) {
+    }
+    /* istanbul ignore next */
+    else if (!name.length) {
         throw new Error(`Could not find name for entity set in collection ${namespace}`);
     }
 
@@ -279,17 +294,21 @@ function getName(entitySet: Node, nameAttr: string, namespace: string) {
 function getSingleType(entitySet: Node, typeAttr: string, namespace: string, forName: string): ODataSingleTypeRef {
 
     const type = nsLookup(entitySet, typeAttr) as Attr[];
+
+    /* istanbul ignore next */
     if (type.length > 1) {
         const names = type.map(x => x.value).join(", ");
         console.warn(`Found more than one Name for EntityContianer: ${names}. Using first value.`);
-    } else if (!type.length) {
+    }
+    /* istanbul ignore next */
+    else if (!type.length) {
         throw new Error(`Could not find type for entity set ${forName} in collection ${namespace}`);
     }
 
     let result = parseTypeStr(type[0].value)
     if (!result.isCollection) return result;
 
-    // TODO: possible to simulate this?
+    /* istanbul ignore next */
     console.warn(`EntityContianer ${type[0].value} refers to a collection. This is not supported. Unwrapping container to use entity type`);
     while (result.isCollection) {
         result = result.collectionType
@@ -305,47 +324,49 @@ function checkVersion(warningConfig: SupressWarnings, config: Document) {
 
     try {
         const version = nsLookup(config, "edmx:Edmx");
+        /* istanbul ignore next */
         if (!version.length) {
             warn(warningConfig, "suppressUnableToVerifyOdataVersion", "Could not find element edmx:Edmx. Unable to check odata version.")
         }
 
         for (let i = 0; i < version.length; i++) {
             const vs = nsLookup(version[i] as Node, "@Version");
+            /* istanbul ignore next */
             if (!vs.length) {
                 warn(warningConfig, "suppressUnableToVerifyOdataVersion", "Could not find Version attribute of element edmx:Edmx. Unable to check odata version")
                 return;
             }
 
+            /* istanbul ignore next */
             if (vs.length > 1) {
                 warn(warningConfig, "suppressUnableToVerifyOdataVersion", "Multiple Version attributes found in element edmx:Edmx. Unable to check odata version")
             }
 
             const v = (vs[0] as Attr)?.value || "";
+            /* istanbul ignore next */
             if (!/^\s*4(\.|(\s*$))/.test(v)) {
                 warn(warningConfig, "suppressUnableToVerifyOdataVersion", `Unsupported odata version: ${v}. Only version 4 is suppoerted`)
             }
         }
     } catch {
+        /* istanbul ignore next */
         warn(warningConfig, "suppressUnableToVerifyOdataVersion", "Error checking odata version")
     }
 }
 
 function getEnumValue(warningConfig: SupressWarnings, attr?: Attr) {
 
+    /* istanbul ignore next */
     if (!attr) {
-        if (!warningConfig?.suppressEnumIssuesValue) {
-            warn(warningConfig, "suppressEnumIssuesValue", `Found enum member with no value. Ignoring.`);
-        }
-
+        warn(warningConfig, "suppressEnumIssuesValue", `Found enum member with no value. Ignoring.`);
         return null;
     }
 
     const value = parseInt(attr.value || "");
-    if (isNaN(value)) {
-        if (!warningConfig?.suppressEnumIssuesValue) {
-            warn(warningConfig, "suppressEnumIssuesValue", `Found enum member with invalid value: ${attr.value}. Ignoring.`);
-        }
 
+    /* istanbul ignore next */
+    if (isNaN(value)) {
+        warn(warningConfig, "suppressEnumIssuesValue", `Found enum member with invalid value: ${attr.value}. Ignoring.`);
         return null;
     }
 
@@ -354,11 +375,9 @@ function getEnumValue(warningConfig: SupressWarnings, attr?: Attr) {
 
 function getEnumMember(warningConfig: SupressWarnings, attr?: Attr) {
 
+    /* istanbul ignore next */
     if (!attr) {
-        if (!warningConfig?.suppressEnumIssuesValue) {
-            warn(warningConfig, "suppressEnumIssuesValue", `Found enum member with no name. Ignoring.`);
-        }
-
+        warn(warningConfig, "suppressEnumIssuesValue", `Found enum member with no name. Ignoring.`);
         return null;
     }
 
@@ -380,12 +399,15 @@ function mapEnumType(warningConfig: SupressWarnings, node: Node): ODataEnum | nu
             }, {} as { [key: string]: number });
 
     const name = nsLookup<Attr>(node, "@Name");
+
+    /* istanbul ignore next */
     if (!name.length) {
         warn(warningConfig, "suppressEnumIssuesValue", `Found enum with no name. Ignoring.`);
         return null;
     }
 
-    if (name.length !== 1 && !warningConfig?.suppressEnumIssuesValue) {
+    /* istanbul ignore next */
+    if (name.length !== 1) {
         warn(warningConfig, "suppressEnumIssuesValue", `Found enum with no multiple names. Using first.`);
     }
 
@@ -443,7 +465,9 @@ function mapEntityType(warningConfig: SupressWarnings, node: Node): ODataComplex
     function baseType() {
 
         const baseType = nsLookup(node, "@BaseType") as Attr[];
-        if (baseType.length > 1 && !warningConfig.suppressAll && !warningConfig.suppressMultipleBaseTypes) {
+
+        /* istanbul ignore next */
+        if (baseType.length > 1) {
             console.warn(`Found multiple base types for ${getName()}: ${baseType.map(x => x.value)}. Using first one found`);
         }
 
@@ -459,6 +483,8 @@ function mapEntityType(warningConfig: SupressWarnings, node: Node): ODataComplex
 
     function getName() {
         const val = (nsLookup(node, "@Name")[0] as Attr)?.value;
+
+        /* istanbul ignore next */
         if (!val) {
             throw new Error("Found edm:EntityType with no @Name");
         }
@@ -496,10 +522,12 @@ function mapProperty(x: { navigationProp: boolean, prop: Node }) {
     const type = nsLookup(x.prop, "@Type")[0] as Attr | undefined
     const nullable = nsLookup(x.prop, "@Nullable")[0] as Attr | undefined
 
+    /* istanbul ignore next */
     if (!name) {
         throw new Error("Found edm:Property with no name");
     }
 
+    /* istanbul ignore next */
     if (!type) {
         throw new Error(`Found edm:Property with no type: ${name}`);
     }

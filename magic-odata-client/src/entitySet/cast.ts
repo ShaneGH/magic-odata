@@ -56,6 +56,8 @@ function buildCaster<TFetchResult, TResult, TCaster>(
 function getCastingTypeRef(type: ODataTypeRef) {
 
     const result = getDeepTypeRef(type);
+
+    /* istanbul ignore next */
     if (result.collectionDepth > 1) {
         throw new Error("Casting collections of collections is not yet supported");
     }

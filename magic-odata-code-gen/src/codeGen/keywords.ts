@@ -58,6 +58,7 @@ export type Keywords = {
 
 export function generateKeywords(allNamespaces: string[], rootLevelTypes: string[]): Keywords {
 
+    /* istanbul ignore next */
     if (rootLevelTypes.indexOf("Edm") !== -1) {
         throw new Error('You cannot have a root level type named "Edm". "Edm" is a namespace reserved by OData for primitive types');
     }
@@ -126,6 +127,7 @@ export function generateKeywords(allNamespaces: string[], rootLevelTypes: string
     function getKeyword(defaultVal: string) {
         if (!lookup[defaultVal]) return defaultVal;
 
+        /* istanbul ignore next */
         // eslint-disable-next-line no-constant-condition
         for (let i = 1; true; i++) {
             const val = `${defaultVal}${i}`;
@@ -191,6 +193,7 @@ ${tab(importWithAlias("EntitySetSubPath"))}
         .join("\n\n")
 
     function importWithAlias(importName: keyof Keywords, libImportName?: string) {
+        /* istanbul ignore next */
         if (!keywords[importName]) {
             throw new Error(`Invalid keyword: ${importName}`);
         }

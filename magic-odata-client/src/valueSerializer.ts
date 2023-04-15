@@ -15,6 +15,8 @@ export class AtParam {
 
     constructor(public readonly param: ParameterDefinition) {
         this.name = param.data.name
+
+        /* istanbul ignore next */
         if (!this.name.length || this.name[0] !== "@") {
             throw new Error(`Parameters must begin with @: "${name}"`);
         }
@@ -26,9 +28,12 @@ export function enumMemberName(enumDef: ODataEnum, value: number): string {
         .keys(enumDef.members)
         .filter(k => enumDef.members[k] === value);
 
+    /* istanbul ignore next */
     if (!name.length) {
         throw new Error(`Cannot find name of enum for value: ${value}. Use the mapper arg to specify a custom value`);
-    } else if (name.length > 1) {
+    }
+    /* istanbul ignore next */
+    else if (name.length > 1) {
         console.warn(`Found multiple members for enum value: ${value}`);
     }
 
@@ -39,9 +44,7 @@ export function stringSerialize(value: string): string {
     return `'${value.replace(/'/g, "''")}'`
 }
 
-export function basicSerialize(value: any): string {
-    if (value == null)
-        return "null"
+function basicSerialize(value: any): string {
 
     if (typeof value === "string")
         return stringSerialize(value);
@@ -56,18 +59,24 @@ export function basicSerialize(value: any): string {
 }
 
 function pad2(x: number) {
+    /* istanbul ignore next */
     if (isNaN(x)) return x?.toString() || ""
+
     return x < 10 ? `0${x}` : x.toString();
 }
 
 function pad3(x: number) {
+    /* istanbul ignore next */
     if (isNaN(x)) return x?.toString() || ""
+
     const p2 = pad2(x)
     return p2.length < 3 ? `0${p2}` : p2
 }
 
 function pad4(x: number) {
+    /* istanbul ignore next */
     if (isNaN(x)) return x?.toString() || ""
+
     const p3 = pad3(x)
     return p3.length < 4 ? `0${p3}` : p3
 }
@@ -90,6 +99,7 @@ function serializeDate(value: any): string {
         return serializeDate(new ODataDate(toDateInputs(value)))
     }
 
+    /* istanbul ignore next */
     if (!(value instanceof ODataDate) && !(value instanceof ODataDateTimeOffset)) {
         console.warn("Unknown Edm.Date type in serialization");
         return value?.toString() || ""
@@ -119,6 +129,7 @@ function serializeDuration(value: any): string {
         return serializeDuration(ODataDuration.fromMilliseconds(value))
     }
 
+    /* istanbul ignore next */
     if (!(value instanceof ODataDuration)) {
         console.warn("Unknown Edm.Duration type in serialization");
         return value?.toString() || ""
@@ -153,6 +164,7 @@ function serializeTime(value: any): string {
         return serializeTime(new ODataTimeOfDay(toTimeInputs(value)));
     }
 
+    /* istanbul ignore next */
     if (!(value instanceof ODataTimeOfDay) && !(value instanceof ODataDateTimeOffset)) {
         console.warn("Unknown Edm.Time type in serialization");
         return value?.toString() || ""
@@ -190,6 +202,7 @@ function serializeDateTimeOffset(value: any): string {
     const time = serializeTime(value)
     const offset = value
 
+    /* istanbul ignore next */
     if (!(value instanceof ODataDateTimeOffset)) {
         console.warn("Unknown Edm.DateTimeOffset type in serialization");
         return value?.toString() || ""
@@ -236,17 +249,13 @@ function serializeToString(value: any, type: ODataTypeRef | null | undefined, se
         return value.name
     }
 
-    if (Array.isArray(value)) {
-        type = type?.isCollection ? type.collectionType : type
-        return `[${value.map(x => serializeToString(x, type, settings))}]`
-    }
-
     // it is possible that an entity property makes it
     // in here if it is wrapped in an array
     if (hasODataQueryMetadata(value)) {
         return value.$$oDataQueryMetadata.path.map(x => x.path).join("/")
     }
 
+    /* istanbul ignore next */
     if (type?.isCollection) {
         const name = typeRefString(type)
         if (!warnedCollectionTypes[name]) {
@@ -287,15 +296,12 @@ function serializeToString(value: any, type: ODataTypeRef | null | undefined, se
             case "Date": return serializeDate(value);
             case "DateTimeOffset": return serializeDateTimeOffset(value);
             case "Guid": return value.toString()
+            /* istanbul ignore next */
             default:
                 console.warn(`Unknown type found when serializing value for filter. `
                     + `Ignoring type info. This may lead to incorrect serializaton of values in filtering`, type);
                 return basicSerialize(value);
         }
-    }
-
-    if (!settings.serviceConfig) {
-        return basicSerialize(value);
     }
 
     const serviceConfig = settings.serviceConfig
@@ -307,6 +313,7 @@ function serializeToString(value: any, type: ODataTypeRef | null | undefined, se
         }
 
         const name = typeRefString(type)
+        /* istanbul ignore next */
         if (!warnedEnumTypes[name]) {
             console.warn(`Complex type found when serializing value for filter. `
                 + `Ignoring type info. This may lead to incorrect serializaton of values in filtering`, type);

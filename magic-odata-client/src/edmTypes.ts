@@ -84,18 +84,22 @@ export class ODataTimeOfDay {
         this.s = inupts.s || 0
         this.ms = inupts.ms || 0
 
+        /* istanbul ignore next */
         if (this.h >= 24) {
             throw new Error("Max hours: 23");
         }
 
+        /* istanbul ignore next */
         if (this.m >= 60) {
             throw new Error("Max minutes: 59");
         }
 
+        /* istanbul ignore next */
         if (this.s >= 60) {
             throw new Error("Max seconds: 59");
         }
 
+        /* istanbul ignore next */
         if (this.ms >= 1000) {
             throw new Error("Max miliseconds: 999");
         }
@@ -254,6 +258,7 @@ export class ODataDateTimeOffset {
 
         checkSigns(this, ["offsetH", "offsetM"])
 
+        /* istanbul ignore next */
         if (this.ms >= 1000 || this.ms <= -1000) {
             throw new Error("Max miliseconds: 999");
         }

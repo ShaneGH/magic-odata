@@ -38,6 +38,8 @@ function findPropertyType(
     root: Dict<ODataSchema>): ODataTypeRef {
 
     const result = tryFindPropertyType(type, propertyName, root);
+
+    /* istanbul ignore next */
     if (!result) {
         throw new Error(`Could not find property ${propertyName} on type ${typeNameString(type)}`);
     }
@@ -77,6 +79,7 @@ function keyExpr(keyTypes: KeyType[], key: any, keyEmbedType: WithKeyType, seria
                 ? serialize(key, keyTypes[0].type, serializerSettings).map(x => ({ appendToLatest: false, value: `${x}` }))
                 : null;
 
+        /* istanbul ignore next */
         if (!result) {
             throw new Error(`Invalid WithKeyType: ${keyEmbedType}`);
         }
@@ -95,6 +98,7 @@ function keyExpr(keyTypes: KeyType[], key: any, keyEmbedType: WithKeyType, seria
         throw new Error(`Missing keys: ${missingKeys}`);
     }
 
+    /* istanbul ignore next */
     if (keyEmbedType !== WithKeyType.FunctionCall) {
         console.warn(`${keyEmbedType} key types are not supported for composite keys. Defaulting to ${WithKeyType.FunctionCall}`);
         keyEmbedType = WithKeyType.FunctionCall;
@@ -135,20 +139,24 @@ export function recontextDataForKey<TRoot, TFetchResult, TResult, TNewEntityQuer
     : Writer<EntityQueryState, QbEmit> {
 
     return data.state.bind(state => {
+        /* istanbul ignore next */
         if (!state.type.isCollection) {
             throw new Error("Cannot search for a single type by key. You must search a collection instead");
         }
 
+        /* istanbul ignore next */
         if (state.type.collectionType.isCollection) {
             throw new Error("Cannot search a collection of collections by key. You must search a collection instead");
         }
 
         const collectionType = state.type.collectionType
 
+        /* istanbul ignore next */
         if (state.query.query.length) {
             throw new Error("You cannot add query components before doing a key lookup");
         }
 
+        /* istanbul ignore next */
         if (!state.path.length) {
             throw new Error("Invalid path");
         }

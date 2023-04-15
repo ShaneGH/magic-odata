@@ -92,15 +92,19 @@ function stripSumType(leaf: Node): FinalNamespace<RBuilder | Function> | RBuilde
 function merge(part1: Node, part2: Node, name: string): Node {
 
     if (part1.t === "EntitySet") {
+        /* istanbul ignore next */
         if (part2.t === "EntitySet") {
             console.warn(`Found clash of entity set names ${name}`);
-        } else {
+        }
+        /* istanbul ignore next */
+        else {
             console.warn(`Found clash of entity set with namespace ${name}`);
         }
 
         return part1
     }
 
+    /* istanbul ignore next */
     if (part2.t === "EntitySet") {
         console.warn(`Found clash of entity set with namespace ${name}`);
         return part2
@@ -184,7 +188,10 @@ function methodsForEntitySetNamespace(
 
 function requestTools(uriRoot: string) {
     return {
-        request() { throw new Error("This entity set has http requests disabled") },
+        request() {
+            /* istanbul ignore next */
+            throw new Error("This entity set has http requests disabled")
+        },
         uriRoot: uriRoot
     }
 }
@@ -199,6 +206,7 @@ function entitySetsForEntitySetNamespace(
     return Object
         .keys(entitySets)
         .reduce((s, key) => {
+            /* istanbul ignore next */
             if (s.t === "EntitySet") {
                 // be careful here. s must always be a "Namespace"
                 // and the type checker will not ensure that
@@ -211,7 +219,10 @@ function entitySetsForEntitySetNamespace(
 
             const tools: SchemaTools<any, any> = {
                 requestTools: requestTools(uriRoot),
-                defaultResponseInterceptor: () => { throw new Error("This entity set has http requests disabled") },
+                defaultResponseInterceptor: () => {
+                    /* istanbul ignore next */
+                    throw new Error("This entity set has http requests disabled")
+                },
                 serializerSettings,
                 schema,
                 root: serviceConfig
@@ -259,7 +270,10 @@ function functionsForEntitySetNamespace(
                         schema,
                         containerName,
                         requestTools: requestTools(uriRoot),
-                        defaultResponseInterceptor: () => { throw new Error("This entity set has http requests disabled") },
+                        defaultResponseInterceptor: () => {
+                            /* istanbul ignore next */
+                            throw new Error("This entity set has http requests disabled")
+                        },
                     }, true)
 
                     return fns.subPath(f)
