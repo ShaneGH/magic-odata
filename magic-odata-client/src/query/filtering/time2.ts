@@ -1,7 +1,6 @@
 import { ODataTypeRef } from "magic-odata-shared";
 import { EdmDate, EdmDateTimeOffset, EdmDuration, EdmTimeOfDay } from "../../edmTypes.js";
-import { Filter, FilterEnv, FilterResult, QbEmit } from "../../queryBuilder.js";
-import { ReaderWriter } from "../../utils.js";
+import { Filter, QbEmit } from "../../queryBuilder.js";
 import { functionCall, infixOp } from "./op1.js";
 import { filterize, Operable, operableToFilter } from "./operable0.js";
 import { DecimalNumberTypes, IntegerTypes, NonNumericTypes, resolveOutputType } from "./queryPrimitiveTypes0.js";
@@ -95,17 +94,17 @@ function accessorFunction<T>(
     return functionCall(name, [operableToFilter(operand)], outputType)
 }
 
-const _now: Filter = ReaderWriter.retn<FilterEnv, FilterResult, QbEmit>({ $$output: dateTimeOffsetT, $$filter: "now()" }, QbEmit.zero)
+const _now: Filter = Filter.retn({ $$output: dateTimeOffsetT, $$filter: "now()" }, QbEmit.zero)
 export function now() {
     return _now;
 }
 
-const _maxdatetime: Filter = ReaderWriter.retn<FilterEnv, FilterResult, QbEmit>({ $$output: dateTimeOffsetT, $$filter: "maxdatetime()" }, QbEmit.zero)
+const _maxdatetime: Filter = Filter.retn({ $$output: dateTimeOffsetT, $$filter: "maxdatetime()" }, QbEmit.zero)
 export function maxDateTime() {
     return _maxdatetime
 }
 
-const _mindatetime: Filter = ReaderWriter.retn<FilterEnv, FilterResult, QbEmit>({ $$output: dateTimeOffsetT, $$filter: "mindatetime()" }, QbEmit.zero)
+const _mindatetime: Filter = Filter.retn({ $$output: dateTimeOffsetT, $$filter: "mindatetime()" }, QbEmit.zero)
 export function minDateTime() {
     return _mindatetime
 }

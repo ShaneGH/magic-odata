@@ -35,13 +35,12 @@ const oDataClient = new ODataClient({
 const popularBlogPosts = oDataClient.BlogPosts
     // Use object deconstruction to choose query tools
     .withQuery((blogPost, {
-        $filter: {gt, or}, 
         $orderby: {orderBy}, 
         $skip, 
         $top
     }) => [ 
-        // Combine query tools to build a query
-        or(gt(blogPost.Comments.$count, 100), gt(blogPost.Likes, 100)),
+        // Combine query tools and fluent operations to build a query
+        blogPost.Comments.$count.gt(100).or(blogPost.Likes.gt(100)),
         orderBy(blogPost.Name),
         $skip(0),
         $top(10)
@@ -79,6 +78,7 @@ Write safe, statically typed odata queries in typescript. No more `string`. No m
  * Indexed ordered collections
  * Query options
     * $filter
+        * fluent comparison operators
     * $select
     * $expand
         * $levels

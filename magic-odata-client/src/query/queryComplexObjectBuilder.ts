@@ -1,10 +1,23 @@
 import { ODataComplexType, ODataTypeRef, ODataEnum, ODataComplexTypeProperty, Function as ODataFunction } from "magic-odata-shared";
 import { functionUriBuilder } from "../entitySet/subPath.js";
-import { QbEmit } from "../queryBuilder.js";
+import { Filter, QbEmit } from "../queryBuilder.js";
 import { groupBy, typeNameString, typeRefString } from "../utils.js";
 import { SerializerSettings, rawType } from "../valueSerializer.js";
+import { eq, ge, gt, isIn, le, lt, ne } from "./filtering/logical2.js";
+import { OperableCollection } from "./filtering/collection1.js";
+import { Operable } from "./filtering/operable0.js";
 
 type Dict<T> = { [key: string]: T }
+
+export type Comparable<T> = {
+    eq(other: T | Operable<T>): Filter
+    ne(other: T | Operable<T>): Filter
+    gt(other: T | Operable<T>): Filter
+    lt(other: T | Operable<T>): Filter
+    ge(other: T | Operable<T>): Filter
+    le(other: T | Operable<T>): Filter
+    isIn(other: T[] | OperableCollection<T>): Filter
+}
 
 export enum QueryObjectType {
     QueryObject = "QueryObject",
@@ -32,18 +45,22 @@ export type QueryObjectMetadata = {
 
 // T is not used, but adds strong typing to FilterUtils
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export type QueryPrimitive<T> = {
+type QueryPrimitiveMeta<T> = {
     $$oDataQueryObjectType: QueryObjectType.QueryPrimitive
     $$oDataQueryMetadata: QueryObjectMetadata
 }
 
+export type QueryPrimitive<T> = QueryPrimitiveMeta<T> & Comparable<T>
+
 // T is not used, but adds strong typing to FilterUtils
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export type QueryEnum<T> = {
+type QueryEnumMeta<T> = {
     $$oDataQueryObjectType: QueryObjectType.QueryEnum
     $$oDataQueryMetadata: QueryObjectMetadata
     $$oDataEnumType: ODataEnum
 }
+
+export type QueryEnum<T> = QueryEnumMeta<T> & Comparable<T>
 
 // type def is recursive for this type: "TQueryObj extends QueryObject<...". Cannot be a "type"
 export interface QueryCollection<TQueryObj extends QueryObject<TArrayType>, TArrayType> {
@@ -71,6 +88,19 @@ export function hasODataQueryMetadata(x: any): x is HasODataQueryMetadata {
 export type QueryComplexObject<T> = T & QueryComplexObjectBase
 
 export type QueryObject<T> = QueryPrimitive<T> | QueryCollection<QueryObject<T>, T> | QueryComplexObject<T> | QueryEnum<T>
+
+export function addEquality<T extends QueryPrimitiveMeta<U> | QueryEnumMeta<U>, U>(x: T): T & Comparable<U> {
+    return {
+        ...x,
+        eq: function (x: U | Operable<U>) { return eq(this, x) },
+        ne: function (x: U | Operable<U>) { return ne(this, x) },
+        gt: function (x: U | Operable<U>) { return gt(this, x) },
+        lt: function (x: U | Operable<U>) { return lt(this, x) },
+        ge: function (x: U | Operable<U>) { return ge(this, x) },
+        le: function (x: U | Operable<U>) { return le(this, x) },
+        isIn: function (xs: U[] | OperableCollection<U>) { return isIn(this, xs) }
+    }
+}
 
 function buildAlias(forName: string) {
 
@@ -107,7 +137,7 @@ function addAlias(aliasFor: string, aliases: Dict<boolean>) {
 }
 
 function buildArrayCount(arrayMetadata: QueryObjectMetadata): QueryPrimitive<number> {
-    return {
+    return addEquality({
         $$oDataQueryObjectType: QueryObjectType.QueryPrimitive,
         $$oDataQueryMetadata: {
             rootContext: arrayMetadata.rootContext,
@@ -116,10 +146,11 @@ function buildArrayCount(arrayMetadata: QueryObjectMetadata): QueryPrimitive<num
             queryAliases: arrayMetadata.queryAliases,
             qbEmit: arrayMetadata.qbEmit
         }
-    };
+    });
 }
 
-function buildPropertyTypeRef<T>(type: ODataTypeRef, serializerSettings: SerializerSettings, rootContext: string, path: PathSegment[], queryAliases: Dict<boolean>, qbEmit: QbEmit): QueryObject<T> {
+function buildPropertyTypeRef<T>(type: ODataTypeRef, serializerSettings: SerializerSettings,
+    rootContext: string, path: PathSegment[], queryAliases: Dict<boolean>, qbEmit: QbEmit): QueryObject<T> {
 
     if (type.isCollection) {
         if (!path.length) {
@@ -145,7 +176,7 @@ function buildPropertyTypeRef<T>(type: ODataTypeRef, serializerSettings: Seriali
     }
 
     if (type.namespace === "Edm") {
-        return {
+        return addEquality({
             $$oDataQueryObjectType: QueryObjectType.QueryPrimitive,
             $$oDataQueryMetadata: {
                 path,
@@ -154,7 +185,7 @@ function buildPropertyTypeRef<T>(type: ODataTypeRef, serializerSettings: Seriali
                 queryAliases,
                 qbEmit
             }
-        };
+        });
     }
 
     const root = serializerSettings.serviceConfig
@@ -164,7 +195,7 @@ function buildPropertyTypeRef<T>(type: ODataTypeRef, serializerSettings: Seriali
     }
 
     if (tLookup.containerType === "Enum") {
-        return {
+        return addEquality({
             $$oDataEnumType: tLookup.type,
             $$oDataQueryObjectType: QueryObjectType.QueryEnum,
             $$oDataQueryMetadata: {
@@ -174,7 +205,7 @@ function buildPropertyTypeRef<T>(type: ODataTypeRef, serializerSettings: Seriali
                 queryAliases,
                 qbEmit
             }
-        };
+        });
     }
 
     const complexType = tLookup.type

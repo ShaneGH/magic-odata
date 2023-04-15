@@ -61,11 +61,12 @@ function filterizeSingle<TArrayType>(
         return operableToFilter(toFilterizeO)
     }
 
-    return operableToFilter(supplimentary)
-        .map(({ $$output }) => ({
-            $$output: ($$output.isCollection && $$output.collectionType) || $$output
-        }))
-        .bind(({ $$output }) => valueToFilter(toFilterize as TArrayType, $$output, mapper))
+    return new Filter(
+        operableToFilter(supplimentary).wrapped
+            .map(({ $$output }) => ({
+                $$output: ($$output.isCollection && $$output.collectionType) || $$output
+            }))
+            .bind(({ $$output }) => valueToFilter(toFilterize as TArrayType, $$output, mapper).wrapped))
 }
 
 function _collectionFunction<TArrayType>(
@@ -93,10 +94,10 @@ function _collectionFunction<TArrayType>(
 
     const _collection = operableToFilter(collection)
     const _values = operableToFilter(values)
-    const inputs = ReaderWriter.traverse([_collection, _values], QbEmit.zero) as ReaderWriter<FilterEnv, [FilterResult, FilterResult], QbEmit>
+    const inputs = ReaderWriter.traverse([_collection.wrapped, _values.wrapped], QbEmit.zero) as ReaderWriter<FilterEnv, [FilterResult, FilterResult], QbEmit>
 
-    return inputs.bind(is =>
-        functionCall(functionName, [_collection, _values], output(is)));
+    return new Filter(inputs.bind(is =>
+        functionCall(functionName, [_collection, _values], output(is)).wrapped));
 }
 
 export function any<TQueryObj extends QueryObject<TArrayType>, TArrayType>(
@@ -123,32 +124,34 @@ export function count<T>(collection: OperableCollection<T>, countUnit = IntegerT
 
 export function $filter<TRoot, T, TQuery extends QueryObject<T>>(collection: QueryCollection<TQuery, T> | Filter, itemFilter: (item: TQuery) => Filter): Filter {
 
-    return operableToFilter(collection)
-        .bind(x => ReaderWriter
-            .create<FilterEnv, Filter, QbEmit>(env => {
+    return new Filter(
+        operableToFilter(collection).wrapped
+            .bind(x => ReaderWriter
+                .create<FilterEnv, ReaderWriter<FilterEnv, FilterResult, QbEmit>, QbEmit>(env => {
 
-                if (!x.$$output.isCollection) {
-                    throw new Error(`$filter can only be done on collections. `
-                        + `Attempting to execute on ${x.$$output.namespace && `${x.$$output.namespace}/`}${x.$$output.name}`);
-                }
+                    if (!x.$$output.isCollection) {
+                        throw new Error(`$filter can only be done on collections. `
+                            + `Attempting to execute on ${x.$$output.namespace && `${x.$$output.namespace}/`}${x.$$output.name}`);
+                    }
 
-                // https://github.com/ShaneGH/magic-odata/issues/60
-                if (x.$$output.collectionType.isCollection) {
-                    throw new Error("Collections of collections are not supported");
-                }
+                    // https://github.com/ShaneGH/magic-odata/issues/60
+                    if (x.$$output.collectionType.isCollection) {
+                        throw new Error("Collections of collections are not supported");
+                    }
 
-                const paramsBuilder = params<TRoot>(env.rootUri, env.serviceConfig, env.serializerSettings, env.schema);
-                return [
-                    executeQueryBuilder<TRoot, TQuery, Filter>(x.$$output.collectionType, env.serializerSettings, itemFilter, "$this", paramsBuilder)
-                        .mapEnv<FilterEnv>(env => ({ ...env, rootContext: "$this" }))
-                        .map(({ $$filter }) => ({
-                            $$output: x.$$output,
-                            $$filter: `${x.$$filter}/$filter(${$$filter})`
-                        })),
-                    QbEmit.zero
-                ]
-            }))
-        .bind(x => x)
+                    const paramsBuilder = params<TRoot>(env.rootUri, env.serviceConfig, env.serializerSettings, env.schema);
+                    return [
+                        executeQueryBuilder<TRoot, TQuery, Filter>(x.$$output.collectionType, env.serializerSettings, itemFilter, "$this", paramsBuilder)
+                            .wrapped
+                            .mapEnv<FilterEnv>(env => ({ ...env, rootContext: "$this" }))
+                            .map(({ $$filter }) => ({
+                                $$output: x.$$output,
+                                $$filter: `${x.$$filter}/$filter(${$$filter})`
+                            })),
+                        QbEmit.zero
+                    ]
+                }))
+            .bind(x => x))
 }
 
 export function hasSubset<TArrayType>(

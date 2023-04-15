@@ -4,6 +4,7 @@ import { NonNumericTypes, resolveOutputType } from "./query/filtering/queryPrimi
 import { groupBy, ReaderWriter, removeNulls, Writer } from "./utils.js";
 import { AtParam, SerializerSettings, rawType, serialize } from "./valueSerializer.js";
 import { extractAtParams } from "./query/root.js";
+import { and, or } from "./query/filtering/logical2.js";
 
 type Dict<T> = { [key: string]: T }
 
@@ -110,7 +111,48 @@ export class QbEmit {
     }
 }
 
-export type Filter = ReaderWriter<FilterEnv, FilterResult, QbEmit>
+/** A wrapper around a ReaderWriter<FilterEnv, FilterResult, QbEmit> which has some fluent methods on it's prototype */
+export class Filter {
+    constructor(public readonly wrapped: ReaderWriter<FilterEnv, FilterResult, QbEmit>) { }
+
+    and(...others: Filter[]) {
+        return and(this, ...others);
+    }
+
+    or(...others: Filter[]) {
+        return or(this, ...others);
+    }
+
+    public static create(f: (env: FilterEnv) => [FilterResult, QbEmit]) {
+        return new Filter(ReaderWriter.create<FilterEnv, FilterResult, QbEmit>(f))
+    }
+
+    public static retn(data: FilterResult, qbEmit?: QbEmit) {
+        return new Filter(ReaderWriter.retn<FilterEnv, FilterResult, QbEmit>(data, qbEmit || QbEmit.zero))
+    }
+
+    execute(env: FilterEnv) {
+        return this.wrapped.execute(env)
+    }
+
+    map(f: (x: FilterResult) => FilterResult) {
+        return new Filter(this.wrapped.map(f))
+    }
+
+    bind(f: (x: FilterResult) => Filter) {
+        return new Filter(this.wrapped.bind(x => f(x).wrapped))
+    }
+
+    asWriter(env: FilterEnv) {
+        return this.wrapped.asWriter(env)
+    }
+
+    static traverse(items: Filter[], reduce: (xs: FilterResult[]) => FilterResult) {
+
+        return new Filter(
+            ReaderWriter.traverse(items.map(x => x.wrapped), QbEmit.zero).map(reduce))
+    }
+}
 
 export type Query = Top | Skip | Count | Expand | OrderBy | Select | Filter | Custom | Search | Levels
 
@@ -142,7 +184,7 @@ export function buildPartialQuery(q: Query | Query[], filterEnv: FilterEnv, enco
     return q
         .reduce((s, x) => {
 
-            if (x instanceof ReaderWriter) {
+            if (x instanceof Filter) {
                 return x
                     .asWriter(filterEnv)
                     .bind(applied => maybeAdd(encode, s, "$filter", applied.$$filter,

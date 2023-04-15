@@ -15,6 +15,7 @@
  * [Enums](#enums)
  * [Query options](#query-options)
     * [$filter](#filter)
+        * [Fluent operations](#fluent-comparison)
     * [$select](#select)
     * [$expand](#expand)
         * [$levels](#levels)
@@ -392,7 +393,7 @@ const users = new MyOdataClient({...})
 See [FilterUtils](https://github.com/ShaneGH/magic-odata/blob/main/magic-odata-client/src/query/filters.ts) for details of all filters
 
 ```typescript
-// use the inbult eq filter
+// use the inbuilt eq filter
 const myUser = new MyOdataClient({...})
     .Users
     .withQuery((user, { $filter: { eq } }) => eq(user.Id, '123'))
@@ -409,6 +410,19 @@ const myUser = new MyOdataClient({...})
 const myUser = new MyOdataClient({...})
     .Users
     .withQuery((user, { $filter: { filterRaw } }) => filterRaw("Id eq '123'"))
+    .get()
+```
+
+### Fluent comparison
+
+There are basic boolean filter operators appended to query objects that can be used fluently. These are:
+
+ * or, and, eq, ne, gt, lt, ge, le, isIn
+
+```typescript
+const myUser = new MyOdataClient({...})
+    .Users
+    .withQuery(user => user.Id.eq('123').or(user.Id.eq('234')))
     .get()
 ```
 
