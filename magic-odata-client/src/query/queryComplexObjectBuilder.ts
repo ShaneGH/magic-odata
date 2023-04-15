@@ -10,12 +10,46 @@ import { Operable } from "./filtering/operable0.js";
 type Dict<T> = { [key: string]: T }
 
 export type Comparable<T> = {
+    /** 
+     * Fluent version of eq filter. 
+     * See https://github.com/ShaneGH/magic-odata/blob/main/magic-odata-client/src/query/filters.ts for details 
+     */
     eq(other: T | Operable<T>): Filter
+
+    /** 
+     * Fluent version of ne filter. 
+     * See https://github.com/ShaneGH/magic-odata/blob/main/magic-odata-client/src/query/filters.ts for details 
+     */
     ne(other: T | Operable<T>): Filter
+
+    /** 
+     * Fluent version of gt filter. 
+     * See https://github.com/ShaneGH/magic-odata/blob/main/magic-odata-client/src/query/filters.ts for details 
+     */
     gt(other: T | Operable<T>): Filter
+
+    /** 
+     * Fluent version of lt filter. 
+     * See https://github.com/ShaneGH/magic-odata/blob/main/magic-odata-client/src/query/filters.ts for details 
+     */
     lt(other: T | Operable<T>): Filter
+
+    /** 
+     * Fluent version of ge filter. 
+     * See https://github.com/ShaneGH/magic-odata/blob/main/magic-odata-client/src/query/filters.ts for details 
+     */
     ge(other: T | Operable<T>): Filter
+
+    /** 
+     * Fluent version of le filter. 
+     * See https://github.com/ShaneGH/magic-odata/blob/main/magic-odata-client/src/query/filters.ts for details 
+     */
     le(other: T | Operable<T>): Filter
+
+    /** 
+     * Fluent version of isIn filter. 
+     * See https://github.com/ShaneGH/magic-odata/blob/main/magic-odata-client/src/query/filters.ts for details 
+     */
     isIn(other: T[] | OperableCollection<T>): Filter
 }
 

@@ -115,10 +115,18 @@ export class QbEmit {
 export class Filter {
     constructor(public readonly wrapped: ReaderWriter<FilterEnv, FilterResult, QbEmit>) { }
 
+    /** 
+     * Fluent version of and filter. 
+     * See https://github.com/ShaneGH/magic-odata/blob/main/magic-odata-client/src/query/filters.ts for details 
+     */
     and(...others: Filter[]) {
         return and(this, ...others);
     }
 
+    /** 
+     * Fluent version of or filter. 
+     * See https://github.com/ShaneGH/magic-odata/blob/main/magic-odata-client/src/query/filters.ts for details 
+     */
     or(...others: Filter[]) {
         return or(this, ...others);
     }
