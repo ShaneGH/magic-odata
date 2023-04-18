@@ -3,9 +3,9 @@
 Magical OData client generation for typescript. No more `string`. No more `any`!
 
 [![Node.js CI](https://github.com/ShaneGH/magic-odata/actions/workflows/node.js.yml/badge.svg)](https://github.com/ShaneGH/magic-odata/actions/workflows/node.js.yml)
-[![NPM]](https://img.shields.io/npm/v/magic-odata-client.svg?style=flat)
+[![NPM](https://img.shields.io/npm/v/magic-odata-client.svg?style=flat)](https://www.npmjs.com/package/magic-odata-client)
 [![Coverage Status](https://coveralls.io/repos/github/ShaneGH/magic-odata/badge.svg?branch=main)](https://coveralls.io/github/ShaneGH/magic-odata?branch=main)
-[![License]](https://img.shields.io/badge/license-MIT-blue.svg?style=flat)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat)](https://github.com/ShaneGH/magic-odata)
 
 ## Install
 
