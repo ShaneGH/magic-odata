@@ -256,8 +256,8 @@ describe("Fluent Operators", function () {
 
     describe("isIn", function () {
 
-        it("Should work correctly (success)", execute.bind(null, true, false));
-        it("Should work correctly (failure)", execute.bind(null, false, false))
+        it("Should work correctly (success)", execute.bind(null, true));
+        it("Should work correctly (failure)", execute.bind(null, false))
 
         async function execute(success: boolean) {
 
