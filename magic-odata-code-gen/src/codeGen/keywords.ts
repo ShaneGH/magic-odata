@@ -1,4 +1,4 @@
-import { AsyncType, CodeGenConfig } from "../config.js";
+import { AngularHttpResultType, AsyncType, CodeGenConfig } from "../config.js";
 import { Dict, Tab } from "./utils.js";
 
 export type Keywords = {
@@ -138,65 +138,71 @@ export function generateKeywords(allNamespaces: string[], rootLevelTypes: string
 
 export function imports(keywords: Keywords, tab: Tab, config: CodeGenConfig | null) {
 
+    const mergeMap = config?.angularMode && typeof config.angularMode !== "boolean"
+        && config.angularMode.httpResultType !== AngularHttpResultType.String
+        ? tab(importWithAlias("mergeMap", false)) + ",\n"
+        : "";
+
     const ng = config?.angularMode && `import {
-    ${tab(importWithAlias("AngularHttpResponse", "HttpResponse"))}
+${tab(importWithAlias("AngularHttpResponse", true, "HttpResponse"))}
 } from '@angular/common/http'`
 
     const rxjs = (config?.angularMode || config?.asyncType === AsyncType.RxJs) && `import {
-    ${tab(importWithAlias("Observable"))},
-    ${tab(importWithAlias("mergeMap"))},
-    ${tab(importWithAlias("map"))},
+${tab(importWithAlias("Observable", false))},
+${mergeMap}${tab(importWithAlias("map", false))},
 } from 'rxjs'`
 
     const odataTsClient = `import {
-${tab(importWithAlias("SerializerSettings"))},
-${tab(importWithAlias("UnboundFunctionSet"))},
-${tab(importWithAlias("Params"))},
-${tab(importWithAlias("EdmDate"))},
-${tab(importWithAlias("EdmTimeOfDay"))},
-${tab(importWithAlias("EdmDuration"))},
-${tab(importWithAlias("EdmDateTimeOffset"))},
-${tab(importWithAlias("RequestOptions"))},
-${tab(importWithAlias("HttpError"))},
-${tab(importWithAlias("DefaultResponseInterceptor"))},
-${tab(importWithAlias("KeySelection"))},
-${tab(importWithAlias("WithKeyType"))},
-${tab(importWithAlias("QueryEnum"))},
-${tab(importWithAlias("ODataTypeRef"))},
-${tab(importWithAlias("RequestTools"))},
-${tab(importWithAlias("ODataServiceConfig"))},
-${tab(importWithAlias("CastSelection"))},
-${tab(importWithAlias("SubPathSelection"))},
-${tab(importWithAlias("QueryPrimitive"))},
-${tab(importWithAlias("QueryCollection"))},
-${tab(importWithAlias("RequestBuilder"))},
-${tab(importWithAlias("ODataEntitySet"))},
-${tab(importWithAlias("ODataSchema"))},
-${tab(importWithAlias("IEntitySet"))},
-${tab(importWithAlias("QueryComplexObject"))},
-${tab(importWithAlias("ODataCollectionResult"))},
-${tab(importWithAlias("ODataResult"))},
-${tab(importWithAlias("SingleItemsCannotBeQueriedByKey"))},
-${tab(importWithAlias("ThisItemDoesNotHaveAKey"))},
-${tab(importWithAlias("CastingOnEnumsAndPrimitivesIsNotSupported"))},
-${tab(importWithAlias("CastingOnCollectionsOfCollectionsIsNotSupported"))},
-${tab(importWithAlias("QueryingOnCollectionsOfCollectionsIsNotSupported"))},
-${tab(importWithAlias("QueryingOnUnboundFunctionsIsNotSupported"))},
-${tab(importWithAlias("CastingOnUnboundFunctionsIsNotSupported"))},
-${tab(importWithAlias("PrimitiveSubPath"))},
-${tab(importWithAlias("CollectionSubPath"))},
-${tab(importWithAlias("EntitySetSubPath"))}
+${tab(importWithAlias("UnboundFunctionSet", false))},
+${tab(importWithAlias("HttpError", false))},
+${tab(importWithAlias("RequestBuilder", false))},
+${tab(importWithAlias("SerializerSettings", true))},
+${tab(importWithAlias("Params", true))},
+${tab(importWithAlias("EdmDate", true))},
+${tab(importWithAlias("EdmTimeOfDay", true))},
+${tab(importWithAlias("EdmDuration", true))},
+${tab(importWithAlias("EdmDateTimeOffset", true))},
+${tab(importWithAlias("RequestOptions", true))},
+${tab(importWithAlias("DefaultResponseInterceptor", true))},
+${tab(importWithAlias("KeySelection", true))},
+${tab(importWithAlias("WithKeyType", true))},
+${tab(importWithAlias("QueryEnum", true))},
+${tab(importWithAlias("ODataTypeRef", true))},
+${tab(importWithAlias("RequestTools", true))},
+${tab(importWithAlias("ODataServiceConfig", true))},
+${tab(importWithAlias("CastSelection", true))},
+${tab(importWithAlias("SubPathSelection", true))},
+${tab(importWithAlias("QueryPrimitive", true))},
+${tab(importWithAlias("QueryCollection", true))},
+${tab(importWithAlias("ODataEntitySet", true))},
+${tab(importWithAlias("ODataSchema", true))},
+${tab(importWithAlias("IEntitySet", true))},
+${tab(importWithAlias("QueryComplexObject", true))},
+${tab(importWithAlias("ODataCollectionResult", true))},
+${tab(importWithAlias("ODataResult", true))},
+${tab(importWithAlias("SingleItemsCannotBeQueriedByKey", true))},
+${tab(importWithAlias("ThisItemDoesNotHaveAKey", true))},
+${tab(importWithAlias("CastingOnEnumsAndPrimitivesIsNotSupported", true))},
+${tab(importWithAlias("CastingOnCollectionsOfCollectionsIsNotSupported", true))},
+${tab(importWithAlias("QueryingOnCollectionsOfCollectionsIsNotSupported", true))},
+${tab(importWithAlias("QueryingOnUnboundFunctionsIsNotSupported", true))},
+${tab(importWithAlias("CastingOnUnboundFunctionsIsNotSupported", true))},
+${tab(importWithAlias("PrimitiveSubPath", true))},
+${tab(importWithAlias("CollectionSubPath", true))},
+${tab(importWithAlias("EntitySetSubPath", true))}
 } from 'magic-odata-client';`
 
     return [odataTsClient, ng, rxjs]
         .filter(x => !!x)
         .join("\n\n")
 
-    function importWithAlias(importName: keyof Keywords, libImportName?: string) {
+    function importWithAlias(importName: keyof Keywords, typeOnly: boolean, libImportName?: string) {
         /* istanbul ignore next */
         if (!keywords[importName]) {
             throw new Error(`Invalid keyword: ${importName}`);
         }
-        return !libImportName && keywords[importName] === importName ? importName : `${libImportName || importName} as ${keywords[importName]}`
+
+        const t = typeOnly ? "type " : "";
+        return !libImportName && keywords[importName] === importName ? `${t}${importName}` : `${t}${libImportName || importName} as ${keywords[importName]}`
     }
 }
